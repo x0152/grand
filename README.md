@@ -1,6 +1,6 @@
 <h1>
   <img src="docs/logo.svg" alt="" width="48" height="48" align="left" />
-  &nbsp;Mantis
+  &nbsp;GRAND
 </h1>
 
 [![Website](https://img.shields.io/badge/website-x0152.github.io%2Fmantis-1d9c92?style=flat-square)](https://x0152.github.io/mantis/)
@@ -39,7 +39,7 @@ Multi-agent system where an LLM orchestrates a pool of isolated agents, each run
       │               │                                  │ API
       ▼               ▼                                  │
 ┌────────────────────────────────────────────────────────┼────────┐
-│  Mantis                          docker-compose / k8s  │        │
+│  GRAND                           docker-compose / k8s  │        │
 │                                                        │        │
 │  ┌─────────────┐   ┌──────────────────┐          ┌─────┴──────┐ │
 │  │  Web Panel  │   │   Agent Loop     │◀────────▶│ LLM client │ │

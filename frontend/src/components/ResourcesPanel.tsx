@@ -93,20 +93,18 @@ export function ResourcesPanel({ activeSteps }: Props) {
   const newCount = recentlyAdded.size
 
   return (
-    <aside className="hidden md:flex w-60 shrink-0 flex-col h-full border-l border-zinc-200/80 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/30">
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-200/70 dark:border-zinc-800/60 shrink-0">
+    <aside className="hidden md:flex w-64 shrink-0 flex-col h-full bg-[var(--grand-surface)] border-l border-[var(--grand-border)]">
+      <div className="flex items-center justify-between px-4 py-3 shrink-0">
         <span className="kicker">
-          <span className="kicker-num tabular-nums">{String(connections.length).padStart(2, '0')}</span>
-          <span className="kicker-sep">/</span>
-          <span>resources</span>
+          <span>resources · {connections.length}</span>
         </span>
         {newCount > 0 && (
-          <span className="font-mono text-[10px] lowercase text-teal-600 dark:text-teal-400">
+          <span className="text-[11px] text-emerald-400">
             +{newCount} new
           </span>
         )}
       </div>
-      <div className="flex-1 overflow-auto px-1.5 py-1.5 space-y-0.5 min-h-0">
+      <div className="flex-1 overflow-auto px-2 py-1 space-y-0.5 min-h-0">
         {connections.map(c => (
           <ResourceRow
             key={c.id}
@@ -170,11 +168,11 @@ function iconToneClass(tone: SandboxStateMeta['tone']) {
 
 function toneText(tone: SandboxStateMeta['tone']) {
   switch (tone) {
-    case 'ok': return 'text-teal-600 dark:text-teal-400'
-    case 'warn': return 'text-amber-600 dark:text-amber-400'
-    case 'err': return 'text-rose-500 dark:text-rose-400'
+    case 'ok': return 'text-emerald-400'
+    case 'warn': return 'text-amber-400'
+    case 'err': return 'text-rose-500'
     case 'idle':
-    default: return 'text-zinc-500 dark:text-zinc-500'
+    default: return 'text-[var(--grand-muted)]'
   }
 }
 
@@ -197,81 +195,81 @@ function ResourceRow({ conn, sandbox, active, isNew, isOpen, onToggle }: RowProp
     <div
       data-new={isNew}
       data-active={active}
-      className={`relative rounded-[5px] border transition-colors ${
+      className={`relative rounded-md transition-colors ${
         active
-          ? 'border-violet-500/50 bg-violet-500/[0.07] shadow-[inset_2px_0_0_rgb(139_92_246)]'
+          ? 'bg-emerald-500/10 shadow-[inset_2px_0_0_var(--grand-accent)]'
           : isNew
-            ? 'border-teal-500/30 bg-teal-500/[0.03]'
-            : 'border-transparent hover:border-zinc-200 dark:hover:border-zinc-800/60 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30'
+            ? 'bg-emerald-500/5'
+            : 'hover:bg-[var(--grand-surface-2)]'
       }`}
     >
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex flex-col items-stretch gap-0.5 px-2 py-1.5 text-left min-w-0"
+        className="w-full flex flex-col items-stretch gap-0.5 px-3 py-2 text-left min-w-0"
       >
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           <ChevronRight
-            size={10}
+            size={12}
             strokeWidth={1.6}
-            className={`shrink-0 text-zinc-400 dark:text-zinc-600 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+            className={`shrink-0 text-[var(--grand-muted-2)] transition-transform ${isOpen ? 'rotate-90' : ''}`}
           />
           {active ? (
-            <Loader2 size={12} strokeWidth={1.7} className="animate-spin text-violet-500 dark:text-violet-400 shrink-0" />
+            <Loader2 size={13} strokeWidth={1.7} className="animate-spin text-emerald-400 shrink-0" />
           ) : (
-            <Icon size={12} strokeWidth={1.7} className={`shrink-0 ${iconToneClass(meta.tone)}`} />
+            <Icon size={13} strokeWidth={1.7} className={`shrink-0 ${iconToneClass(meta.tone)}`} />
           )}
-          <span className={`truncate text-[12.5px] tracking-tight ${active ? 'text-zinc-900 dark:text-zinc-50 font-medium' : 'text-zinc-700 dark:text-zinc-300'}`}>
+          <span className={`truncate text-[13px] tracking-tight ${active ? 'text-[var(--grand-fg)] font-medium' : 'text-[var(--grand-fg-2)]'}`}>
             {conn.name}
           </span>
-          <span className={`ml-auto font-mono text-[10px] lowercase shrink-0 ${active ? 'text-violet-600 dark:text-violet-400' : toneText(meta.tone)}`}>
+          <span className={`ml-auto font-mono text-[10.5px] shrink-0 ${active ? 'text-emerald-400' : toneText(meta.tone)}`}>
             {active ? 'busy' : meta.label}
           </span>
         </div>
         {(description || isNew) && (
-          <div className="flex items-center gap-1.5 pl-[26px] min-w-0">
+          <div className="flex items-center gap-1.5 pl-7 min-w-0">
             {description && (
-              <span className="truncate text-[11px] text-zinc-500 dark:text-zinc-500 min-w-0">
+              <span className="truncate text-[12px] text-[var(--grand-muted)] min-w-0">
                 {description}
               </span>
             )}
             {isNew && !active && (
-              <span className="font-mono text-[9.5px] lowercase text-teal-600 dark:text-teal-400 shrink-0 ml-auto">new</span>
+              <span className="text-[10.5px] text-emerald-400 shrink-0 ml-auto">new</span>
             )}
           </div>
         )}
       </button>
       {isOpen && (
-        <div className="px-2.5 pb-2 pt-1 space-y-1.5 border-t border-zinc-200/70 dark:border-zinc-800/60">
-          <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-0.5 font-mono text-[10.5px] lowercase">
-            <dt className="text-zinc-400 dark:text-zinc-600">id</dt>
-            <dd className="text-zinc-600 dark:text-zinc-400 truncate">{conn.id}</dd>
-            <dt className="text-zinc-400 dark:text-zinc-600">type</dt>
-            <dd className="text-zinc-600 dark:text-zinc-400">{isSandbox ? 'sandbox' : conn.type}</dd>
+        <div className="px-3 pb-2.5 pt-1.5 space-y-1.5">
+          <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-0.5 font-mono text-[11px]">
+            <dt className="text-[var(--grand-muted-2)]">id</dt>
+            <dd className="text-[var(--grand-fg-2)] truncate">{conn.id}</dd>
+            <dt className="text-[var(--grand-muted-2)]">type</dt>
+            <dd className="text-[var(--grand-fg-2)]">{isSandbox ? 'sandbox' : conn.type}</dd>
             {isSandbox && sandbox?.container?.image && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-600">image</dt>
-                <dd className="text-zinc-600 dark:text-zinc-400 truncate">{sandbox.container.image}</dd>
+                <dt className="text-[var(--grand-muted-2)]">image</dt>
+                <dd className="text-[var(--grand-fg-2)] truncate">{sandbox.container.image}</dd>
               </>
             )}
             {isSandbox && sandbox?.container?.host && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-600">host</dt>
-                <dd className="text-zinc-600 dark:text-zinc-400 truncate">
+                <dt className="text-[var(--grand-muted-2)]">host</dt>
+                <dd className="text-[var(--grand-fg-2)] truncate">
                   {sandbox.container.host}{sandbox.container.port ? `:${sandbox.container.port}` : ''}
                 </dd>
               </>
             )}
             {isSandbox && sandbox?.container?.status && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-600">container</dt>
+                <dt className="text-[var(--grand-muted-2)]">container</dt>
                 <dd className={toneText(meta.tone)}>{sandbox.container.status}</dd>
               </>
             )}
             {!isSandbox && conn.config && Object.keys(conn.config).length > 0 && (
               <>
-                <dt className="text-zinc-400 dark:text-zinc-600">config</dt>
-                <dd className="text-zinc-600 dark:text-zinc-400 truncate">
+                <dt className="text-[var(--grand-muted-2)]">config</dt>
+                <dd className="text-[var(--grand-fg-2)] truncate">
                   {previewConfig(conn.config)}
                 </dd>
               </>

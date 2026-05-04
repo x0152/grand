@@ -53,7 +53,7 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
   }, [input, textareaRef])
 
   return (
-    <div className="px-6 py-3 border-t border-zinc-200/80 dark:border-zinc-800/60 bg-zinc-50/70 dark:bg-zinc-900/40 shrink-0 space-y-2">
+    <div className="px-6 py-4 bg-[var(--grand-bg)] shrink-0 space-y-3">
       {messages.length > 0 && (
         <ContextMeter
           messages={messages}
@@ -64,16 +64,16 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
         />
       )}
       {files.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {files.map(pf => (
             <FilePreview key={pf.id} file={pf} onRemove={() => onRemoveFile(pf.id)} />
           ))}
         </div>
       )}
       {attachError && (
-        <div className="font-mono text-[11px] lowercase text-rose-500 dark:text-rose-400">{attachError}</div>
+        <div className="text-[12px] text-rose-500">{attachError}</div>
       )}
-      <div className="flex gap-1.5 items-end">
+      <div className="flex gap-2 items-end bg-[var(--grand-surface)] border border-[var(--grand-border)] rounded-xl p-2.5 focus-within:border-emerald-400/60 transition-colors">
         <input
           ref={fileInputRef}
           type="file"
@@ -98,12 +98,12 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
               onSend()
             }
           }}
-          placeholder="type a message — shift+enter for newline"
+          placeholder="Type a message — Shift+Enter for newline"
           rows={1}
-          className="flex-1 min-h-[36px] max-h-[220px] py-2 px-3 text-[14px] bg-white dark:bg-zinc-900
-                     border border-zinc-200/80 dark:border-zinc-800/70 rounded-md
-                     leading-relaxed overflow-y-auto placeholder:text-zinc-400 dark:placeholder:text-zinc-600
-                     focus-visible:border-teal-500/50 focus-visible:ring-0"
+          className="flex-1 min-h-[36px] max-h-[220px] py-2 px-2 text-[15px]
+                     bg-transparent border-0 rounded-none
+                     leading-relaxed overflow-y-auto placeholder:text-[var(--grand-muted-2)]
+                     focus:bg-transparent focus:ring-0 focus:border-0"
           disabled={sending || hasPending}
         />
         {hasPending ? (
@@ -123,12 +123,12 @@ function AttachButton({ onClick, disabled }: { onClick: () => void; disabled: bo
       onClick={onClick}
       disabled={disabled}
       title="Attach files"
-      className="shrink-0 h-9 w-9 inline-flex items-center justify-center rounded-md
-                 border border-zinc-200/80 dark:border-zinc-800/70 bg-white dark:bg-zinc-900
-                 text-zinc-500 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400
-                 hover:border-teal-500/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-md
+                 text-[var(--grand-muted)] hover:text-[var(--grand-fg)]
+                 hover:bg-[var(--grand-surface-2)]
+                 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <Paperclip size={14} strokeWidth={1.5} />
+      <Paperclip size={16} strokeWidth={1.5} />
     </button>
   )
 }
@@ -139,12 +139,11 @@ function StopButton({ onClick, disabled }: { onClick: () => void; disabled: bool
       onClick={onClick}
       disabled={disabled}
       title="Stop generation"
-      className="shrink-0 h-9 w-9 inline-flex items-center justify-center rounded-md
-                 border border-zinc-200/80 dark:border-zinc-800/70 bg-white dark:bg-zinc-900
-                 text-zinc-500 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400
-                 hover:border-rose-500/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-md
+                 text-rose-500 hover:bg-rose-500/10
+                 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <Square size={12} className="fill-current" />
+      <Square size={14} className="fill-current" />
     </button>
   )
 }
@@ -155,12 +154,11 @@ function SendButton({ onClick, disabled }: { onClick: () => void; disabled: bool
       onClick={onClick}
       disabled={disabled}
       title="Send"
-      className="shrink-0 h-9 w-9 inline-flex items-center justify-center rounded-md
-                 border border-teal-500/40 bg-teal-500/10 dark:bg-teal-500/15
-                 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 dark:hover:bg-teal-500/25
-                 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-md
+                 bg-emerald-400 text-zinc-950 hover:bg-emerald-300
+                 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
-      <Send size={14} strokeWidth={1.6} />
+      <Send size={16} strokeWidth={2} />
     </button>
   )
 }

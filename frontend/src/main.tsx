@@ -6,7 +6,7 @@ import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="dark" storageKey="mantis-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="grand-theme">
       <App />
     </ThemeProvider>
   </StrictMode>,

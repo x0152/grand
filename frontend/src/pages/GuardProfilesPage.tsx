@@ -151,30 +151,30 @@ export default function GuardProfilesPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-5">
+    <div className="p-8">
+      <div className="flex items-end justify-between mb-7">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Guard Profiles</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-600 mt-0.5">Security profiles control which commands SSH agents can execute</p>
+          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">Guard Profiles</h1>
+          <p className="text-[13.5px] text-[var(--grand-muted)] mt-1.5">Security profiles control which commands SSH agents can execute</p>
         </div>
-        <Button size="sm" onClick={openCreate}>
-          <Plus size={14} /> New Profile
+        <Button onClick={openCreate}>
+          <Plus size={15} /> New profile
         </Button>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-zinc-500 dark:text-zinc-600 text-sm">Loading...</div>
+        <div className="text-center py-12 text-[var(--grand-muted)] text-[14px]">Loading…</div>
       ) : profiles.length === 0 ? (
         <EmptyState icon={Shield} title="No guard profiles yet" description="Create profiles to control SSH command execution" />
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {profiles.map(p => (
-            <div key={p.id} className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-              <div className="px-4 py-3.5">
+            <div key={p.id} className="bg-[var(--grand-surface)] rounded-lg overflow-hidden">
+              <div className="px-5 py-4">
                 <div className="flex items-center justify-between">
-                  <button onClick={() => toggle(p.id)} className="flex items-center gap-2 min-w-0 text-left">
-                    {expanded.has(p.id) ? <ChevronDown size={14} className="text-zinc-600" /> : <ChevronRight size={14} className="text-zinc-600" />}
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200 text-sm">{p.name}</span>
+                  <button onClick={() => toggle(p.id)} className="flex items-center gap-2.5 min-w-0 text-left">
+                    {expanded.has(p.id) ? <ChevronDown size={16} className="text-[var(--grand-muted)]" /> : <ChevronRight size={16} className="text-[var(--grand-muted)]" />}
+                    <span className="font-medium text-[var(--grand-fg)] text-[14.5px]">{p.name}</span>
                     {p.builtin && <Badge variant="secondary">Built-in</Badge>}
                     {p.capabilities.unrestricted && <Badge variant="warning">Unrestricted</Badge>}
                   </button>

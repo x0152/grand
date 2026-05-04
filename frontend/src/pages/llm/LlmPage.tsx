@@ -308,16 +308,16 @@ export default function LlmPage() {
   })
 
   if (loading) {
-    return <div className="p-6 text-center py-16 text-sm text-zinc-500 dark:text-zinc-600">Loading…</div>
+    return <div className="p-8 text-center py-16 text-[14px] text-[var(--grand-muted)]">Loading…</div>
   }
 
   const routingFilled = (routing.chatPresetId ? 1 : 0) + (routing.serverPresetId ? 1 : 0)
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <header className="mb-6">
-        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">AI Engine</h1>
-        <p className="text-xs text-zinc-500 dark:text-zinc-600 mt-0.5">
+    <div className="p-8 max-w-5xl mx-auto">
+      <header className="mb-7">
+        <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">AI Engine</h1>
+        <p className="text-[13.5px] text-[var(--grand-muted)] mt-1.5 leading-relaxed">
           Configure AI in three steps. Each step builds on the previous one.
         </p>
       </header>

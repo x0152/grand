@@ -93,26 +93,26 @@ export default function ChannelsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-5">
+    <div className="p-8">
+      <div className="flex items-end justify-between mb-7">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Channels</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-600 mt-0.5">Chat channel is default; Telegram channels can be added</p>
+          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">Channels</h1>
+          <p className="text-[13.5px] text-[var(--grand-muted)] mt-1.5">Chat channel is default; Telegram channels can be added</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" disabled className="opacity-50 cursor-not-allowed">
-            <Plus size={14} /> Add Channel
+          <Button disabled className="opacity-50 cursor-not-allowed">
+            <Plus size={15} /> Add channel
           </Button>
-          <span className="text-[11px] text-zinc-400 dark:text-zinc-600">Coming soon</span>
+          <span className="text-[12px] text-[var(--grand-muted-2)]">Coming soon</span>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-zinc-500 dark:text-zinc-600 text-sm">Loading...</div>
+        <div className="text-center py-12 text-[var(--grand-muted)] text-[14px]">Loading…</div>
       ) : channels.length === 0 ? (
         <EmptyState icon={Radio} title="No channels yet" />
       ) : (
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div className="bg-[var(--grand-surface)] rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -185,7 +185,7 @@ export default function ChannelsPage() {
               <select
                 value={form.presetId}
                 onChange={e => setForm(f => ({ ...f, presetId: e.target.value }))}
-                className="flex w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-teal-500/50"
+                className="flex w-full h-10 rounded-md bg-[var(--grand-surface-2)] px-3.5 py-2 text-[14px] text-[var(--grand-fg)] outline-none focus:bg-[var(--grand-surface)] focus:ring-2 focus:ring-emerald-400/40"
               >
                 <option value="">Inherit (use global default)</option>
                 {presets.map(p => (

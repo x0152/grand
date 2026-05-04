@@ -16,33 +16,33 @@ export function scrollToSection(n: number) {
 
 export function Stepper({ steps }: { steps: StepItem[] }) {
   return (
-    <nav className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-2 flex items-center gap-1">
+    <nav className="rounded-lg bg-[var(--grand-surface)] px-2 py-2 flex items-center gap-1">
       {steps.map((s, i) => {
         const Icon = s.icon
         return (
           <div key={s.n} className="flex items-center gap-1 flex-1 min-w-0">
             <button
               onClick={() => scrollToSection(s.n)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/70 flex-1 min-w-0 text-left"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-[var(--grand-surface-2)] flex-1 min-w-0 text-left transition-colors"
             >
               <span
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                className={`size-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
                   s.done
-                    ? 'bg-teal-500 text-white'
-                    : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                    ? 'bg-emerald-400 text-zinc-950'
+                    : 'bg-[var(--grand-surface-2)] text-[var(--grand-muted)]'
                 }`}
               >
                 {s.n}
               </span>
-              <Icon size={13} className={s.done ? 'text-teal-500' : 'text-zinc-400'} />
-              <span className={`text-xs font-medium truncate ${s.done ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-500'}`}>
+              <Icon size={15} className={s.done ? 'text-emerald-400' : 'text-[var(--grand-muted)]'} />
+              <span className={`text-[13.5px] font-medium truncate ${s.done ? 'text-[var(--grand-fg)]' : 'text-[var(--grand-muted)]'}`}>
                 {s.label}
               </span>
-              <span className="text-[11px] text-zinc-400 ml-auto shrink-0">
+              <span className="text-[11.5px] text-[var(--grand-muted-2)] ml-auto shrink-0 tabular-nums">
                 {s.total != null ? `${s.count}/${s.total}` : s.count}
               </span>
             </button>
-            {i < steps.length - 1 && <div className="w-3 h-px bg-zinc-200 dark:bg-zinc-800 shrink-0" />}
+            {i < steps.length - 1 && <div className="w-3 h-px bg-[var(--grand-line)] shrink-0" />}
           </div>
         )
       })}
@@ -65,19 +65,19 @@ export function Section({ n, icon: Icon, title, subtitle, action, disabled, disa
   return (
     <section
       id={`section-${n}`}
-      className={`rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 p-4 scroll-mt-4 transition-opacity ${disabled ? 'opacity-60' : ''}`}
+      className={`rounded-xl bg-[var(--grand-surface)] p-5 scroll-mt-4 transition-opacity ${disabled ? 'opacity-60' : ''}`}
     >
-      <header className="flex items-start justify-between gap-3 mb-3">
+      <header className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-start gap-3 min-w-0">
-          <div className="w-6 h-6 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
+          <div className="size-7 rounded-md bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-[12px] font-bold shrink-0 mt-0.5">
             {n}
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <Icon size={14} className="text-teal-500" />
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
+            <div className="flex items-center gap-2">
+              <Icon size={16} className="text-emerald-400" />
+              <h2 className="text-[15px] font-semibold tracking-tight text-[var(--grand-fg)]">{title}</h2>
             </div>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-600 mt-0.5">
+            <p className="text-[12.5px] text-[var(--grand-muted)] mt-1 leading-relaxed">
               {disabled && disabledHint ? disabledHint : subtitle}
             </p>
           </div>
@@ -91,7 +91,7 @@ export function Section({ n, icon: Icon, title, subtitle, action, disabled, disa
 
 export function EmptyHint({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-white/60 dark:bg-zinc-900/40 px-4 py-6 text-center text-xs text-zinc-500 dark:text-zinc-500">
+    <div className="rounded-md bg-[var(--grand-surface-2)] px-4 py-7 text-center text-[13px] text-[var(--grand-muted)]">
       {children}
     </div>
   )

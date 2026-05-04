@@ -3,14 +3,14 @@ import { navigate } from '../../router'
 
 export function PlanBanner({ planId }: { planId?: string }) {
   return (
-    <div className="px-6 py-3 border-t border-zinc-200/80 dark:border-zinc-800/60 bg-zinc-50/70 dark:bg-zinc-900/40 shrink-0">
-      <div className="flex items-center gap-2 font-mono text-[11px] lowercase tracking-tight text-zinc-500 dark:text-zinc-500">
-        <GitBranch size={12} className="text-amber-500/70" />
-        <span>plan execution chat · read-only</span>
+    <div className="px-6 py-3 bg-[var(--grand-surface-2)] shrink-0">
+      <div className="flex items-center gap-2.5 text-[12.5px] tracking-tight text-[var(--grand-fg-2)]">
+        <GitBranch size={14} className="text-amber-400" />
+        <span>Plan execution chat · read-only</span>
         {planId && (
           <button
             onClick={() => navigate({ page: 'plans', planId })}
-            className="ml-auto text-amber-500/80 hover:text-amber-400 hover:underline"
+            className="ml-auto text-emerald-400 hover:text-emerald-300 hover:underline"
           >
             open plan →
           </button>

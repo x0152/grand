@@ -5,8 +5,8 @@ export function stepMeta(stepId: StepId): StepMeta {
   switch (stepId) {
     case 'provider':
       return {
-        title: 'How do you want to power Mantis?',
-        subtitle: 'Pick where Mantis sends your messages. You can change this later.',
+        title: 'How do you want to power GRAND?',
+        subtitle: 'Pick where GRAND sends your messages. You can change this later.',
       }
     case 'openai':
       return {
@@ -45,7 +45,7 @@ export function stepMeta(stepId: StepId): StepMeta {
       }
     case 'telegram':
       return {
-        title: 'Talk to Mantis on Telegram?',
+        title: 'Talk to GRAND on Telegram?',
         subtitle: 'Paste a bot token and send the code to the bot — we’ll detect you. Or tick the box below to stay on chat-only.',
       }
     case 'finish':

@@ -9,10 +9,10 @@ interface EmptyStateProps {
 export function EmptyState({ icon: Icon, title, description }: EmptyStateProps) {
   return (
     <div className="text-center py-20">
-      <Icon size={40} className="mx-auto text-zinc-400 dark:text-zinc-700 mb-3" />
-      <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">{title}</p>
+      <Icon size={48} className="mx-auto text-[var(--grand-muted-2)] mb-4" strokeWidth={1.5} />
+      <p className="text-[var(--grand-fg-2)] text-[15px] font-medium">{title}</p>
       {description && (
-        <p className="text-xs text-zinc-600 mt-1">{description}</p>
+        <p className="text-[13px] text-[var(--grand-muted)] mt-1.5 max-w-sm mx-auto">{description}</p>
       )}
     </div>
   )

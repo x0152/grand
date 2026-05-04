@@ -32,15 +32,15 @@ const NODES: NodeDef[] = [
 ]
 
 const EDGES: EdgeDef[] = [
-  { id: 'e1', from: 'n1', to: 'n2' },
-  { id: 'e2', from: 'n2', to: 'n3', pulse: { dur: '1.7s', begin: '0s' } },
-  { id: 'e3', from: 'n1', to: 'n4' },
+  { id: 'e1', from: 'n1', to: 'n2', pulse: { dur: '0.7s', begin: '0.4s' } },
+  { id: 'e2', from: 'n2', to: 'n3', pulse: { dur: '0.65s', begin: '0s' } },
+  { id: 'e3', from: 'n1', to: 'n4', pulse: { dur: '0.85s', begin: '0.9s' } },
   { id: 'e4', from: 'n3', to: 'n6' },
-  { id: 'e5', from: 'n4', to: 'n5', pulse: { dur: '1.5s', begin: '0.6s' } },
-  { id: 'e6', from: 'n5', to: 'n6' },
-  { id: 'e7', from: 'n2', to: 'n5', pulse: { dur: '1.9s', begin: '1.1s' } },
+  { id: 'e5', from: 'n4', to: 'n5', pulse: { dur: '0.6s', begin: '0.25s' } },
+  { id: 'e6', from: 'n5', to: 'n6', pulse: { dur: '0.7s', begin: '0.55s' } },
+  { id: 'e7', from: 'n2', to: 'n5', pulse: { dur: '0.8s', begin: '0.45s' } },
   { id: 'e8', from: 'n4', to: 'n7' },
-  { id: 'e9', from: 'n6', to: 'n7', pulse: { dur: '1.6s', begin: '0.3s' } },
+  { id: 'e9', from: 'n6', to: 'n7', pulse: { dur: '0.7s', begin: '0.15s' } },
 ]
 
 const BRAIN_OUTLINE = [

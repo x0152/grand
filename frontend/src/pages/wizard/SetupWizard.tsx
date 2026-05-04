@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Toaster } from '@/components/ui/sonner'
-import { MantisLogo } from '@/components/MantisLogo'
+import { BrandLogo, BRAND_NAME } from '@/components/Brand'
 import { ModeToggle } from '@/components/mode-toggle'
 import { AlertCircle } from '@/lib/icons'
 import { api } from '@/api'
@@ -219,17 +219,17 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--grand-bg)] flex items-center justify-center p-6">
       <Toaster />
       <div className="w-full max-w-xl">
-        <div className="relative mb-6 flex items-center justify-center gap-3">
-          <MantisLogo size={40} className="text-teal-500 dark:text-teal-400" />
+        <div className="relative mb-8 flex items-center justify-center gap-3">
+          <BrandLogo size={44} />
           <div className="leading-tight">
-            <h1 className="font-mono text-[20px] font-medium lowercase tracking-tight text-zinc-900 dark:text-zinc-50">
-              mantis
+            <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">
+              {BRAND_NAME}
             </h1>
-            <p className="font-mono text-[11px] lowercase tracking-tight text-zinc-500 mt-0.5">
-              {mode === 'resume' ? 'finishing setup' : 'let’s set you up'}
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--grand-muted)] mt-1">
+              {mode === 'resume' ? 'finishing setup' : 'first run'}
             </p>
           </div>
           <div className="absolute right-0 top-0">
@@ -237,7 +237,7 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
           </div>
         </div>
 
-        <Card className="bg-white dark:bg-zinc-900/60 p-6 space-y-6">
+        <Card className="bg-[var(--grand-surface)] p-7 space-y-6 border-0 shadow-none">
           <StepHeader path={path} stepId={stepId} />
 
           {stepId === 'provider' && (

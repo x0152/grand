@@ -31,7 +31,7 @@ export function WalletChoiceStep({ walletMode, gonkaConfig, onSelect }: WalletCh
       <BigChoiceCard
         icon={Wallet}
         title="I already have a wallet"
-        description="Paste a private key from your wallet app — Mantis will use it to sign requests."
+        description="Paste a private key from your wallet app — GRAND will use it to sign requests."
         bullets={[
           '64-character private key (with or without 0x)',
           'Stays on your server, never leaves',

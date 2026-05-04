@@ -37,10 +37,10 @@ export function ContextMeter({
 
   const color =
     pct >= 90
-      ? 'bg-red-500'
+      ? 'bg-rose-500'
       : pct >= 70
-        ? 'bg-amber-500'
-        : 'bg-teal-500'
+        ? 'bg-amber-400'
+        : 'bg-emerald-400'
 
   const tooltip = [
     isServer
@@ -55,26 +55,26 @@ export function ContextMeter({
     .join(' ')
 
   return (
-    <div className="flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-500" title={tooltip}>
-      <Gauge size={12} className="shrink-0" />
+    <div className="flex items-center gap-2.5 text-[12px] text-[var(--grand-muted)]" title={tooltip}>
+      <Gauge size={14} className="shrink-0" />
       <span className="font-mono tabular-nums shrink-0">
         {!isServer && partial && '≥'}
         {isServer ? '' : '~'}
         {fmtTokens(total)} / {fmtTokens(threshold)}
       </span>
-      <div className="flex-1 min-w-16 max-w-40 h-1 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+      <div className="flex-1 min-w-16 max-w-40 h-1.5 rounded-full bg-[var(--grand-surface-2)] overflow-hidden">
         <div
           className={`h-full ${color} transition-all`}
           style={{ width: `${Math.max(2, pct)}%` }}
         />
       </div>
-      <span className="font-mono tabular-nums shrink-0 w-8 text-right">{pct}%</span>
+      <span className="font-mono tabular-nums shrink-0 w-9 text-right">{pct}%</span>
       {compactionCount > 0 && (
         <span
-          className="flex items-center gap-0.5 shrink-0 text-teal-600 dark:text-teal-400"
+          className="flex items-center gap-1 shrink-0 text-emerald-400"
           title={`${compactionCount} compaction${compactionCount === 1 ? '' : 's'}`}
         >
-          <Layers size={10} />
+          <Layers size={12} />
           <span className="font-mono tabular-nums">×{compactionCount}</span>
         </span>
       )}

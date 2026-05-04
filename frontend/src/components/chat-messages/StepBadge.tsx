@@ -27,33 +27,33 @@ export function StepBadge({ step, onClick }: { step: Step; onClick: () => void }
   return (
     <button
       onClick={handleClick}
-      className={`inline-flex items-start gap-1.5 px-2 py-1 rounded-sm font-mono text-[11px] lowercase tracking-tight cursor-pointer transition-colors max-w-full text-left step-enter ${
+      className={`inline-flex items-start gap-2 px-2.5 py-1.5 rounded-md border font-mono text-[12px] tracking-tight cursor-pointer transition-colors max-w-full text-left step-enter ${
         isRunning
-          ? 'text-teal-600 dark:text-teal-400 border border-teal-500/40 bg-teal-500/5 step-running'
+          ? 'text-emerald-400 bg-emerald-500/10 border-emerald-400/40 step-running'
           : isError
-            ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+            ? 'bg-rose-500/10 text-rose-400 border-rose-500/40'
             : isCancelled
-              ? 'bg-zinc-200/40 dark:bg-zinc-800/40 text-zinc-400 dark:text-zinc-600 border border-zinc-300/40 dark:border-zinc-700/40 line-through decoration-zinc-400/50'
-              : 'bg-zinc-100/70 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-700/70 hover:text-zinc-700 dark:hover:text-zinc-300'
+              ? 'bg-[var(--grand-bg)] text-[var(--grand-muted-2)] border-[var(--grand-border)] line-through decoration-[var(--grand-muted-2)]'
+              : 'bg-[var(--grand-bg)] text-[var(--grand-fg)] border-[var(--grand-border)] hover:border-emerald-400/60 hover:text-emerald-400'
       }`}
     >
       {isRunning ? (
-        <Loader2 size={11} className="animate-spin shrink-0 mt-0.5" />
+        <Loader2 size={13} className="animate-spin shrink-0 mt-0.5" />
       ) : isError ? (
-        <AlertCircle size={11} className="shrink-0 mt-0.5" />
+        <AlertCircle size={13} className="shrink-0 mt-0.5" />
       ) : isCancelled ? (
-        <Square size={10} className="fill-current opacity-70 shrink-0 mt-1" />
+        <Square size={12} className="fill-current opacity-70 shrink-0 mt-0.5" />
       ) : (
-        <Icon size={11} className="shrink-0 mt-0.5" />
+        <Icon size={13} className="shrink-0 mt-0.5" />
       )}
       <span className="break-words whitespace-normal leading-snug min-w-0 flex-1">
-        {step.label.toLowerCase()}
-        {argSummary && <span className="ml-1.5 opacity-60 normal-case">{argSummary}</span>}
+        {step.label}
+        {argSummary && <span className="ml-1.5 opacity-60">{argSummary}</span>}
       </span>
       {showElapsed && (
         <span className="opacity-70 tabular-nums shrink-0 mt-0.5">{fmtElapsed(elapsed)}</span>
       )}
-      {!isRunning && !isError && !isCancelled && <CheckCircle2 size={10} className="text-emerald-500 shrink-0 mt-1" />}
+      {!isRunning && !isError && !isCancelled && <CheckCircle2 size={12} className="text-emerald-400 shrink-0 mt-0.5" />}
     </button>
   )
 }

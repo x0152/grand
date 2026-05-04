@@ -298,8 +298,8 @@ export default function ChatPage({ sessionId, onFirstMessage }: Props) {
 
   if (!sessionId) {
     return (
-      <div className="flex items-center justify-center h-full font-mono text-[11.5px] lowercase tracking-tight text-zinc-500 dark:text-zinc-600">
-        — select a chat or create a new one —
+      <div className="flex items-center justify-center h-full text-[14px] text-[var(--grand-muted)]">
+        Select a chat or create a new one
       </div>
     )
   }

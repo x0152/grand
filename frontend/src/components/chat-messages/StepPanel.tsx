@@ -74,11 +74,11 @@ export function StepPanel({ step, onClose }: { step: Step; onClose: () => void }
   }, [log?.entries.length, stepEntries.length])
 
   return (
-    <div className="w-[560px] max-w-[60vw] min-w-[400px] h-full bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 flex flex-col shadow-2xl">
+    <div className="w-[560px] max-w-[60vw] min-w-[400px] h-full bg-[var(--grand-surface)] border-l border-[var(--grand-border)] flex flex-col shadow-2xl">
       <PanelHeader step={step} isRunning={isRunning} isError={isError} onClose={onClose} />
       <PanelMeta step={step} log={log} hasLog={hasLog} />
       <div ref={logScrollRef} onScroll={handleScroll} className="flex-1 overflow-auto min-h-0">
-        <div className="bg-zinc-50 dark:bg-zinc-950 px-4 py-3.5 space-y-1 min-h-[120px]">
+        <div className="bg-[var(--grand-bg)] px-4 py-4 space-y-1 min-h-[120px]">
           {logPrompt && <PromptBanner prompt={logPrompt} />}
           <PanelBody
             log={log}
@@ -105,24 +105,24 @@ function PanelHeader({
   onClose: () => void
 }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
-      <div className="flex items-center gap-2 min-w-0">
+    <div className="flex items-center justify-between px-5 py-4 shrink-0">
+      <div className="flex items-center gap-2.5 min-w-0">
         {isRunning ? (
-          <Loader2 size={14} className="text-teal-400 animate-spin shrink-0" />
+          <Loader2 size={16} className="text-emerald-400 animate-spin shrink-0" />
         ) : isError ? (
-          <AlertCircle size={14} className="text-red-400 shrink-0" />
+          <AlertCircle size={16} className="text-rose-400 shrink-0" />
         ) : (
-          <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
         )}
-        <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100 whitespace-normal break-words leading-snug">
+        <span className="font-medium text-[15px] text-[var(--grand-fg)] whitespace-normal break-words leading-snug">
           {step.label}
         </span>
       </div>
       <button
         onClick={onClose}
-        className="p-1 rounded-md text-zinc-500 dark:text-zinc-600 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 shrink-0 ml-2"
+        className="p-1.5 rounded-md text-[var(--grand-muted)] hover:text-[var(--grand-fg)] hover:bg-[var(--grand-surface-2)] shrink-0 ml-2"
       >
-        <X size={16} />
+        <X size={18} />
       </button>
     </div>
   )
@@ -130,45 +130,45 @@ function PanelHeader({
 
 function PanelMeta({ step, log, hasLog }: { step: Step; log: SessionLog | null; hasLog: boolean }) {
   return (
-    <div className="px-5 py-3 border-b border-zinc-200 dark:border-zinc-800 space-y-2 shrink-0">
-      <div className="flex items-center gap-x-2 gap-y-1 flex-wrap font-mono text-[11px] lowercase tracking-tight text-zinc-500 dark:text-zinc-500">
+    <div className="px-5 py-3 space-y-2 shrink-0 bg-[var(--grand-surface-2)]">
+      <div className="flex items-center gap-x-2 gap-y-1 flex-wrap font-mono text-[11.5px] tracking-tight text-[var(--grand-muted)]">
         <span>{step.tool}</span>
         {hasLog && (log?.agentName || log?.status) && (
           <>
-            <span className="text-zinc-300 dark:text-zinc-700">/</span>
+            <span className="text-[var(--grand-muted-2)]">/</span>
             <span className="flex items-center gap-1">
-              <ScrollText size={11} className="text-teal-500 dark:text-teal-400" />
+              <ScrollText size={12} className="text-emerald-400" />
               {log?.agentName ?? 'agent'}
               {log?.status === 'running' && (
-                <span className="px-1 py-px rounded-sm bg-amber-500/15 text-amber-600 dark:text-amber-400">running</span>
+                <span className="px-1.5 py-px rounded-sm bg-amber-500/15 text-amber-400">running</span>
               )}
             </span>
           </>
         )}
         {(step.presetName || log?.presetName) && (
           <>
-            <span className="text-zinc-300 dark:text-zinc-700">·</span>
-            <span>{(step.presetName || log?.presetName || '').toLowerCase()}</span>
+            <span className="text-[var(--grand-muted-2)]">·</span>
+            <span>{step.presetName || log?.presetName}</span>
           </>
         )}
         {(step.modelName || log?.modelName) && (
           <>
-            <span className="text-zinc-300 dark:text-zinc-700">/</span>
-            <span>{(step.modelName || log?.modelName || '').toLowerCase()}</span>
+            <span className="text-[var(--grand-muted-2)]">/</span>
+            <span>{step.modelName || log?.modelName}</span>
           </>
         )}
         {(step.modelRole === 'fallback' || log?.modelRole === 'fallback') && (
-          <span className="px-1 py-px rounded-sm bg-amber-500/15 text-amber-600 dark:text-amber-400">fallback</span>
+          <span className="px-1.5 py-px rounded-sm bg-amber-500/15 text-amber-400">fallback</span>
         )}
         {step.finishedAt && step.startedAt && (
           <>
-            <span className="text-zinc-300 dark:text-zinc-700">·</span>
+            <span className="text-[var(--grand-muted-2)]">·</span>
             <span className="tabular-nums">{fmtDuration(step.startedAt, step.finishedAt)}</span>
           </>
         )}
       </div>
       {step.args && step.args !== '{}' && (
-        <pre className="text-[11px] font-mono text-zinc-500 dark:text-zinc-600 bg-zinc-50 dark:bg-zinc-950 rounded-md px-2.5 py-1.5 overflow-x-auto max-h-24 whitespace-pre-wrap break-all">
+        <pre className="text-[11.5px] font-mono text-[var(--grand-muted)] bg-[var(--grand-bg)] rounded-md px-3 py-2 overflow-x-auto max-h-28 whitespace-pre-wrap break-all">
           {formatArgs(step.args)}
         </pre>
       )}
@@ -188,8 +188,8 @@ function PanelBody({ log, hasLog, isRunning, stepEntries, stepResultPresent }: P
   if (hasLog) {
     if (!log) {
       return (
-        <div className="font-mono text-xs flex items-center gap-2 text-zinc-500 dark:text-zinc-600 py-2">
-          <Loader2 size={11} className="animate-spin" />
+        <div className="font-mono text-[12.5px] flex items-center gap-2 text-[var(--grand-muted)] py-2">
+          <Loader2 size={13} className="animate-spin" />
           <span>Loading log…</span>
         </div>
       )
@@ -198,11 +198,11 @@ function PanelBody({ log, hasLog, isRunning, stepEntries, stepResultPresent }: P
       <>
         {log.entries.map((entry, i) => <EntryLine key={i} entry={entry} />)}
         {log.entries.length === 0 && log.status !== 'running' && (
-          <p className="text-zinc-500 dark:text-zinc-600 text-xs font-mono">No entries</p>
+          <p className="text-[var(--grand-muted)] text-[12.5px] font-mono">No entries</p>
         )}
         {(log.status === 'running' || isRunning) && (
-          <div className="font-mono text-xs flex items-center gap-2 text-zinc-500 dark:text-zinc-600 py-2">
-            <Loader2 size={11} className="animate-spin" />
+          <div className="font-mono text-[12.5px] flex items-center gap-2 text-[var(--grand-muted)] py-2">
+            <Loader2 size={13} className="animate-spin" />
             <span>{log.entries.length === 0 ? 'Waiting for output…' : 'Running…'}</span>
           </div>
         )}
@@ -213,8 +213,8 @@ function PanelBody({ log, hasLog, isRunning, stepEntries, stepResultPresent }: P
     <>
       {stepEntries.map((entry, i) => <EntryLine key={i} entry={entry} />)}
       {isRunning && !stepResultPresent && (
-        <div className="font-mono text-xs flex items-center gap-2 text-zinc-500 dark:text-zinc-600 py-2">
-          <Loader2 size={11} className="animate-spin" />
+        <div className="font-mono text-[12.5px] flex items-center gap-2 text-[var(--grand-muted)] py-2">
+          <Loader2 size={13} className="animate-spin" />
           <span>Running…</span>
         </div>
       )}

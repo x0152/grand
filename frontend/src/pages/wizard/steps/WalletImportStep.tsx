@@ -59,7 +59,7 @@ export function WalletImportStep({
             Server: <span className="font-mono">{nodeUrl || 'default'}</span> · change
           </button>
         ) : (
-          <FormField label="Gonka server" hint="Where Mantis sends your AI requests. The default works.">
+          <FormField label="Gonka server" hint="Where GRAND sends your AI requests. The default works.">
             <Input
               value={nodeUrl}
               onChange={e => onChangeNodeUrl(e.target.value)}

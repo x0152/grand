@@ -15,7 +15,7 @@ import SetupPage from './pages/SetupPage'
 import { deriveStatus } from './pages/wizard/status'
 import LoginPage from './pages/LoginPage'
 import ChatSidebar from './components/ChatSidebar'
-import { MantisLogo } from './components/MantisLogo'
+import { BrandLogo, BRAND_NAME, BRAND_TAGLINE } from './components/Brand'
 import { LogoStateProvider, useLogoState } from './components/LogoState'
 import { ModeToggle } from './components/mode-toggle'
 import { api, setUnauthorizedHandler, UnauthorizedError } from './api'
@@ -157,11 +157,9 @@ export default function App() {
     </button>
   ))
 
-  const renderSectionLabel = (title: string, idx: number) => (
-    <div className="kicker px-3.5 pt-2 pb-1">
-      <span className="kicker-num">{String(idx).padStart(2, '0')}</span>
-      <span className="kicker-sep">/</span>
-      <span>{title.toLowerCase()}</span>
+  const renderSectionLabel = (title: string) => (
+    <div className="kicker px-4 pt-3 pb-1.5">
+      <span>{title}</span>
     </div>
   )
 
@@ -169,14 +167,14 @@ export default function App() {
 
   return (
     <LogoStateProvider>
-    <div className="flex h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors">
-      <aside className="w-56 bg-zinc-50/70 dark:bg-zinc-900/40 border-r border-zinc-200/80 dark:border-zinc-800/60 flex flex-col shrink-0 min-w-0 overflow-hidden transition-colors">
-        <div className="px-3 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800/60 flex justify-between items-center gap-2 transition-colors min-w-0">
-          <div className="flex items-center gap-2 min-w-0">
+    <div className="flex h-screen bg-[var(--grand-bg)] text-[var(--grand-fg)] transition-colors">
+      <aside className="w-64 bg-[var(--grand-surface)] border-r border-[var(--grand-border)] flex flex-col shrink-0 min-w-0 overflow-hidden">
+        <div className="px-4 py-4 flex justify-between items-center gap-2 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
             <SidebarLogo />
             <div className="leading-tight min-w-0">
-              <h1 className="text-[14px] font-medium lowercase text-zinc-900 dark:text-zinc-50 tracking-tight truncate">mantis</h1>
-              <p className="font-mono text-[10px] lowercase tracking-tight text-zinc-500 dark:text-zinc-500 mt-0.5 truncate">v0 · control</p>
+              <h1 className="text-[17px] font-semibold tracking-tight text-[var(--grand-fg)] truncate">{BRAND_NAME}</h1>
+              <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-[var(--grand-muted)] mt-0.5 truncate">{BRAND_TAGLINE}</p>
             </div>
           </div>
           <div className="flex items-center gap-0 shrink-0">
@@ -187,7 +185,7 @@ export default function App() {
               onClick={handleLogout}
               title={user ? `Sign out ${user.name}` : 'Sign out'}
             >
-              <LogOut className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
               <span className="sr-only">Sign out</span>
             </Button>
           </div>
@@ -195,7 +193,7 @@ export default function App() {
 
         <div className="flex flex-col flex-1 overflow-hidden">
           <div className="pt-1">
-            {renderSectionLabel('chat', 1)}
+            {renderSectionLabel('chat')}
           </div>
           <div className="flex-1 overflow-auto min-h-0">
             <ChatSidebar
@@ -206,10 +204,10 @@ export default function App() {
             />
           </div>
 
-          <div className="border-t border-zinc-200/80 dark:border-zinc-800/60 py-1 overflow-auto transition-colors">
-            {nav.map((s, i) => (
+          <div className="py-1 overflow-auto">
+            {nav.map(s => (
               <div key={s.title}>
-                {renderSectionLabel(s.title, i + 2)}
+                {renderSectionLabel(s.title)}
                 <div>
                   {renderNav(s.items)}
                 </div>
@@ -218,7 +216,7 @@ export default function App() {
           </div>
         </div>
       </aside>
-      <main className="flex-1 min-w-0 overflow-auto bg-white dark:bg-zinc-950 transition-colors">
+      <main className="flex-1 min-w-0 overflow-auto bg-[var(--grand-bg)]">
         {route.page === 'chat' && <ChatPage sessionId={activeSessionId ?? ''} onFirstMessage={handleFirstMessage} />}
         {route.page === 'channels' && <ChannelsPage />}
         {route.page === 'llm' && <LlmPage />}
@@ -237,11 +235,5 @@ export default function App() {
 
 function SidebarLogo() {
   const { state } = useLogoState()
-  return (
-    <MantisLogo
-      size={34}
-      state={state}
-      className="text-teal-500 dark:text-teal-400 shrink-0"
-    />
-  )
+  return <BrandLogo size={32} state={state} className="shrink-0" />
 }

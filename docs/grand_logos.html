@@ -1,0 +1,1661 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRAND — logo & color exploration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #08080a;
+      --bg-2:      #0e0e11;
+      --card:      #111114;
+      --card-2:    #16161a;
+      --fg:        #fafafa;
+      --fg-2:      #d4d4d8;
+      --muted:     #a1a1aa;
+      --muted-2:   #71717a;
+      --line:      rgba(244, 244, 245, 0.08);
+      --line-2:    rgba(244, 244, 245, 0.16);
+      /* "ink" = neutral outline color used for the body of every glyph */
+      --ink:       #a1a1aa;
+      /* "accent" = the bright highlight (replaces the old teal) */
+      --accent:    #ffffff;
+      --accent-soft: rgba(255,255,255,0.08);
+      --accent-glow: rgba(255,255,255,0.55);
+      --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --font-mono: 'Geist Mono', ui-monospace, Menlo, Consolas, monospace;
+      --font-display: 'Geist', 'Inter', sans-serif;
+      --radius: 8px;
+    }
+    [data-theme="light"] {
+      --bg:        #fafafa;
+      --bg-2:      #f4f4f5;
+      --card:      #ffffff;
+      --card-2:    #f7f7f8;
+      --fg:        #09090b;
+      --fg-2:      #27272a;
+      --muted:     #52525b;
+      --muted-2:   #a1a1aa;
+      --line:      rgba(9,9,11,0.08);
+      --line-2:    rgba(9,9,11,0.18);
+      --ink:       #52525b;
+      --accent:    #09090b;
+      --accent-soft: rgba(9,9,11,0.06);
+      --accent-glow: rgba(9,9,11,0.30);
+    }
+    *,*:before,*:after { box-sizing: border-box; }
+    html, body { margin:0; padding:0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      letter-spacing: -0.005em;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
+    .nav {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(10px) saturate(140%);
+      background: color-mix(in srgb, var(--bg) 78%, transparent);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-row {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    .brand-mini {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--muted);
+    }
+    .brand-mini b { color: var(--fg); letter-spacing: 0.16em; font-weight: 600; }
+    .toggle {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border-radius: 999px;
+      border: 1px solid var(--line-2);
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--muted); cursor: pointer; background: transparent;
+    }
+    .toggle:hover { color: var(--fg); border-color: var(--accent); }
+    .toggle .pill {
+      width: 22px; height: 12px; border-radius: 999px;
+      background: var(--card-2); position: relative; border: 1px solid var(--line-2);
+    }
+    .toggle .pill::after {
+      content: ""; position: absolute; top: 1px; left: 1px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      transition: left 160ms ease;
+    }
+    [data-theme="light"] .toggle .pill::after { left: 11px; }
+
+    .hero { padding: 96px 0 40px; }
+    .kicker {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.14em;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(40px, 6vw, 84px);
+      line-height: 1.0; margin: 12px 0 18px;
+      letter-spacing: -0.04em;
+    }
+    h1 .ac { color: var(--accent); }
+    .lede {
+      max-width: 720px; color: var(--muted); font-size: 17px;
+    }
+    .section { padding: 56px 0; border-top: 1px solid var(--line); }
+    .section h2 {
+      font-size: 22px; font-weight: 600; margin: 0 0 4px;
+      letter-spacing: -0.02em;
+    }
+    .section p.sub { margin: 0 0 28px; color: var(--muted); font-size: 14px; }
+
+    /* Logo grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+      display: flex; flex-direction: column; align-items: stretch;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card .stage {
+      height: 130px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      background:
+        radial-gradient(ellipse at center, var(--accent-soft), transparent 70%),
+        var(--card-2);
+      border: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+    .card .stage svg { width: 64px; height: 64px; }
+    .card .meta { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .card .name { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+    .card .id   { font-family: var(--font-mono); color: var(--muted-2); font-size: 11px; }
+    .card .desc { color: var(--muted); font-size: 12.5px; margin-top: 4px; line-height: 1.45; }
+
+    /* Wordmarks */
+    .wordmarks {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    }
+    .wm {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 26px 24px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .wm .label {
+      font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.12em;
+    }
+    .wm .demo {
+      display: flex; align-items: center; gap: 12px;
+      min-height: 64px;
+    }
+    .wm .demo svg { flex: none; }
+    .wm-text {
+      font-family: var(--font-display);
+      font-weight: 800; font-size: 36px; letter-spacing: -0.04em;
+      color: var(--fg);
+    }
+    .wm-text .ac { color: var(--accent); }
+    .wm-text.thin { font-weight: 300; letter-spacing: 0.18em; }
+    .wm-text.mono { font-family: var(--font-mono); font-weight: 600; font-size: 28px; letter-spacing: 0.06em; }
+    .wm-text.serif { font-family: 'Space Grotesk', serif; font-weight: 700; font-size: 36px; letter-spacing: -0.02em; }
+    .wm-text.split .a { color: var(--muted); }
+    .wm-text.huge  { font-size: 56px; letter-spacing: -0.05em; }
+    .wm-text.dot   { letter-spacing: 0.32em; }
+
+    /* Palettes */
+    .palettes {
+      display: grid; gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+    .pal {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .pal h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+    .pal .tag { font-family: var(--font-mono); font-size: 10px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.12em; }
+    .pal .swatches { display: flex; gap: 8px; margin-top: 14px; }
+    .pal .sw {
+      flex: 1; height: 56px; border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.18);
+      position: relative; display: flex; align-items: flex-end;
+      padding: 6px; font-family: var(--font-mono); font-size: 9.5px;
+      color: rgba(255,255,255,0.7);
+    }
+    .pal .sw.lt { color: rgba(0,0,0,0.55); }
+    .pal .preview {
+      margin-top: 14px;
+      border-radius: 6px;
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      border: 1px solid var(--line);
+    }
+    .pal .preview svg { width: 28px; height: 28px; flex: none; }
+    .pal .preview .pmark {
+      font-family: var(--font-display);
+      font-weight: 800; font-size: 18px; letter-spacing: -0.03em;
+    }
+    .pal .preview .ptag {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 10px; opacity: 0.7;
+    }
+
+    /* Application mocks */
+    .apps { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 14px; }
+    @media (max-width: 880px) { .apps { grid-template-columns: 1fr; } }
+    .app {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .app .label {
+      font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 10px;
+    }
+    /* Browser tab mock */
+    .browser {
+      background: var(--card-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .browser .bar {
+      height: 28px; display: flex; align-items: center; gap: 4px;
+      padding: 0 10px; border-bottom: 1px solid var(--line);
+    }
+    .browser .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); }
+    .browser .tab {
+      margin-left: 12px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--card); padding: 4px 10px; border-radius: 6px 6px 0 0;
+      font-family: var(--font-mono); font-size: 11px; color: var(--fg-2);
+      border: 1px solid var(--line); border-bottom: 0;
+    }
+    .browser .tab svg { width: 12px; height: 12px; }
+    .browser .body {
+      padding: 22px; display: flex; align-items: center; gap: 14px;
+    }
+    .browser .body svg { width: 36px; height: 36px; }
+    .browser .body .name {
+      font-family: var(--font-display); font-weight: 800; letter-spacing: -0.03em; font-size: 22px;
+    }
+    .browser .body .path {
+      font-family: var(--font-mono); color: var(--muted); font-size: 12px;
+    }
+
+    /* App tile */
+    .tile {
+      width: 110px; height: 110px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #18181c 0%, #0a0a0c 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    [data-theme="light"] .tile {
+      background: linear-gradient(180deg, #ffffff, #f0f0f2);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.6);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .tile svg { width: 56px; height: 56px; }
+    .app .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+
+    /* Stripe */
+    .stripe {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+    @media (max-width: 720px) { .stripe { grid-template-columns: 1fr; } }
+    .stripe .panel {
+      border-radius: var(--radius);
+      padding: 36px;
+      border: 1px solid var(--line);
+      min-height: 200px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .stripe .dark  { background: #08080a; color: #fafafa; }
+    .stripe .light { background: #ffffff; color: #09090b; border-color: rgba(0,0,0,0.10); }
+    .stripe .lockup {
+      display: inline-flex; align-items: center; gap: 14px;
+    }
+    .stripe .lockup svg { width: 44px; height: 44px; }
+    .stripe .lockup .name {
+      font-family: var(--font-display); font-weight: 800; font-size: 30px;
+      letter-spacing: -0.04em;
+    }
+    .stripe .dark .lockup .name span { color: #ffffff; }
+    .stripe .light .lockup .name span { color: #09090b; }
+    .stripe .panel .meta {
+      font-family: var(--font-mono); font-size: 11px; opacity: 0.65;
+      margin-top: 14px;
+    }
+
+    .footer {
+      padding: 60px 0 80px;
+      color: var(--muted);
+      font-family: var(--font-mono); font-size: 11.5px;
+      border-top: 1px solid var(--line);
+    }
+
+    /* Companion to Gonka */
+    .featured h2 .star {
+      color: var(--accent);
+      margin-right: 6px;
+    }
+    .companion-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
+    }
+    .pair {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: border-color 160ms ease;
+    }
+    .pair:hover { border-color: var(--accent); }
+    .pair .stage {
+      display: flex; align-items: center; justify-content: center;
+      gap: 22px; min-height: 96px;
+      background:
+        radial-gradient(ellipse at center, var(--accent-soft), transparent 70%),
+        var(--card-2);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .pair .stage svg { width: 44px; height: 44px; color: var(--ink); flex: none; }
+    .pair .stage .grand-mark { color: var(--ink); }
+    .pair .stage .grand-mark .ac { color: var(--accent); }
+    .pair .stage .x {
+      color: var(--muted-2);
+      font-family: var(--font-mono);
+      font-size: 18px; line-height: 1;
+      opacity: 0.5;
+    }
+    .pair-tags {
+      display: flex; gap: 0;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted-2);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin: 0 0 14px;
+    }
+    .pair-tags span {
+      flex: 1; text-align: center;
+    }
+    .pair-tags span:first-child { text-align: left; }
+    .pair-tags span:last-child  { text-align: right; color: var(--muted); }
+    .pair .name { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+    .pair .desc { color: var(--muted); font-size: 12.5px; line-height: 1.45; margin-top: 4px; }
+
+    .featured-callout {
+      margin-top: 20px;
+      padding: 22px 24px;
+      border: 1px dashed var(--line-2);
+      border-radius: var(--radius);
+      background: var(--card-2);
+      display: flex; align-items: center; gap: 28px;
+      flex-wrap: wrap;
+    }
+    .featured-callout .pair-stage {
+      display: inline-flex; align-items: center; gap: 22px;
+    }
+    .featured-callout svg { width: 48px; height: 48px; flex: none; color: var(--ink); }
+    .featured-callout .grand-mark .ac { color: var(--accent); }
+    .featured-callout .x { color: var(--muted-2); font-family: var(--font-mono); }
+    .featured-callout .copy {
+      flex: 1; min-width: 240px;
+      color: var(--muted); font-size: 13px;
+    }
+    .featured-callout .copy b { color: var(--fg); }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-row">
+      <div class="brand-mini">
+        <svg viewBox="0 0 32 32" width="22" height="22" fill="none" aria-hidden="true">
+          <circle cx="16" cy="16" r="11" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M16 16 H22" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span><b>GRAND</b> · logo exploration</span>
+      </div>
+      <button class="toggle" id="themeBtn" aria-label="toggle theme">
+        <span id="themeName">dark</span>
+        <span class="pill"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- shared SVG symbols -->
+  <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+    <defs>
+      <symbol id="gonka-mark" viewBox="0 0 44 44">
+        <path fill="currentColor" d="M22.0779 0.000895182C22.2017 6.07859 22.4682 12.1564 22.8218 18.234C23.2874 26.2385 26.7009 34.2436 29.0827 42.2481C29.1354 42.4251 29.185 42.6029 29.2367 42.7799C26.9701 43.5691 24.5355 44 22 44C19.4649 44 17.0305 43.5698 14.7642 42.7808C14.816 42.6034 14.8663 42.4255 14.9191 42.2481C17.3009 34.2436 20.7144 26.2385 21.18 18.234C21.5336 12.1564 21.7992 6.07859 21.923 0.000895182C21.9487 0.000807303 21.9743 0 22 0C22.026 0 22.0519 0.000805247 22.0779 0.000895182Z"/>
+        <path fill="currentColor" d="M20.7262 21.2364C19.4639 28.1647 15.6505 35.0935 12.8718 42.0216C12.0526 41.6475 11.2603 41.2248 10.4987 40.7568C14.3095 34.2502 19.1923 27.7431 20.7262 21.2364Z"/>
+        <path fill="currentColor" d="M23.2747 21.2364C24.8085 27.7426 29.6898 34.2498 33.5004 40.7559C32.739 41.2237 31.9472 41.6467 31.1282 42.0208C28.3495 35.093 24.5369 28.1642 23.2747 21.2364Z"/>
+        <path fill="currentColor" d="M20.6062 0.0447591C20.5973 6.14511 20.5901 12.2455 20.5641 18.3459C20.5354 25.059 13.5075 31.7743 7.43628 38.4875C2.87637 34.4566 0 28.5647 0 22C0 10.3179 9.10536 0.763813 20.6062 0.0447591Z"/>
+        <path fill="currentColor" d="M23.3938 0.0447591C34.8946 0.763813 44 10.3179 44 22C44 28.5649 41.123 34.4565 36.5628 38.4875C30.4919 31.7747 23.4655 25.0585 23.4368 18.3459C23.4108 12.2455 23.4027 6.14511 23.3938 0.0447591Z"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <main class="container">
+
+    <section class="hero">
+      <div class="kicker">brand · v0.1 · monochrome study</div>
+      <h1>GRAND<span class="ac">.</span></h1>
+      <p class="lede">
+        Эскиз монохромной идентичности для системы при ребрендинге Mantis → GRAND.
+        Базовая идея: чёрный фон, серый «корпус» элементов, ярко-белые акценты в местах,
+        где сейчас живёт бирюзовый. Светлая тема — зеркало.
+        Ниже — отдельный блок «<a href="#" style="color:var(--accent);border-bottom:1px solid var(--accent)">Companion to Gonka</a>»,
+        где знак намеренно сделан в той же визуальной грамматике, что у gonka.ai, как горизонтальный «земляной» парный знак.
+      </p>
+    </section>
+
+    <!-- COMPANION TO GONKA (featured) -->
+    <section class="section featured">
+      <h2><span class="star">★</span>Companion to Gonka</h2>
+      <p class="sub">
+        <b>Gonka</b> по-русски — «гонка»: движение, вертикальная динамика, острое «семя», тянущееся вверх.
+        Тогда <b>GRAND</b> — «земля»/«основание» под этим движением: горизонтальная, тяжёлая, неподвижная база,
+        на которой эта гонка вообще происходит. Та же визуальная грамматика: <i>одна заливка, без обводок, плотные геометрические массы</i> —
+        но горизонтальная инверсия вертикального семени Gonka. Один акцентный штрих в варианте GRAND намекает на «там, где сейчас бирюзовый».
+      </p>
+
+      <div class="featured-callout">
+        <div class="pair-stage">
+          <svg><use href="#gonka-mark"/></svg>
+          <span class="x">×</span>
+          <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+            <rect x="0" y="30" width="44" height="10"/>
+            <rect x="3" y="22" width="38" height="5"/>
+            <rect x="20" y="6"  width="4"  height="13" class="ac"/>
+          </svg>
+        </div>
+        <div class="copy">
+          <b>Suggested pair.</b> Gonka — вертикальное движение вверх. GRAND — горизонтальные слои земли,
+          в которые уходит корнями это движение. Силуэты ведут себя как буквы одного алфавита.
+        </div>
+      </div>
+
+      <div class="companion-grid" style="margin-top:18px">
+
+        <!-- 01 BEDROCK: heavy ground + vertical pillar -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="30" width="44" height="10"/>
+              <rect x="3" y="22" width="38" height="5"/>
+              <rect x="20" y="6"  width="4"  height="13" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">01 · Bedrock</div>
+          <div class="desc">Слои земли + воткнутая вертикаль. Прямой парный знак: семя Gonka садится в почву GRAND.</div>
+        </div>
+
+        <!-- 02 INVERTED LEAF: gonka silhouette rotated 90° -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <g transform="rotate(90 22 22)">
+                <use href="#gonka-mark"/>
+              </g>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">02 · Lying Seed</div>
+          <div class="desc">Та же форма, повёрнутая на 90°. Buchstabenpaar: вертикаль ↔ горизонталь. Самый «родной» вариант пары.</div>
+        </div>
+
+        <!-- 03 STRATA: 3 horizontal layers -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="2"  y="14" width="40" height="3"/>
+              <rect x="2"  y="22" width="40" height="5"/>
+              <rect x="2"  y="32" width="40" height="8"/>
+              <rect x="20" y="4"  width="4"  height="6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">03 · Strata</div>
+          <div class="desc">Геологические слои: чем ниже — тем толще. Гравитация в чистом виде. Акцентный штрих сверху — горизонт/солнце.</div>
+        </div>
+
+        <!-- 04 MESA: solid trapezoid -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <path d="M2 40 L12 8 L32 8 L42 40 Z"/>
+              <rect x="20" y="0" width="4" height="6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">04 · Mesa</div>
+          <div class="desc">Плоскогорье/массив. Та же массивность, что у Gonka, но с плоской вершиной — «здесь стоят».</div>
+        </div>
+
+        <!-- 05 HORIZON LENS -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <ellipse cx="22" cy="26" rx="20" ry="6"/>
+              <rect x="0" y="36" width="44" height="3"/>
+              <circle cx="22" cy="14" r="3.4" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">05 · Horizon</div>
+          <div class="desc">Эллипс земли + линия горизонта + восходящая точка. Космический «вид сбоку», парный к Gonka.</div>
+        </div>
+
+        <!-- 06 ANVIL: heavy pedestal -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <path d="M4 40 L4 30 Q4 24 14 24 L14 14 L30 14 L30 24 Q40 24 40 30 L40 40 Z"/>
+              <rect x="20" y="4" width="4" height="8" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">06 · Anvil</div>
+          <div class="desc">Наковальня/постамент. Тяжёлая база с узкой шеей — буквально «то, на чём кует Gonka».</div>
+        </div>
+
+        <!-- 07 ROOTS -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="20" width="44" height="3"/>
+              <rect x="20" y="0" width="4" height="20" class="ac"/>
+              <path d="M22 23 Q14 32 6 42 L10 42 Q18 30 22 26 Z"/>
+              <path d="M22 23 Q30 32 38 42 L34 42 Q26 30 22 26 Z"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">07 · Roots</div>
+          <div class="desc">Ствол + горизонт + корни в землю. Метафора: Gonka растёт, GRAND держит её корни. Самая «литературная» пара.</div>
+        </div>
+
+        <!-- 08 EARTH SLICE -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <path d="M2 22 a20 20 0 0 1 40 0 Z"/>
+              <rect x="0" y="22" width="44" height="3"/>
+              <rect x="0" y="30" width="44" height="2" opacity="0.6"/>
+              <rect x="0" y="36" width="44" height="2" opacity="0.35"/>
+              <rect x="20" y="6" width="4" height="6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">08 · Dome</div>
+          <div class="desc">Полусфера земли + затухающие линии слоёв. «Купол» — стабильная защитная оболочка под движением Gonka.</div>
+        </div>
+
+        <!-- 09 COMPASS HORIZON -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="2" y="26" width="40" height="4"/>
+              <path d="M22 8 L30 26 L14 26 Z"/>
+              <rect x="20" y="34" width="4" height="6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">09 · Cardinal</div>
+          <div class="desc">Стрелка/треугольник стоит на горизонте. Намёк на «север/направление» без буквы «G».</div>
+        </div>
+
+        <!-- 10 BLOCK MONOLITH -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="6" y="6" width="32" height="32"/>
+              <rect x="20" y="12" width="4" height="12" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">10 · Block</div>
+          <div class="desc">Цельный квадратный массив с одной прорезью. Максимально лаконично, читается на 16×16.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ULTIMATE SYNTHESIS: the logo is the system -->
+    <section class="section featured">
+      <h2><span class="star">★★★</span>The logo <i>is</i> the system</h2>
+      <p class="sub" style="max-width:820px">
+        Самый сильный смысловой слой в самом конце: <b>лого должно быть самой системой и быть простым</b>.
+        Mantis/GRAND внутри — это <b>стратифицированная архитектура</b>:
+      </p>
+      <pre style="
+        background: var(--card-2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 16px 18px;
+        font-family: var(--font-mono); font-size: 12.5px;
+        color: var(--fg-2);
+        overflow-x: auto;
+        max-width: 820px;
+        line-height: 1.55;">[user / telegram] ─→ [LLM orchestrator] ─→ <b style="color:var(--accent)">[Guard layer]</b> ─→ [agent | agent | agent | … ] ─→ [SSH servers / earth]</pre>
+      <p class="sub" style="max-width:820px;margin-top:14px">
+        Это уже само по себе — <b>стратификация</b> («ground»), <b>несколько параллельных колонн</b> («grand» / античный портик),
+        и <b>одна горизонтальная Guard-линия</b>, которая отсекает «разговор» от «выполнения».
+        Брендовый акцент в Mantis сейчас — бирюзовый. Если в GRAND акцент станет белой полосой — то эта полоса <b>буквально</b> и есть Guard.
+        Лого ничего не иллюстрирует — оно <i>есть</i> схема системы. Простота тут не ограничение, а суть.
+      </p>
+
+      <!-- THE recommended pick -->
+      <div class="featured-callout" style="margin-top:18px">
+        <div class="pair-stage">
+          <svg><use href="#gonka-mark"/></svg>
+          <span class="x">×</span>
+          <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor" width="56" height="56">
+            <rect x="0" y="38" width="44" height="4"/>
+            <rect x="8"  y="14" width="5" height="24"/>
+            <rect x="19.5" y="14" width="5" height="24"/>
+            <rect x="31" y="14" width="5" height="24"/>
+            <rect x="0" y="22" width="44" height="3" class="ac"/>
+            <rect x="20" y="4" width="4" height="6"/>
+          </svg>
+        </div>
+        <div class="copy">
+          <b>Final pick · Guard Portico.</b>
+          Земля (стилобат) + три колонны (агенты) + горизонтальная белая линия (Guard) + точка-orchestrator над центральной колонной.
+          5 геометрических элементов. Читается на 16×16. И это <b>буквально</b> диаграмма архитектуры.
+          Рядом с Gonka — ровный диалог: их вертикальное «семя» × наш «храм с guard-линией».
+        </div>
+      </div>
+
+      <div class="companion-grid" style="margin-top:18px">
+
+        <!-- 01 GUARD PORTICO (recommended) -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <rect x="8"  y="14" width="5" height="24"/>
+              <rect x="19.5" y="14" width="5" height="24"/>
+              <rect x="31" y="14" width="5" height="24"/>
+              <rect x="0" y="22" width="44" height="3" class="ac"/>
+              <rect x="20" y="4" width="4" height="6"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">01 · Guard Portico <em style="color:var(--accent);font-style:normal">★ recommended</em></div>
+          <div class="desc">3 колонны = агенты. Белая полоса = Guard. Точка сверху = orchestrator. Стилобат снизу = ground/инфраструктура. Лого = архитектура.</div>
+        </div>
+
+        <!-- 02 4-PILLAR -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <rect x="4"  y="14" width="5" height="24"/>
+              <rect x="13" y="14" width="5" height="24"/>
+              <rect x="26" y="14" width="5" height="24"/>
+              <rect x="35" y="14" width="5" height="24"/>
+              <rect x="0" y="22" width="44" height="3" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">02 · Quad</div>
+          <div class="desc">Четыре колонны (base / browser / ffmpeg / python — реальный сэндбокс-пул). Симметрично, «четыре во дворце».</div>
+        </div>
+
+        <!-- 03 MINIMAL: single pillar + guard + ground -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <rect x="20" y="10" width="4" height="28"/>
+              <rect x="0" y="22" width="44" height="3" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">03 · Axis</div>
+          <div class="desc">Минимум: одна вертикаль + Guard + земля. 3 элемента. Самое читаемое в фавиконе. «Один путь, одна стена».</div>
+        </div>
+
+        <!-- 04 TRIDENT: trunk top, 3 prongs down -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <rect x="20" y="4" width="4" height="12"/>
+              <rect x="0" y="14" width="44" height="3" class="ac"/>
+              <rect x="8"  y="17" width="4" height="21"/>
+              <rect x="20" y="17" width="4" height="21"/>
+              <rect x="32" y="17" width="4" height="21"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">04 · Trident</div>
+          <div class="desc">Один ствол сверху → Guard → три ветви вниз. Прямая иллюстрация fan-out: orchestrator делится на агентов через Guard.</div>
+        </div>
+
+        <!-- 05 STRATA WITH GUARD -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="2" y="14" width="40" height="3"/>
+              <rect x="2" y="22" width="40" height="3" class="ac"/>
+              <rect x="2" y="30" width="40" height="3"/>
+              <rect x="0" y="38" width="44" height="4"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">05 · Strata</div>
+          <div class="desc">Чистая «слойка»: user / orchestrator / <b>guard (white)</b> / agents / earth. Без вертикалей. Самый «земляной» вариант.</div>
+        </div>
+
+        <!-- 06 GATE: ground + 2 pillars + lintel + guard -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <rect x="6" y="14" width="6" height="24"/>
+              <rect x="32" y="14" width="6" height="24"/>
+              <rect x="6" y="8" width="32" height="6"/>
+              <rect x="14" y="22" width="16" height="3" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">06 · Gate</div>
+          <div class="desc">Ворота с притолокой и Guard-чертой посередине. Вход в систему: «ничего не пройдёт мимо этой линии».</div>
+        </div>
+
+        <!-- 07 PYRAMID OF LAYERS -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <rect x="2" y="32" width="40" height="4"/>
+              <rect x="6" y="26" width="32" height="4" class="ac"/>
+              <rect x="11" y="20" width="22" height="4"/>
+              <rect x="16" y="14" width="12" height="4"/>
+              <rect x="20" y="8" width="4" height="4"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">07 · Pyramid Stack</div>
+          <div class="desc">Стэк: основание → серверы → guard (белая ступень) → агенты → orchestrator. Иерархия, читаемая как пирамида.</div>
+        </div>
+
+        <!-- 08 FUNNEL -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <path d="M2 6 L42 6 L26 22 L26 36 L18 36 L18 22 Z"/>
+              <rect x="2" y="20" width="40" height="3" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">08 · Funnel</div>
+          <div class="desc">Воронка: широкий вход (любой запрос) → узкое горлышко → один поток в систему. Guard режет посередине.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SYNTHESIS: Grand + Ground + Gonka grammar -->
+    <section class="section featured">
+      <h2><span class="star">★★</span>Synthesis · Grand + Ground</h2>
+      <p class="sub">
+        В слове <b>GRAND</b> сидят сразу два смысла: <b>«great»</b> (монумент, важность, триумф)
+        и <b>«ground»</b> (земля, основание, та плоскость, на которой всё это стоит). Если их сложить
+        с грамматикой Gonka, нужная форма — это любой объект, в котором эти три смысла уже исторически срослись:
+        <b>пирамида, обелиск на ступенчатом постаменте, триумфальная арка на стилобате, корона на земле, зиккурат</b>.
+        Всё это формы, которые одновременно тяжёлые и устремлённые вверх — поэтому ставят красивый диалог
+        с вертикальным «семенем» Gonka, не повторяя его.
+      </p>
+
+      <!-- featured top-2 picks -->
+      <div class="featured-callout">
+        <div class="pair-stage">
+          <svg><use href="#gonka-mark"/></svg>
+          <span class="x">×</span>
+          <!-- Obelisk (top pick #1) -->
+          <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor" width="48" height="48">
+            <rect x="8"  y="38" width="28" height="4"/>
+            <rect x="12" y="34" width="20" height="3"/>
+            <rect x="16" y="30" width="12" height="3"/>
+            <rect x="20" y="6"  width="4"  height="24"/>
+            <path d="M22 0 L18 6 L26 6 Z" class="ac"/>
+          </svg>
+          <span class="x">/</span>
+          <!-- Ziggurat (top pick #2) -->
+          <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor" width="48" height="48">
+            <rect x="2"  y="36" width="40" height="4"/>
+            <rect x="8"  y="28" width="28" height="4"/>
+            <rect x="14" y="20" width="16" height="4"/>
+            <rect x="20" y="12" width="4"  height="4" class="ac"/>
+          </svg>
+        </div>
+        <div class="copy">
+          <b>Top synthesis picks.</b> <i>Obelisk на ступенчатом постаменте</i> прямо рифмуется с вертикальным
+          семенем Gonka, но добавляет монументальную базу. <i>Зиккурат</i> читает «grand+ground» одной формой:
+          ступени = земля, силуэт = монумент. Оба работают на 16×16, оба остаются монохромом с одной белой деталью.
+        </div>
+      </div>
+
+      <div class="companion-grid" style="margin-top:18px">
+
+        <!-- 01 PYRAMID -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="40" width="44" height="2"/>
+              <path d="M22 4 L42 40 L2 40 Z"/>
+              <circle cx="22" cy="6" r="2.6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">01 · Pyramid</div>
+          <div class="desc">Самый универсальный знак «grand + ground» в человеческой истории. Точка-акцент на вершине — «to the top».</div>
+        </div>
+
+        <!-- 02 ZIGGURAT -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="2"  y="36" width="40" height="4"/>
+              <rect x="8"  y="28" width="28" height="4"/>
+              <rect x="14" y="20" width="16" height="4"/>
+              <rect x="20" y="12" width="4"  height="4" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">02 · Ziggurat <em style="color:var(--accent);font-style:normal">★</em></div>
+          <div class="desc">Ступенчатая пирамида. «Земля» прочитана буквально (слои), «grand» — силуэтом монумента. Один штрих наверху = пик.</div>
+        </div>
+
+        <!-- 03 OBELISK -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="8"  y="38" width="28" height="4"/>
+              <rect x="12" y="34" width="20" height="3"/>
+              <rect x="16" y="30" width="12" height="3"/>
+              <rect x="20" y="6"  width="4"  height="24"/>
+              <path d="M22 0 L18 6 L26 6 Z" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">03 · Obelisk <em style="color:var(--accent);font-style:normal">★</em></div>
+          <div class="desc">Игла на ступенчатом постаменте. Прямая визуальная рифма к Gonka: вертикаль остаётся, но «приземлена».</div>
+        </div>
+
+        <!-- 04 TRIUMPHAL ARCH -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 38 V18 Q4 4 22 4 Q40 4 40 18 V38 Z M12 38 V22 Q12 12 22 12 Q32 12 32 22 V38 Z"/>
+              <rect x="0" y="38" width="44" height="4"/>
+              <rect x="20" y="6" width="4" height="6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">04 · Arch</div>
+          <div class="desc">Триумфальная арка на стилобате. Прямой смысл слова «grand» (Arc de Triomphe, Гранд-арка). Замковый камень — акцент.</div>
+        </div>
+
+        <!-- 05 TEMPLE -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0"  y="38" width="44" height="4"/>
+              <rect x="6"  y="14" width="6"  height="22"/>
+              <rect x="32" y="14" width="6"  height="22"/>
+              <path d="M22 4 L42 14 L2 14 Z"/>
+              <rect x="20" y="22" width="4"  height="10" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">05 · Temple</div>
+          <div class="desc">Античный портик: фронтон + колонны + стилобат. Самая «grand» архитектура на Земле. Между колоннами — белая щель.</div>
+        </div>
+
+        <!-- 06 PANTHEON -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <path d="M2 22 a20 14 0 0 1 40 0 V38 H2 Z"/>
+              <rect x="12.5" y="28" width="3" height="10" fill="var(--card-2)"/>
+              <rect x="20.5" y="28" width="3" height="10" fill="var(--card-2)"/>
+              <rect x="28.5" y="28" width="3" height="10" fill="var(--card-2)"/>
+              <circle cx="22" cy="14" r="2.6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">06 · Pantheon</div>
+          <div class="desc">Купол на основании с тремя «колоннами». Окулус купола — единственный белый акцент. Очень «classical grand».</div>
+        </div>
+
+        <!-- 07 CROWN ON GROUND -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="36" width="44" height="4"/>
+              <path d="M2 36 L2 18 L11 28 L17 12 L22 22 L27 12 L33 28 L42 18 L42 36 Z"/>
+              <circle cx="22" cy="8" r="2.6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">07 · Crown</div>
+          <div class="desc">Корона на горизонте земли. Буквальная этимология слова «grand» — «королевский, величественный». Камень в центре светится.</div>
+        </div>
+
+        <!-- 08 STAR ON PEDESTAL -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <rect x="6" y="34" width="32" height="3"/>
+              <rect x="10" y="30" width="24" height="3"/>
+              <path d="M22 4 L25.5 14 L36 14 L27.5 20 L31 30 L22 24 L13 30 L16.5 20 L8 14 L18.5 14 Z" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">08 · Capitoline</div>
+          <div class="desc">Звезда на ступенчатом пьедестале. Heraldic-вариант: «grand seal» с важностью знака отличия.</div>
+        </div>
+
+        <!-- 09 BIG-G ON FOUNDATION -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <circle cx="20" cy="20" r="14"/>
+              <circle cx="20" cy="20" r="8" fill="var(--card-2)"/>
+              <rect x="20" y="14" width="16" height="12" fill="var(--card-2)"/>
+              <rect x="20" y="18" width="14" height="4"/>
+              <rect x="30" y="22" width="4" height="6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">09 · Capital G</div>
+          <div class="desc">Заглавная «G» как настоящая капитель — на стилобате. Если хочется явной литеры в знаке.</div>
+        </div>
+
+        <!-- 10 MOUNTAIN MASSIF -->
+        <div class="pair">
+          <div class="stage">
+            <svg><use href="#gonka-mark"/></svg>
+            <span class="x">×</span>
+            <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor">
+              <rect x="0" y="38" width="44" height="4"/>
+              <path d="M2 38 L14 18 L22 26 L30 14 L42 38 Z"/>
+              <circle cx="30" cy="10" r="2.6" class="ac"/>
+            </svg>
+          </div>
+          <div class="pair-tags"><span>gonka</span><span>×</span><span>grand</span></div>
+          <div class="name">10 · Massif</div>
+          <div class="desc">Два пика на земле. «Grand» в природной семантике (Grand Canyon, Grand Tetons). Звезда у вершины — север.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ICONS -->
+    <section class="section">
+      <h2>1 · Icon concepts</h2>
+      <p class="sub">14 направлений. У каждого глифа: серый «корпус» (<span style="font-family:var(--font-mono)">--ink</span>) и яркий акцент (<span style="font-family:var(--font-mono)">--accent</span>).</p>
+
+      <div class="grid">
+
+        <!-- 01 G-RING: classic open G ring with accent terminal -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="22" stroke="var(--ink)" stroke-width="3"/>
+              <path d="M32 32 H46" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
+              <path d="M46 32 V42" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Ring G</span><span class="id">01</span></div>
+          <div class="desc">Классическая «G» из окружности и засечки. Понятная, читается как буква на любом размере.</div>
+        </div>
+
+        <!-- 02 MONOLITH: tall slab with bright slit -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="var(--ink)" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="var(--accent)"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Monolith</span><span class="id">02</span></div>
+          <div class="desc">«2001: Космическая Одиссея». Тяжёлый, серьёзный, безусловно «grand». Слот — единственный акцент.</div>
+        </div>
+
+        <!-- 03 ARCH: roman arch with keystone -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <path d="M12 54 V32 a20 20 0 0 1 40 0 V54" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" fill="none"/>
+              <rect x="29" y="14" width="6" height="10" fill="var(--accent)"/>
+              <path d="M8 54 H56" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Arch</span><span class="id">03</span></div>
+          <div class="desc">Триумфальная арка с замковым камнем. Архитектурная отсылка к слову «grand».</div>
+        </div>
+
+        <!-- 04 PILLARS -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="14" y="14" width="6" height="36" stroke="var(--ink)" stroke-width="2.4"/>
+              <rect x="29" y="14" width="6" height="36" stroke="var(--ink)" stroke-width="2.4" fill="var(--accent)"/>
+              <rect x="44" y="14" width="6" height="36" stroke="var(--ink)" stroke-width="2.4"/>
+              <path d="M10 50 H54" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M10 14 H54" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Pillars</span><span class="id">04</span></div>
+          <div class="desc">Три колонны — устойчивость, классика. Один pillar выделен как «защищённый».</div>
+        </div>
+
+        <!-- 05 GATE: portal -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="10" y="14" width="44" height="40" rx="2" stroke="var(--ink)" stroke-width="2.6"/>
+              <path d="M22 54 V26 H42 V54" stroke="var(--ink)" stroke-width="2.4"/>
+              <circle cx="32" cy="38" r="2.4" fill="var(--accent)"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Gate</span><span class="id">05</span></div>
+          <div class="desc">Портал/ворота с сторожевым огоньком. Прямая метафора «security boundary».</div>
+        </div>
+
+        <!-- 06 BEACON: concentric arcs -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="6" fill="var(--accent)"/>
+              <circle cx="32" cy="32" r="13" stroke="var(--ink)" stroke-width="2"/>
+              <circle cx="32" cy="32" r="20" stroke="var(--ink)" stroke-width="2" stroke-opacity="0.7"/>
+              <circle cx="32" cy="32" r="27" stroke="var(--ink)" stroke-width="2" stroke-opacity="0.4"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Beacon</span><span class="id">06</span></div>
+          <div class="desc">Маяк/радар. Концентрические круги расходятся от яркого центра — «control plane».</div>
+        </div>
+
+        <!-- 07 HEX SEAL with G inside -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <path d="M32 6 L54 18 V42 L32 54 L10 42 V18 Z" stroke="var(--ink)" stroke-width="2.6"/>
+              <circle cx="32" cy="30" r="9" stroke="var(--accent)" stroke-width="2.6"/>
+              <path d="M32 30 H40" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Seal</span><span class="id">07</span></div>
+          <div class="desc">Гексагональная печать с буквой G. Корпоративный, «штамп одобрения».</div>
+        </div>
+
+        <!-- 08 COMPASS -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="22" stroke="var(--ink)" stroke-width="2.4"/>
+              <path d="M32 14 L36 32 L32 50 L28 32 Z" fill="var(--ink)"/>
+              <path d="M32 14 L36 32 L32 32 Z" fill="var(--accent)"/>
+              <circle cx="32" cy="32" r="2.4" fill="var(--accent)"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Compass</span><span class="id">08</span></div>
+          <div class="desc">Компас. Мета-смысл — «направление», «навигация», «север». Узнаваемо для агентного оркестратора.</div>
+        </div>
+
+        <!-- 09 GRID G (dotted) -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <!-- 5x5 dot G -->
+              <g fill="var(--ink)">
+                <!-- top row -->
+                <circle cx="20" cy="14" r="2"/><circle cx="28" cy="14" r="2"/><circle cx="36" cy="14" r="2"/><circle cx="44" cy="14" r="2"/>
+                <!-- left col -->
+                <circle cx="20" cy="22" r="2"/><circle cx="20" cy="30" r="2"/><circle cx="20" cy="38" r="2"/><circle cx="20" cy="46" r="2"/>
+                <!-- bottom row -->
+                <circle cx="28" cy="50" r="2"/><circle cx="36" cy="50" r="2"/><circle cx="44" cy="50" r="2"/>
+                <!-- middle stub -->
+                <circle cx="36" cy="34" r="2"/><circle cx="44" cy="34" r="2"/>
+              </g>
+              <circle cx="44" cy="42" r="2.4" fill="var(--accent)"/>
+              <circle cx="44" cy="50" r="2.4" fill="var(--accent)"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Pixel G</span><span class="id">09</span></div>
+          <div class="desc">Точечная сетка, собирающая «G». Технологичный, «node-grid» характер.</div>
+        </div>
+
+        <!-- 10 APEX: triangle peak -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <path d="M32 8 L56 52 H8 Z" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/>
+              <path d="M22 36 H42" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Apex</span><span class="id">10</span></div>
+          <div class="desc">Вершина горы. «Grand» как масштаб, «пик».</div>
+        </div>
+
+        <!-- 11 HALO: notched concentric rings -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="22" stroke="var(--ink)" stroke-width="2" stroke-dasharray="62 8"/>
+              <circle cx="32" cy="32" r="14" stroke="var(--ink)" stroke-width="2"/>
+              <path d="M32 18 V32 H46" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Halo</span><span class="id">11</span></div>
+          <div class="desc">Орбита с разрезом и стрелка часов внутри. Намёк на «boundary» и «runtime».</div>
+        </div>
+
+        <!-- 12 VAULT: combination dial -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="22" stroke="var(--ink)" stroke-width="2.4"/>
+              <g stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round">
+                <line x1="32" y1="10" x2="32" y2="14"/>
+                <line x1="32" y1="50" x2="32" y2="54"/>
+                <line x1="10" y1="32" x2="14" y2="32"/>
+                <line x1="50" y1="32" x2="54" y2="32"/>
+                <line x1="46" y1="18" x2="48.8" y2="15.2"/>
+                <line x1="18" y1="46" x2="15.2" y2="48.8"/>
+                <line x1="18" y1="18" x2="15.2" y2="15.2"/>
+                <line x1="46" y1="46" x2="48.8" y2="48.8"/>
+              </g>
+              <circle cx="32" cy="32" r="3" fill="var(--accent)"/>
+              <path d="M32 32 L44 22" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Vault</span><span class="id">12</span></div>
+          <div class="desc">Диск кодового замка. Прямая метафора защищённого периметра.</div>
+        </div>
+
+        <!-- 13 SENTINEL: tower silhouette -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <path d="M22 54 V20 L32 12 L42 20 V54 Z" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/>
+              <rect x="30" y="26" width="4" height="6" fill="var(--ink)" fill-opacity="0.6"/>
+              <rect x="30" y="38" width="4" height="6" fill="var(--ink)" fill-opacity="0.6"/>
+              <circle cx="32" cy="14" r="2.4" fill="var(--accent)"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Sentinel</span><span class="id">13</span></div>
+          <div class="desc">Сторожевая башня/цитадель. «Защитник, который смотрит сверху».</div>
+        </div>
+
+        <!-- 14 CHEVRON G -->
+        <div class="card">
+          <div class="stage">
+            <svg viewBox="0 0 64 64" fill="none">
+              <path d="M14 16 L32 32 L14 48" stroke="var(--ink)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M30 16 L48 32 L30 48" stroke="var(--ink)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.5"/>
+              <circle cx="50" cy="32" r="3.2" fill="var(--accent)"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Chevron</span><span class="id">14</span></div>
+          <div class="desc">Геометрический «правее, дальше». Подходит CLI/devtool-эстетике.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- WORDMARKS -->
+    <section class="section">
+      <h2>2 · Wordmarks</h2>
+      <p class="sub">5 типографических трактовок названия. Все дружат с акцентом.</p>
+
+      <div class="wordmarks">
+        <div class="wm">
+          <div class="label">A · heavy display</div>
+          <div class="demo">
+            <span class="wm-text huge">GRAND<span class="ac">.</span></span>
+          </div>
+          <div class="label" style="opacity:.6">Geist 800 · -0.05em</div>
+        </div>
+
+        <div class="wm">
+          <div class="label">B · thin caps</div>
+          <div class="demo">
+            <span class="wm-text thin">G&nbsp;R&nbsp;A&nbsp;N&nbsp;D</span>
+          </div>
+          <div class="label" style="opacity:.6">Geist 300 · letter-spacing 0.18em</div>
+        </div>
+
+        <div class="wm">
+          <div class="label">C · monospace tag</div>
+          <div class="demo">
+            <span class="wm-text mono">[ GRAND ]</span>
+          </div>
+          <div class="label" style="opacity:.6">Geist Mono 600 · CLI-friendly</div>
+        </div>
+
+        <div class="wm">
+          <div class="label">D · split emphasis</div>
+          <div class="demo">
+            <span class="wm-text split"><span class="ac">G</span><span class="a">RAND</span></span>
+          </div>
+          <div class="label" style="opacity:.6">Большая «G» как монограмма + остаток приглушён</div>
+        </div>
+
+        <div class="wm">
+          <div class="label">E · dotted</div>
+          <div class="demo">
+            <span class="wm-text dot">G·R·A·N·D</span>
+          </div>
+          <div class="label" style="opacity:.6">Mock «brand seal» / печать</div>
+        </div>
+
+        <div class="wm">
+          <div class="label">F · lockup with mark</div>
+          <div class="demo">
+            <svg viewBox="0 0 64 64" width="56" height="56" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="var(--ink)" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="var(--accent)"/>
+            </svg>
+            <span class="wm-text">GRAND</span>
+          </div>
+          <div class="label" style="opacity:.6">Mark + wordmark · базовый horizontal lockup</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLOR PALETTES -->
+    <section class="section">
+      <h2>3 · Color palettes</h2>
+      <p class="sub">Восемь палитр. №1 — рекомендуемая, чистая монохромная.</p>
+
+      <div class="palettes">
+
+        <!-- 01 PURE MONO (recommended) -->
+        <div class="pal" style="--p1:#08080a; --p2:#27272a; --p3:#a1a1aa; --p4:#ffffff;">
+          <div class="tag">recommended</div>
+          <h3>01 · Pure Mono</h3>
+          <div style="color:var(--muted);font-size:12.5px;margin-top:4px">Чёрный → серый → белый. Акцент = чистый <code style="font-family:var(--font-mono)">#fff</code>.</div>
+          <div class="swatches">
+            <div class="sw" style="background:#08080a">#08080a</div>
+            <div class="sw" style="background:#27272a">#27272a</div>
+            <div class="sw" style="background:#a1a1aa">#a1a1aa</div>
+            <div class="sw lt" style="background:#ffffff">#ffffff</div>
+          </div>
+          <div class="preview" style="background:#08080a;color:#fafafa">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#a1a1aa" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#ffffff"/>
+            </svg>
+            <span class="pmark">GRAND</span>
+            <span class="ptag">// runtime</span>
+          </div>
+        </div>
+
+        <!-- 02 INVERTED MONO -->
+        <div class="pal">
+          <div class="tag">light counterpart</div>
+          <h3>02 · Inverted Mono</h3>
+          <div style="color:var(--muted);font-size:12.5px;margin-top:4px">Зеркало. Светлый фон, акцент = чистый чёрный.</div>
+          <div class="swatches">
+            <div class="sw lt" style="background:#fafafa">#fafafa</div>
+            <div class="sw lt" style="background:#e4e4e7">#e4e4e7</div>
+            <div class="sw" style="background:#52525b">#52525b</div>
+            <div class="sw" style="background:#09090b">#09090b</div>
+          </div>
+          <div class="preview" style="background:#ffffff;color:#09090b;border-color:rgba(0,0,0,0.10)">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#52525b" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#09090b"/>
+            </svg>
+            <span class="pmark">GRAND</span>
+            <span class="ptag">// runtime</span>
+          </div>
+        </div>
+
+        <!-- 03 ICE BLUE accent (subtle warmer than current teal) -->
+        <div class="pal">
+          <div class="tag">cool · subtle hint</div>
+          <h3>03 · Ice</h3>
+          <div style="color:var(--muted);font-size:12.5px;margin-top:4px">Почти-белый акцент с холодным голубоватым подтоном. Ощущение «steel».</div>
+          <div class="swatches">
+            <div class="sw" style="background:#08080a">#08080a</div>
+            <div class="sw" style="background:#1f2937">#1f2937</div>
+            <div class="sw" style="background:#94a3b8">#94a3b8</div>
+            <div class="sw lt" style="background:#e0f2fe">#e0f2fe</div>
+          </div>
+          <div class="preview" style="background:#08080a;color:#fafafa">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#94a3b8" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#e0f2fe"/>
+            </svg>
+            <span class="pmark" style="color:#fafafa">GRAND</span>
+            <span class="ptag">// cool</span>
+          </div>
+        </div>
+
+        <!-- 04 GOLD/AMBER -->
+        <div class="pal">
+          <div class="tag">heritage · luxury</div>
+          <h3>04 · Sovereign</h3>
+          <div style="color:var(--muted);font-size:12.5px;margin-top:4px">Глубокий чёрный + серый + амбра. «Дорого, тяжело, важно».</div>
+          <div class="swatches">
+            <div class="sw" style="background:#0a0908">#0a0908</div>
+            <div class="sw" style="background:#3a342b">#3a342b</div>
+            <div class="sw" style="background:#a89673">#a89673</div>
+            <div class="sw" style="background:#f5b041">#f5b041</div>
+          </div>
+          <div class="preview" style="background:#0a0908;color:#fafafa">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#a89673" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#f5b041"/>
+            </svg>
+            <span class="pmark" style="color:#fafafa">GRAND</span>
+            <span class="ptag" style="color:#a89673">// sovereign</span>
+          </div>
+        </div>
+
+        <!-- 05 CRIMSON (security/danger) -->
+        <div class="pal">
+          <div class="tag">security · alert</div>
+          <h3>05 · Crimson</h3>
+          <div style="color:var(--muted);font-size:12.5px;margin-top:4px">Чёрный + графит + кровавый акцент. Подчёркивает «security boundary».</div>
+          <div class="swatches">
+            <div class="sw" style="background:#08080a">#08080a</div>
+            <div class="sw" style="background:#262626">#262626</div>
+            <div class="sw" style="background:#a3a3a3">#a3a3a3</div>
+            <div class="sw" style="background:#dc2626">#dc2626</div>
+          </div>
+          <div class="preview" style="background:#08080a;color:#fafafa">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#a3a3a3" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#dc2626"/>
+            </svg>
+            <span class="pmark" style="color:#fafafa">GRAND</span>
+            <span class="ptag" style="color:#dc2626">// alert</span>
+          </div>
+        </div>
+
+        <!-- 06 EMERALD -->
+        <div class="pal">
+          <div class="tag">tech · runtime</div>
+          <h3>06 · Verdant</h3>
+          <div style="color:var(--muted);font-size:12.5px;margin-top:4px">Чёрный + холодный зелёный акцент. Прохладнее текущего бирюзового, более «терминальный».</div>
+          <div class="swatches">
+            <div class="sw" style="background:#08080a">#08080a</div>
+            <div class="sw" style="background:#1f2937">#1f2937</div>
+            <div class="sw" style="background:#94a3b8">#94a3b8</div>
+            <div class="sw" style="background:#34d399">#34d399</div>
+          </div>
+          <div class="preview" style="background:#08080a;color:#fafafa">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#94a3b8" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#34d399"/>
+            </svg>
+            <span class="pmark" style="color:#fafafa">GRAND</span>
+            <span class="ptag" style="color:#34d399">// ok</span>
+          </div>
+        </div>
+
+        <!-- 07 VIOLET -->
+        <div class="pal">
+          <div class="tag">modern saas</div>
+          <h3>07 · Aurora</h3>
+          <div style="color:var(--muted);font-size:12.5px;margin-top:4px">Графит + ультрафиолет. Современный, чуть более «фронтенд-стартап».</div>
+          <div class="swatches">
+            <div class="sw" style="background:#0a0a0e">#0a0a0e</div>
+            <div class="sw" style="background:#27272a">#27272a</div>
+            <div class="sw" style="background:#a1a1aa">#a1a1aa</div>
+            <div class="sw" style="background:#a78bfa">#a78bfa</div>
+          </div>
+          <div class="preview" style="background:#0a0a0e;color:#fafafa">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#a1a1aa" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#a78bfa"/>
+            </svg>
+            <span class="pmark" style="color:#fafafa">GRAND</span>
+            <span class="ptag" style="color:#a78bfa">// aurora</span>
+          </div>
+        </div>
+
+        <!-- 08 PAPER & INK -->
+        <div class="pal">
+          <div class="tag">editorial · light</div>
+          <h3>08 · Paper</h3>
+          <div style="color:var(--muted);font-size:12.5px;margin-top:4px">Кремовая бумага + чернила. Светлая «editorial» альтернатива №2 — для документации.</div>
+          <div class="swatches">
+            <div class="sw lt" style="background:#f9f7f1">#f9f7f1</div>
+            <div class="sw lt" style="background:#e6e1d3">#e6e1d3</div>
+            <div class="sw" style="background:#5b5444">#5b5444</div>
+            <div class="sw" style="background:#0c0c0c">#0c0c0c</div>
+          </div>
+          <div class="preview" style="background:#f9f7f1;color:#0c0c0c;border-color:rgba(0,0,0,0.10)">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#5b5444" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#0c0c0c"/>
+            </svg>
+            <span class="pmark">GRAND</span>
+            <span class="ptag">// paper</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- DARK / LIGHT STRIPE -->
+    <section class="section">
+      <h2>4 · Dark / Light split</h2>
+      <p class="sub">Один и тот же знак ведёт себя зеркально в обеих темах.</p>
+
+      <div class="stripe">
+        <div class="panel dark">
+          <div class="lockup">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#a1a1aa" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#ffffff"/>
+            </svg>
+            <span class="name"><span>GRAND</span></span>
+          </div>
+          <div class="meta">// dark · accent = pure white #ffffff on neutral grey body</div>
+        </div>
+        <div class="panel light">
+          <div class="lockup">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="#52525b" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="#09090b"/>
+            </svg>
+            <span class="name"><span>GRAND</span></span>
+          </div>
+          <div class="meta">// light · accent = pure black #09090b on neutral grey body</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- APP MOCKS -->
+    <section class="section">
+      <h2>5 · In context</h2>
+      <p class="sub">Как Monolith-знак (#02) живёт в браузере, плитке приложения и фавиконе.</p>
+
+      <div class="apps">
+        <div class="app">
+          <div class="label">browser tab + header</div>
+          <div class="browser">
+            <div class="bar">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              <span class="tab">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <rect x="22" y="8" width="20" height="48" rx="2" stroke="currentColor" stroke-width="3"/>
+                  <rect x="30" y="14" width="4" height="14" fill="var(--accent)"/>
+                </svg>
+                grand · runtime
+              </span>
+            </div>
+            <div class="body">
+              <svg viewBox="0 0 64 64" fill="none">
+                <rect x="22" y="8" width="20" height="48" rx="2" stroke="var(--ink)" stroke-width="2.6"/>
+                <rect x="30" y="14" width="4" height="14" fill="var(--accent)"/>
+              </svg>
+              <div>
+                <div class="name">GRAND</div>
+                <div class="path">runtime.grand.dev / dashboard</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="app">
+          <div class="label">app tile</div>
+          <div class="row">
+            <div class="tile">
+              <svg viewBox="0 0 64 64" fill="none">
+                <rect x="22" y="8" width="20" height="48" rx="2" stroke="var(--ink)" stroke-width="2.6"/>
+                <rect x="30" y="14" width="4" height="14" fill="var(--accent)"/>
+              </svg>
+            </div>
+            <div class="tile">
+              <svg viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="22" stroke="var(--ink)" stroke-width="3"/>
+                <path d="M32 32 H46" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
+                <path d="M46 32 V42" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="app">
+          <div class="label">favicon · 16/32/64</div>
+          <div class="row" style="gap:18px">
+            <svg viewBox="0 0 64 64" width="16" height="16" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="var(--ink)" stroke-width="4"/>
+              <rect x="30" y="14" width="4" height="14" fill="var(--accent)"/>
+            </svg>
+            <svg viewBox="0 0 64 64" width="32" height="32" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="var(--ink)" stroke-width="3"/>
+              <rect x="30" y="14" width="4" height="14" fill="var(--accent)"/>
+            </svg>
+            <svg viewBox="0 0 64 64" width="64" height="64" fill="none">
+              <rect x="22" y="8" width="20" height="48" rx="2" stroke="var(--ink)" stroke-width="2.6"/>
+              <rect x="30" y="14" width="4" height="14" fill="var(--accent)"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>6 · Final pick</h2>
+      <p class="sub" style="max-width:820px">
+        Все четыре слоя складываются в один знак: <b>имя</b> (great + ground), <b>грамматика</b> (язык gonka.ai),
+        <b>палитра</b> (монохром + один белый акцент) и — самое главное — <b>сама архитектура продукта</b>
+        (стратификация: orchestrator → guard → agents → earth). Победитель один:
+      </p>
+
+      <div class="featured-callout" style="margin-top:6px">
+        <div class="pair-stage">
+          <svg viewBox="0 0 44 44" class="grand-mark" fill="currentColor" width="72" height="72" style="color:var(--ink)">
+            <rect x="0" y="38" width="44" height="4"/>
+            <rect x="8"  y="14" width="5" height="24"/>
+            <rect x="19.5" y="14" width="5" height="24"/>
+            <rect x="31" y="14" width="5" height="24"/>
+            <rect x="0" y="22" width="44" height="3" class="ac"/>
+            <rect x="20" y="4" width="4" height="6"/>
+          </svg>
+          <span class="wm-text" style="font-family:var(--font-display);font-weight:800;font-size:42px;letter-spacing:-0.04em">GRAND</span>
+        </div>
+        <div class="copy">
+          <b>Guard Portico</b> · 5 элементов: <i>стилобат</i> (земля/инфра) + <i>3 колонны</i> (агенты-сэндбоксы)
+          + <i>белая горизонталь</i> (Guard-слой = брендовый акцент) + <i>точка</i> (orchestrator).
+          Знак буквально иллюстрирует архитектуру и при этом монументален как античный портик.
+        </div>
+      </div>
+
+      <ul style="color:var(--muted);max-width:820px;line-height:1.7;margin-top:18px">
+        <li>Знак — <b>★★★ System Synthesis · 01 Guard Portico</b>. Резервная упрощённая версия для 16×16 — <b>03 Axis</b> (1 колонна + Guard + земля).</li>
+        <li>Палитра — <b>01 Pure Mono</b> (чёрный → серый → чистый <code style="font-family:var(--font-mono)">#fff</code>). Светлая тема — зеркало (<b>02 Inverted Mono</b>).</li>
+        <li>Wordmark — <b>A · heavy display</b> (Geist 800). Lockup горизонтальный: знак слева, GRAND справа.</li>
+        <li>Pair-context — рядом с Gonka знак работает как «храм с guard-линией» против их «вертикального семени». Один движется, другой держит.</li>
+      </ul>
+
+      <p class="sub" style="margin-top:14px;max-width:820px">
+        Главное: бренд-акцент перестаёт быть «просто цветом». Белая полоса = <b>Guard</b>, физический слой продукта.
+        Когда мы рисуем GRAND — мы рисуем то, что делаем.
+      </p>
+    </section>
+
+    <footer class="footer">
+      <div class="container">// docs/grand_logos.html · static study · no build needed</div>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('themeBtn');
+      var name = document.getElementById('themeName');
+      var html = document.documentElement;
+      var saved = localStorage.getItem('grand-theme');
+      if (saved === 'light') { html.setAttribute('data-theme', 'light'); name.textContent = 'light'; }
+      btn.addEventListener('click', function () {
+        var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        name.textContent = next;
+        localStorage.setItem('grand-theme', next);
+      });
+    })();
+  </script>
+</body>
+</html>

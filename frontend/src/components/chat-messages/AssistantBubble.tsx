@@ -72,7 +72,7 @@ export function AssistantBubble({ msg, onStepClick, canRegenerate, onRegenerate,
 
   return (
     <div className="flex justify-start">
-      <div className="max-w-[80%] rounded-md text-[14.5px] bg-zinc-50/80 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-800/60 border-l-2 border-l-zinc-300 dark:border-l-zinc-700 overflow-hidden px-4 py-2.5 space-y-2 leading-relaxed">
+      <div className="bubble bubble-assistant max-w-[80%] text-[15px] overflow-hidden px-5 py-3 space-y-2.5 leading-relaxed">
         {showHeader && (
           <Header
             presetName={msg.presetName}
@@ -107,17 +107,17 @@ export function AssistantBubble({ msg, onStepClick, canRegenerate, onRegenerate,
           </div>
         )}
         {otherFiles.length > 0 && (
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {otherFiles.map(a => (
               <a
                 key={a.id}
                 href={`/api/artifacts/${msg.sessionId}/${a.id}`}
                 download={a.fileName}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                className="flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--grand-border)] text-[13px] bg-[var(--grand-bg)] text-[var(--grand-fg-2)] hover:border-emerald-400/60 hover:text-emerald-400 transition-colors"
               >
-                <Download size={11} />
+                <Download size={13} />
                 <span className="truncate">{a.fileName}</span>
-                <span className="text-[10px] text-zinc-500 shrink-0">{formatBytes(a.size)}</span>
+                <span className="text-[11px] text-[var(--grand-muted)] shrink-0">{formatBytes(a.size)}</span>
               </a>
             ))}
           </div>
@@ -126,15 +126,15 @@ export function AssistantBubble({ msg, onStepClick, canRegenerate, onRegenerate,
         {showTyping && <PendingIndicator mode="typing" />}
         {isCancelled && (
           <div>
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[10px] lowercase rounded-sm bg-zinc-200/70 dark:bg-zinc-800/70 text-zinc-500 dark:text-zinc-500">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.10em] rounded bg-[var(--grand-surface-2)] text-[var(--grand-muted)]">
               <Square size={9} className="fill-current" />
               stopped
             </span>
           </div>
         )}
         {showEmpty && (
-          <div className="font-mono text-[11px] lowercase text-zinc-500 dark:text-zinc-600">
-            — no response —
+          <div className="text-[13px] text-[var(--grand-muted)]">
+            No response
           </div>
         )}
         {!isPending && (
@@ -172,28 +172,27 @@ function Header({
   hasMeasuredTokens,
 }: HeaderProps) {
   return (
-    <div className="flex items-center gap-x-2 gap-y-1 flex-wrap font-mono text-[10px] lowercase tracking-tight text-zinc-500 dark:text-zinc-500">
-      {presetName && <span className="text-zinc-600 dark:text-zinc-400">{presetName.toLowerCase()}</span>}
+    <div className="flex items-center gap-x-2 gap-y-1 flex-wrap font-mono text-[11px] tabular-nums text-[var(--grand-muted-2)]">
+      {presetName && <span className="text-[var(--grand-muted)]">{presetName}</span>}
       {modelName && (
         <>
-          {presetName && <span className="text-zinc-300 dark:text-zinc-700">/</span>}
-          <span className="text-zinc-600 dark:text-zinc-400">{modelName.toLowerCase()}</span>
+          {presetName && <span className="opacity-50">·</span>}
+          <span className="text-[var(--grand-muted)]">{modelName}</span>
         </>
       )}
       {modelRole === 'fallback' && (
-        <span className="px-1 py-px rounded-sm bg-amber-500/15 text-amber-600 dark:text-amber-400">fallback</span>
+        <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">fallback</span>
       )}
       {showMsgDuration && (
         <>
-          <span className="text-zinc-300 dark:text-zinc-700">·</span>
-          <span className="tabular-nums">{fmtElapsed(msgElapsed)}</span>
+          <span className="opacity-50">·</span>
+          <span>{fmtElapsed(msgElapsed)}</span>
         </>
       )}
       {showTokens && (
         <>
-          <span className="text-zinc-300 dark:text-zinc-700">·</span>
+          <span className="opacity-50">·</span>
           <span
-            className="tabular-nums"
             title={hasMeasuredTokens ? 'Model-reported tokens in this message' : 'Estimated tokens in visible response text'}
           >
             {hasMeasuredTokens ? fmtTokens(estimatedTokens) : `~${fmtTokens(estimatedTokens)}`} tok
@@ -223,10 +222,10 @@ function Footer({ content, canRegenerate, onRegenerate, regenerating }: FooterPr
         <button
           onClick={onRegenerate}
           disabled={regenerating}
-          className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium rounded-md text-zinc-500 dark:text-zinc-500 hover:text-teal-500 dark:hover:text-teal-400 hover:bg-teal-500/5 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-1.5 px-2 py-1 text-[12px] font-medium rounded-md text-[var(--grand-muted)] hover:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50 transition-colors"
           title="Regenerate response"
         >
-          {regenerating ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+          {regenerating ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
           Regenerate
         </button>
       )}

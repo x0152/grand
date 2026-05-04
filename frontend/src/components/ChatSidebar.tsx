@@ -100,19 +100,19 @@ export default function ChatSidebar({ activeSessionId, onSelect, onNew, refreshK
         key={session.id}
         onClick={() => { if (editingId !== session.id) onSelect(session) }}
         data-active={active}
-        className={`group relative flex items-center gap-2 pl-3.5 pr-2 py-1.5 cursor-pointer text-[13px] min-w-0 border-l ${
+        className={`group relative flex items-center gap-2.5 px-4 py-2 cursor-pointer text-[14px] min-w-0 transition-colors ${
           active
-            ? 'border-l-teal-500 text-zinc-900 dark:text-zinc-50'
-            : 'border-l-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+            ? 'bg-[var(--grand-surface-2)] text-[var(--grand-fg)]'
+            : 'text-[var(--grand-muted)] hover:text-[var(--grand-fg)] hover:bg-[var(--grand-surface-2)]/50'
         }`}
       >
         {session.active
-          ? <Loader2 size={12} className="shrink-0 text-teal-500 animate-spin" />
-          : <Icon size={12} className={`shrink-0 opacity-80 ${isPlan ? 'text-amber-500/70' : ''}`} strokeWidth={1.5} />
+          ? <Loader2 size={14} className="shrink-0 text-emerald-400 animate-spin" />
+          : <Icon size={14} className={`shrink-0 ${isPlan ? 'text-amber-500/70' : 'opacity-70'}`} strokeWidth={1.5} />
         }
 
         {editingId === session.id ? (
-          <div className="flex items-center gap-1 flex-1 min-w-0" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center gap-1.5 flex-1 min-w-0" onClick={e => e.stopPropagation()}>
             <input
               ref={editRef}
               value={editTitle}
@@ -121,21 +121,21 @@ export default function ChatSidebar({ activeSessionId, onSelect, onNew, refreshK
                 if (e.key === 'Enter') confirmRename(session.id)
                 if (e.key === 'Escape') cancelRename()
               }}
-              className="flex-1 min-w-0 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded px-1.5 py-0.5 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-teal-500/50"
+              className="flex-1 min-w-0 bg-[var(--grand-surface)] rounded px-2 py-1 text-[13px] text-[var(--grand-fg)] outline-none focus:ring-2 focus:ring-emerald-400/40"
             />
-            <button onClick={() => confirmRename(session.id)} className="text-teal-400 hover:text-teal-300"><Check size={12} /></button>
-            <button onClick={cancelRename} className="text-zinc-500 hover:text-zinc-300"><X size={12} /></button>
+            <button onClick={() => confirmRename(session.id)} className="text-emerald-400 hover:text-emerald-300"><Check size={14} /></button>
+            <button onClick={cancelRename} className="text-[var(--grand-muted)] hover:text-[var(--grand-fg)]"><X size={14} /></button>
           </div>
         ) : (
           <>
             <div className="flex-1 min-w-0">
               <div className={`truncate ${active ? 'font-medium' : ''}`}>{displayTitle(session)}</div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="font-mono text-[10px] tabular-nums text-zinc-400 dark:text-zinc-600">{formatDate(session.createdAt).toLowerCase()}</span>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="font-mono text-[10.5px] tabular-nums text-[var(--grand-muted-2)]">{formatDate(session.createdAt).toLowerCase()}</span>
                 {isPlan && planIdFromSession(session) && (
                   <button
                     onClick={e => { e.stopPropagation(); navigate({ page: 'plans', planId: planIdFromSession(session)! }) }}
-                    className="font-mono text-[10px] text-amber-500/70 hover:text-amber-400 hover:underline"
+                    className="font-mono text-[10.5px] text-amber-500/70 hover:text-amber-400"
                   >
                     plan
                   </button>
@@ -146,16 +146,16 @@ export default function ChatSidebar({ activeSessionId, onSelect, onNew, refreshK
               {!isPlan && (
                 <button
                   onClick={e => startRename(e, session)}
-                  className="p-1 text-zinc-500 dark:text-zinc-600 hover:text-zinc-700 dark:hover:text-zinc-300 rounded"
+                  className="p-1.5 text-[var(--grand-muted)] hover:text-[var(--grand-fg)] rounded"
                 >
-                  <Pencil size={11} />
+                  <Pencil size={13} />
                 </button>
               )}
               <button
                 onClick={e => { e.stopPropagation(); setDeleteTarget(session.id) }}
-                className="p-1 text-zinc-500 dark:text-zinc-600 hover:text-red-400 rounded"
+                className="p-1.5 text-[var(--grand-muted)] hover:text-rose-500 rounded"
               >
-                <Trash2 size={11} />
+                <Trash2 size={13} />
               </button>
             </div>
           </>
@@ -168,33 +168,31 @@ export default function ChatSidebar({ activeSessionId, onSelect, onNew, refreshK
     <div className="flex flex-col h-full">
       <button
         onClick={onNew}
-        className="mx-2 mt-1 mb-1.5 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-[5px] border border-dashed border-zinc-300 dark:border-zinc-700 text-[11.5px] font-mono lowercase text-zinc-500 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 hover:border-teal-500/60 transition-colors"
+        className="mx-3 mt-2 mb-2 flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border border-[var(--grand-border)] bg-[var(--grand-surface)] text-[13px] font-medium text-[var(--grand-fg)] hover:border-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors"
       >
-        <Plus size={12} strokeWidth={1.6} />
-        new chat
+        <Plus size={14} strokeWidth={2} />
+        New chat
       </button>
 
-      <div className="flex-1 overflow-auto py-0.5">
+      <div className="flex-1 overflow-auto pb-2">
         <div>
           {regularSessions.map(s => renderSession(s))}
         </div>
 
         {regularSessions.length === 0 && planSessions.length === 0 && (
-          <div className="text-center font-mono lowercase text-zinc-500 dark:text-zinc-600 text-[11px] py-6">
-            — no chats yet —
+          <div className="text-center text-[13px] text-[var(--grand-muted-2)] py-8">
+            No chats yet
           </div>
         )}
 
         {planSessions.length > 0 && (
-          <div className="mt-2">
+          <div className="mt-3">
             <button
               onClick={() => setPlanCollapsed(v => !v)}
-              className="kicker px-3.5 pt-2 pb-1 w-full text-left hover:text-zinc-700 dark:hover:text-zinc-400 transition-colors"
+              className="kicker px-4 pt-3 pb-1.5 w-full text-left hover:text-[var(--grand-fg-2)] transition-colors"
             >
-              {planCollapsed ? <ChevronRight size={9} /> : <ChevronDown size={9} />}
-              <span className="kicker-num">{String(planSessions.length).padStart(2, '0')}</span>
-              <span className="kicker-sep">/</span>
-              <span>plans</span>
+              {planCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
+              <span>plans · {planSessions.length}</span>
             </button>
             {!planCollapsed && (
               <div>

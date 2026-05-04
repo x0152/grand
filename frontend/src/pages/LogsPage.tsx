@@ -29,63 +29,63 @@ function SessionCard({ log, expanded, onToggle }: { log: SessionLog; expanded: b
   const isRunning = log.status === 'running'
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+    <div className="bg-[var(--grand-surface)] rounded-lg overflow-hidden">
       <div
-        className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+        className="flex items-center gap-3 px-5 py-4 cursor-pointer hover:bg-[var(--grand-surface-2)] transition-colors"
         onClick={onToggle}
       >
-        <div className="text-zinc-400 dark:text-zinc-600">
-          {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        <div className="text-[var(--grand-muted)]">
+          {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </div>
         <div className={`p-1.5 rounded-md ${isRunning ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
           {isRunning
-            ? <Loader2 size={14} className="text-amber-400 animate-spin" />
-            : <CheckCircle2 size={14} className="text-emerald-400" />
+            ? <Loader2 size={16} className="text-amber-400 animate-spin" />
+            : <CheckCircle2 size={16} className="text-emerald-400" />
           }
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-zinc-800 dark:text-zinc-200 text-sm">{log.agentName}</span>
+            <span className="font-medium text-[var(--grand-fg)] text-[14.5px]">{log.agentName}</span>
             <Badge variant={isRunning ? 'warning' : 'success'}>
               {log.status}
             </Badge>
           </div>
           {log.prompt && (
-            <p className="text-xs text-zinc-500 mt-0.5 truncate">{log.prompt}</p>
+            <p className="text-[12.5px] text-[var(--grand-muted)] mt-1 truncate">{log.prompt}</p>
           )}
           {(log.presetName || log.modelName || log.modelRole === 'fallback') && (
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {log.presetName && (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-500">
+                <span className="px-2 py-0.5 text-[11px] rounded-full bg-[var(--grand-surface-2)] text-[var(--grand-muted)]">
                   {log.presetName}
                 </span>
               )}
               {log.modelName && (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-500">
+                <span className="px-2 py-0.5 text-[11px] rounded-full bg-[var(--grand-surface-2)] text-[var(--grand-muted)]">
                   {log.modelName}
                 </span>
               )}
               {log.modelRole === 'fallback' && (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-amber-500/15 text-amber-400">
+                <span className="px-2 py-0.5 text-[11px] rounded-full bg-amber-500/15 text-amber-400">
                   fallback
                 </span>
               )}
             </div>
           )}
-          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-600">
-            <span className="flex items-center gap-1"><Clock size={10} />{timeAgo(log.startedAt)}</span>
+          <div className="flex items-center gap-3 mt-1.5 text-[12px] text-[var(--grand-muted)]">
+            <span className="flex items-center gap-1"><Clock size={12} />{timeAgo(log.startedAt)}</span>
             <span>{duration(log.startedAt, log.finishedAt)}</span>
             <span>{log.entries.length} entries</span>
           </div>
         </div>
-        <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-700">{log.id.slice(0, 8)}</span>
+        <span className="font-mono text-[11px] text-[var(--grand-muted-2)]">{log.id.slice(0, 8)}</span>
       </div>
 
       {expanded && (
-        <div className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-4 py-3.5 space-y-1 max-h-125 overflow-y-auto">
+        <div className="bg-[var(--grand-bg)] px-5 py-4 space-y-1 max-h-125 overflow-y-auto">
           {log.prompt && <PromptBanner prompt={log.prompt} />}
           {log.entries.length === 0 && !log.prompt ? (
-            <p className="text-zinc-500 dark:text-zinc-600 text-xs font-mono">No entries yet</p>
+            <p className="text-[var(--grand-muted)] text-[12px] font-mono">No entries yet</p>
           ) : (
             log.entries.map((entry, i) => <EntryLine key={i} entry={entry} />)
           )}
@@ -167,11 +167,11 @@ export default function LogsPage() {
   const connName = (id: string) => connections.find(c => c.id === id)?.name ?? id.slice(0, 8)
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-5">
+    <div className="p-8">
+      <div className="flex items-end justify-between mb-7">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Session Logs</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-600 mt-0.5">Execution history per connection</p>
+          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">Session Logs</h1>
+          <p className="text-[13.5px] text-[var(--grand-muted)] mt-1.5">Execution history per connection</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -179,14 +179,14 @@ export default function LogsPage() {
             size="sm"
             onClick={() => setClearOpen(true)}
           >
-            <Trash2 size={13} />
+            <Trash2 size={14} />
             Clear all
           </Button>
-          <Filter size={14} className="text-zinc-600" />
+          <Filter size={14} className="text-[var(--grand-muted)]" />
           <select
             value={selectedConn}
             onChange={e => { setSelectedConn(e.target.value); setExpanded(null) }}
-            className="px-2.5 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 focus:outline-none focus:border-teal-500/50"
+            className="h-9 px-3 rounded-md text-[13px] bg-[var(--grand-surface-2)] text-[var(--grand-fg)] outline-none focus:ring-2 focus:ring-emerald-400/40"
           >
             <option value="">All connections</option>
             {connections.map(c => (

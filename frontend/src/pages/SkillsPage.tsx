@@ -129,23 +129,23 @@ export default function SkillsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-5">
+    <div className="p-8">
+      <div className="flex items-end justify-between mb-7">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Skills</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-600 mt-0.5">Reusable SSH scripts exposed as tools for the agent</p>
+          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">Skills</h1>
+          <p className="text-[13.5px] text-[var(--grand-muted)] mt-1.5">Reusable SSH scripts exposed as tools for the agent</p>
         </div>
-        <Button size="sm" onClick={openCreate}>
-          <Plus size={14} /> Add Skill
+        <Button onClick={openCreate}>
+          <Plus size={15} /> Add skill
         </Button>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-zinc-500 dark:text-zinc-600 text-sm">Loading...</div>
+        <div className="text-center py-12 text-[var(--grand-muted)] text-[14px]">Loading…</div>
       ) : skills.length === 0 ? (
         <EmptyState icon={Wrench} title="No skills yet" description="Create a skill and the agent will be able to call it as a tool" />
       ) : (
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div className="bg-[var(--grand-surface)] rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -159,13 +159,11 @@ export default function SkillsPage() {
             <TableBody>
               {skills.map(skill => (
                 <TableRow key={skill.id}>
-                  <TableCell className="font-medium text-zinc-800 dark:text-zinc-200 text-sm">
+                  <TableCell className="font-medium text-[var(--grand-fg)]">
                     {skill.name}
                   </TableCell>
-                  <TableCell className="text-zinc-600 dark:text-zinc-400 text-sm">
-                    {connectionName(skill.connectionId)}
-                  </TableCell>
-                  <TableCell className="text-zinc-500 text-sm max-w-[380px] truncate">
+                  <TableCell>{connectionName(skill.connectionId)}</TableCell>
+                  <TableCell className="text-[var(--grand-muted)] max-w-[380px] truncate">
                     {skill.description || '—'}
                   </TableCell>
                   <TableCell>
@@ -174,10 +172,10 @@ export default function SkillsPage() {
                   <TableCell>
                     <div className="flex gap-1 justify-end">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(skill)}>
-                        <Pencil size={14} />
+                        <Pencil size={16} />
                       </Button>
                       <Button variant="destructive" size="icon" onClick={() => setDeleteTarget(skill.id)}>
-                        <Trash2 size={14} />
+                        <Trash2 size={16} />
                       </Button>
                     </div>
                   </TableCell>

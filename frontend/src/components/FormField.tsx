@@ -10,11 +10,11 @@ interface FormFieldProps {
 
 export function FormField({ label, children, hint, error }: FormFieldProps) {
   return (
-    <div>
+    <div className="space-y-2">
       <Label>{label}</Label>
       {children}
-      {hint && <p className="text-[11px] text-zinc-500 dark:text-zinc-600 mt-1">{hint}</p>}
-      {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+      {hint && <p className="text-[12px] text-[var(--grand-muted)] mt-1.5">{hint}</p>}
+      {error && <p className="text-[12px] text-rose-500 mt-1.5">{error}</p>}
     </div>
   )
 }

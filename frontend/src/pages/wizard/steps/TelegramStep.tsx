@@ -208,7 +208,7 @@ export function TelegramStep({
                 )}
               </div>
               <p className="text-[11.5px] text-zinc-500 dark:text-zinc-500">
-                Open the bot, paste the code as a message, and send it. Mantis will detect you automatically.
+                Open the bot, paste the code as a message, and send it. GRAND will detect you automatically.
               </p>
             </div>
           </div>

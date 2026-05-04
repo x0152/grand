@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { FormField } from '@/components/FormField'
-import { MantisLogo } from '@/components/MantisLogo'
+import { BrandLogo, BRAND_NAME, BRAND_TAGLINE } from '@/components/Brand'
 import type { User } from '../types'
 
 export default function LoginPage({ onLogin }: { onLogin: (user: User) => void }) {
@@ -29,22 +29,21 @@ export default function LoginPage({ onLogin }: { onLogin: (user: User) => void }
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--grand-bg)] flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center justify-center gap-3">
-          <MantisLogo size={40} className="text-teal-500 dark:text-teal-400" />
+        <div className="mb-8 flex items-center justify-center gap-3">
+          <BrandLogo size={44} />
           <div className="leading-tight">
-            <h1 className="font-mono text-[20px] font-medium lowercase tracking-tight text-zinc-900 dark:text-zinc-50">mantis</h1>
-            <p className="font-mono text-[11px] lowercase tracking-tight text-zinc-500 mt-0.5">v0 · control</p>
+            <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">{BRAND_NAME}</h1>
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--grand-muted)] mt-1">{BRAND_TAGLINE}</p>
           </div>
         </div>
 
-        <Card className="bg-white dark:bg-zinc-900/60 p-6">
-          <div className="kicker mb-4 pb-3 border-b border-zinc-200/60 dark:border-zinc-800/60">
-            <span className="kicker-num">·</span>
+        <Card className="bg-[var(--grand-surface)] p-7 border-0 shadow-none">
+          <div className="kicker mb-5">
             <span>auth</span>
           </div>
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="space-y-5">
             <FormField label="Access token">
               <Input
                 type="password"
@@ -55,14 +54,14 @@ export default function LoginPage({ onLogin }: { onLogin: (user: User) => void }
               />
             </FormField>
 
-            {error && <p className="font-mono text-[11px] lowercase text-rose-500">err: {error}</p>}
+            {error && <p className="font-mono text-[12px] text-rose-500">{error}</p>}
 
             <Button
               type="submit"
               disabled={loading || !token.trim()}
-              className="w-full h-9"
+              className="w-full h-10"
             >
-              {loading ? 'signing in...' : 'sign in'}
+              {loading ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
         </Card>

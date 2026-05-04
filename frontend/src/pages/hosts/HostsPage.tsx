@@ -239,14 +239,14 @@ export default function HostsPage() {
     }))
 
   if (loading && connections.length === 0 && sandboxes.length === 0) {
-    return <div className="p-6 text-center py-16 text-sm text-zinc-500 dark:text-zinc-600">Loading…</div>
+    return <div className="p-8 text-center py-16 text-[14px] text-[var(--grand-muted)]">Loading…</div>
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <header className="mb-6">
-        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Hosts</h1>
-        <p className="text-xs text-zinc-500 dark:text-zinc-600 mt-0.5">
+    <div className="p-8 max-w-5xl mx-auto">
+      <header className="mb-7">
+        <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">Hosts</h1>
+        <p className="text-[13.5px] text-[var(--grand-muted)] mt-1.5 leading-relaxed">
           Where the assistant runs commands. Connect to your own machines or spin up isolated sandboxes.
         </p>
       </header>

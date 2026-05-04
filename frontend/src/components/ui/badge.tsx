@@ -4,17 +4,18 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium",
+  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium tracking-tight",
   {
     variants: {
       variant: {
-        default: "bg-blue-500/15 text-blue-400",
-        secondary: "bg-violet-500/15 text-violet-400",
-        success: "bg-emerald-500/15 text-emerald-400",
-        destructive: "bg-red-500/10 text-red-400",
-        warning: "bg-amber-500/15 text-amber-400",
-        outline: "bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono rounded-md",
-        muted: "bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-600",
+        default: "bg-emerald-500/10 text-emerald-400",
+        secondary: "bg-[var(--grand-surface-2)] text-[var(--grand-muted)]",
+        success: "bg-emerald-500/10 text-emerald-400",
+        destructive: "bg-rose-500/10 text-rose-400",
+        warning: "bg-amber-500/10 text-amber-400",
+        outline:
+          "bg-transparent text-[var(--grand-muted)] border border-[var(--grand-line)] font-mono rounded-md",
+        muted: "bg-[var(--grand-surface-2)] text-[var(--grand-muted-2)]",
       },
     },
     defaultVariants: {

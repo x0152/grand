@@ -9,7 +9,7 @@ const Table = React.forwardRef<
   <div className="relative w-full overflow-auto">
     <table
       ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
+      className={cn("w-full caption-bottom text-[14px]", className)}
       {...props}
     />
   </div>
@@ -20,7 +20,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props} />
+  <thead ref={ref} className={cn("", className)} {...props} />
 ))
 TableHeader.displayName = "TableHeader"
 
@@ -28,11 +28,7 @@ const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <tbody
-    ref={ref}
-    className={cn("[&_tr:last-child]:border-0", className)}
-    {...props}
-  />
+  <tbody ref={ref} className={cn("", className)} {...props} />
 ))
 TableBody.displayName = "TableBody"
 
@@ -43,7 +39,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-b border-zinc-200/50 dark:border-zinc-800/50 transition-colors hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30",
+      "transition-colors hover:bg-[var(--grand-surface-2)]/50",
       className,
     )}
     {...props}
@@ -58,7 +54,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-9 px-3 text-left align-middle text-[11px] font-medium uppercase tracking-wider text-zinc-500 [&:has([role=checkbox])]:pr-0",
+      "h-10 px-4 text-left align-middle text-[11px] font-medium uppercase tracking-[0.10em] text-[var(--grand-muted)] [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}
@@ -73,7 +69,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "px-3 py-2.5 align-middle text-xs text-zinc-700 dark:text-zinc-300 [&:has([role=checkbox])]:pr-0",
+      "px-4 py-3 align-middle text-[13.5px] text-[var(--grand-fg-2)] [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}

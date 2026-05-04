@@ -1,24 +1,26 @@
+/* GRAND brand book · Verdant palette
+   bg #08080a · surface #1f2937 · muted #94a3b8 · accent #34d399 */
 :root {
-  --bg: #fcfcfc;
-  --bg-2: #f7f7f8;
+  --bg: #fafafa;
+  --bg-2: #f4f4f5;
   --fg: #18181b;
   --fg-2: #3f3f46;
-  --muted: #71717a;
+  --muted: #52525b;
   --muted-2: #a1a1aa;
-  --line: rgba(24, 24, 27, 0.10);
-  --line-strong: rgba(24, 24, 27, 0.16);
+  --line: rgba(24, 24, 27, 0.06);
+  --line-strong: rgba(24, 24, 27, 0.12);
   --card: #ffffff;
   --card-2: #fafafa;
-  --accent: #0d9488;
-  --accent-bright: #14b8a6;
-  --accent-soft: rgba(20, 184, 166, 0.10);
-  --accent-line: rgba(20, 184, 166, 0.32);
+  --accent: #10b981;
+  --accent-bright: #34d399;
+  --accent-soft: rgba(16, 185, 129, 0.10);
+  --accent-line: rgba(16, 185, 129, 0.30);
   --warn: #b45309;
   --danger: #b91c1c;
 
-  --radius: 6px;
-  --radius-sm: 4px;
-  --shadow-flat: 0 1px 0 rgba(0, 0, 0, 0.02);
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow-flat: none;
 
   --container: 1140px;
 
@@ -28,20 +30,20 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #09090b;
-    --bg-2: #0c0c0f;
+    --bg: #08080a;
+    --bg-2: #0e0f12;
     --fg: #fafafa;
-    --fg-2: #d4d4d8;
-    --muted: #a1a1aa;
-    --muted-2: #71717a;
-    --line: rgba(244, 244, 245, 0.08);
-    --line-strong: rgba(244, 244, 245, 0.14);
-    --card: #111114;
-    --card-2: #0e0e11;
-    --accent: #2dd4bf;
-    --accent-bright: #5eead4;
-    --accent-soft: rgba(45, 212, 191, 0.10);
-    --accent-line: rgba(45, 212, 191, 0.32);
+    --fg-2: #e4e4e7;
+    --muted: #94a3b8;
+    --muted-2: #64748b;
+    --line: rgba(244, 244, 245, 0.05);
+    --line-strong: rgba(244, 244, 245, 0.10);
+    --card: #0e0f12;
+    --card-2: #14151a;
+    --accent: #10b981;
+    --accent-bright: #34d399;
+    --accent-soft: rgba(52, 211, 153, 0.10);
+    --accent-line: rgba(52, 211, 153, 0.28);
     --warn: #f59e0b;
     --danger: #f43f5e;
     --shadow-flat: none;
@@ -60,8 +62,8 @@ body {
   font-feature-settings: 'cv11', 'ss01', 'ss03', 'cv01';
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
-  line-height: 1.55;
-  font-size: 15px;
+  line-height: 1.6;
+  font-size: 16px;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -91,28 +93,30 @@ code, kbd, pre, samp, .mono {
 }
 
 .section {
-  padding: 110px 0;
+  padding: 84px 0;
   position: relative;
 }
 
-.section + .section { border-top: 1px solid var(--line); }
+.section + .section { border-top: 1px solid var(--line-strong); }
 
 @media (max-width: 720px) {
-  .section { padding: 72px 0; }
+  .section { padding: 56px 0; }
 }
 
 .kicker {
   font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: lowercase;
-  letter-spacing: -0.01em;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
   color: var(--muted);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
-.kicker .num { color: var(--muted-2); font-variant-numeric: tabular-nums; }
-.kicker .sep { color: var(--muted-2); opacity: 0.6; }
+.kicker .num,
+.kicker .sep {
+  display: none;
+}
 
 .stamp {
   display: inline-flex;
@@ -233,18 +237,17 @@ code, kbd, pre, samp, .mono {
   gap: 10px;
 }
 .brand .word {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  text-transform: lowercase;
   color: var(--fg);
 }
 .brand .meta {
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  text-transform: lowercase;
+  font-size: 11px;
+  text-transform: uppercase;
   color: var(--muted);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.14em;
 }
 
 .nav {
@@ -275,7 +278,7 @@ code, kbd, pre, samp, .mono {
 }
 
 .hero {
-  padding: 80px 0 84px;
+  padding: 64px 0 72px;
   position: relative;
   overflow: hidden;
 }
@@ -297,11 +300,11 @@ code, kbd, pre, samp, .mono {
 }
 
 .hero h1 {
-  font-size: clamp(34px, 5.2vw, 56px);
+  font-size: clamp(40px, 5.6vw, 64px);
   line-height: 1.04;
-  letter-spacing: -0.024em;
-  font-weight: 500;
-  margin: 16px 0 18px;
+  letter-spacing: -0.028em;
+  font-weight: 600;
+  margin: 20px 0 24px;
   color: var(--fg);
 }
 .hero h1 em {
@@ -311,10 +314,10 @@ code, kbd, pre, samp, .mono {
 
 .hero .lede {
   color: var(--fg-2);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 18px;
+  line-height: 1.55;
   max-width: 56ch;
-  margin: 0 0 24px;
+  margin: 0 0 28px;
 }
 
 .hero .ctas {
@@ -375,32 +378,31 @@ code, kbd, pre, samp, .mono {
 }
 
 .chat-mock .app-brand-name {
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: -0.01em;
-  font-weight: 500;
-  text-transform: lowercase;
+  font-weight: 700;
 }
 
 .chat-mock .app-brand-meta {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--muted);
-  letter-spacing: -0.01em;
-  text-transform: lowercase;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-top: 2px;
 }
 
 .chat-mock .app-new-chat {
   margin: 8px;
-  height: 28px;
-  border: 1px dashed var(--line-strong);
-  border-radius: 5px;
+  height: 30px;
+  background: var(--card-2);
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: lowercase;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -450,29 +452,24 @@ code, kbd, pre, samp, .mono {
   font-family: var(--font-mono);
   font-size: 9.5px;
   color: var(--muted);
-  text-transform: lowercase;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0 10px;
-  margin: 5px 0;
+  padding: 8px 10px 4px;
 }
 
-.chat-mock .app-kicker .num {
-  color: var(--muted-2);
-}
-
+.chat-mock .app-kicker .num,
 .chat-mock .app-kicker .sep {
-  color: var(--muted-2);
-  opacity: 0.7;
+  display: none;
 }
 
 .chat-mock .app-nav-row {
-  font-size: 11.5px;
-  text-transform: lowercase;
+  font-size: 12.5px;
   color: var(--muted);
-  padding: 5px 10px;
-  border-left: 1px solid transparent;
+  padding: 6px 10px;
+  border-left: 2px solid transparent;
 }
 
 .chat-mock .app-nav-row.active {
@@ -712,53 +709,71 @@ code, kbd, pre, samp, .mono {
 .section-head {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-bottom: 48px;
+  gap: 12px;
+  margin-bottom: 36px;
   max-width: 720px;
 }
 .section-head h2 {
-  font-size: clamp(26px, 3.4vw, 36px);
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  font-weight: 500;
+  font-size: clamp(28px, 3.4vw, 38px);
+  letter-spacing: -0.022em;
+  line-height: 1.18;
+  font-weight: 600;
   margin: 0;
+  color: var(--fg);
+}
+.section-head h2 em {
+  font-style: normal;
+  color: var(--accent-bright);
+  font-family: var(--font-mono);
+  font-weight: 500;
 }
 .section-head p {
   margin: 0;
   color: var(--fg-2);
-  font-size: 15px;
+  font-size: 15.5px;
+  line-height: 1.6;
   max-width: 64ch;
 }
 
 .card {
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--card);
-  padding: 18px;
-  transition: border-color 160ms ease, transform 160ms ease;
-  box-shadow: var(--shadow-flat);
+  border: 1px solid var(--line-strong);
+  padding: 22px;
+  transition: border-color 160ms ease, background 160ms ease;
 }
-.card:hover { border-color: var(--line-strong); }
+.card:hover {
+  border-color: var(--accent-line);
+}
 
 .card .icon {
-  width: 32px; height: 32px; border-radius: 6px;
+  width: 34px; height: 34px; border-radius: 7px;
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--accent-soft);
   color: var(--accent-bright);
-  margin-bottom: 12px;
+  border: 1px solid var(--accent-line);
+  margin-bottom: 14px;
 }
 
 .card h3 {
   margin: 0 0 6px;
-  font-size: 14.5px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   letter-spacing: -0.01em;
+  color: var(--fg);
 }
 .card p {
   margin: 0;
   font-size: 13.5px;
   color: var(--fg-2);
   line-height: 1.55;
+}
+.card code {
+  font-size: 12.5px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 1px 5px;
 }
 
 .grid-3 {
@@ -1402,7 +1417,7 @@ code, kbd, pre, samp, .mono {
 }
 
 .code-block {
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: var(--card);
   overflow: hidden;
@@ -1413,11 +1428,14 @@ code, kbd, pre, samp, .mono {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--line);
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line-strong);
   background: var(--card-2);
   color: var(--muted);
+  font-family: var(--font-mono);
   font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 .code-block pre {
   margin: 0;
@@ -1434,15 +1452,18 @@ code, kbd, pre, samp, .mono {
   display: flex; flex-direction: column; gap: 14px;
 }
 .deployment .points .item {
-  border-left: 1px solid var(--line-strong);
-  padding: 4px 0 4px 16px;
+  border: 1px solid var(--line-strong);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 14px 16px;
 }
 .deployment .points .item b {
   display: block;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  font-size: 14px;
+  font-size: 14.5px;
   margin-bottom: 4px;
+  color: var(--fg);
 }
 .deployment .points .item span {
   color: var(--fg-2);
@@ -1451,27 +1472,25 @@ code, kbd, pre, samp, .mono {
 
 .final {
   text-align: center;
-  padding: 96px 0 110px;
+  padding: 72px 0 80px;
   position: relative;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--line-strong);
 }
 .final h2 {
-  font-size: clamp(26px, 3.6vw, 36px);
+  font-size: clamp(24px, 3.2vw, 32px);
   letter-spacing: -0.022em;
-  font-weight: 500;
-  margin: 12px 0 12px;
-}
-.final p {
-  color: var(--fg-2);
-  margin: 0 auto 22px;
-  max-width: 56ch;
+  font-weight: 600;
+  margin: 14px 0 22px;
+  color: var(--fg);
 }
 .final .ctas {
   display: inline-flex;
-  gap: 10px;
+  gap: 14px;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
 }
+.final .cta-inline { margin-top: 0; }
 
 .footer {
   border-top: 1px solid var(--line);

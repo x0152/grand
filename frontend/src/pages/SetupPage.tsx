@@ -77,32 +77,32 @@ export default function SetupPage() {
   }))
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10 space-y-6">
+    <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
       <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
+        <div className="space-y-2">
           <div className="kicker"><span>setup</span></div>
-          <h1 className="text-[20px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Mantis configuration
+          <h1 className="text-[26px] font-semibold tracking-tight text-[var(--grand-fg)]">
+            Configuration
           </h1>
-          <p className="text-[13px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+          <p className="text-[14px] text-[var(--grand-muted)] leading-relaxed max-w-xl">
             Provider, models, and channels managed by the wizard. Environment variables prefill empty fields; saved values take over once you finish a step.
           </p>
         </div>
         {status.done && !loading && (
-          <div className="flex items-center gap-1.5 rounded-md border border-teal-500/30 bg-teal-500/5 px-2.5 py-1 text-[11.5px] text-teal-600 dark:text-teal-400">
-            <CheckCircle2 size={13} /> ready
+          <div className="flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-3 py-1.5 text-[12px] text-emerald-500">
+            <CheckCircle2 size={14} /> ready
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800/60 bg-white dark:bg-zinc-900/40 divide-y divide-zinc-200/70 dark:divide-zinc-800/50">
+      <div className="rounded-lg bg-[var(--grand-surface)] divide-y divide-[var(--grand-line)]">
         {loading && (
-          <div className="px-5 py-8 flex items-center justify-center text-[12px] text-zinc-500">
+          <div className="px-5 py-10 flex items-center justify-center text-[13px] text-[var(--grand-muted)]">
             <Loader2 size={14} className="animate-spin mr-2" /> Loading configuration…
           </div>
         )}
         {!loading && items.length === 0 && (
-          <div className="px-5 py-6 text-[13px] text-zinc-500">
+          <div className="px-5 py-6 text-[14px] text-[var(--grand-muted)]">
             No configuration steps available.
           </div>
         )}
@@ -156,12 +156,12 @@ export default function SetupPage() {
 
 function StatusRow({ item }: { item: StatusItem }) {
   return (
-    <div className="px-5 py-3.5 flex items-center justify-between gap-3">
+    <div className="px-5 py-4 flex items-center justify-between gap-3">
       <div className="min-w-0 flex items-start gap-3">
         <StatusBadge done={item.done} optional={item.optional} />
         <div className="min-w-0">
-          <div className="text-[13.5px] font-medium text-zinc-900 dark:text-zinc-50 truncate">{item.label}</div>
-          <div className="text-[11.5px] text-zinc-500 dark:text-zinc-500 mt-0.5">
+          <div className="text-[14px] font-medium text-[var(--grand-fg)] truncate">{item.label}</div>
+          <div className="text-[12px] text-[var(--grand-muted)] mt-1">
             {item.optional ? 'optional · ' : ''}
             <SourceLabel source={item.source} />
           </div>
@@ -173,12 +173,12 @@ function StatusRow({ item }: { item: StatusItem }) {
 
 function StatusBadge({ done, optional }: { done: boolean; optional: boolean }) {
   if (done) {
-    return <CheckCircle2 size={16} className="text-teal-500 mt-0.5 shrink-0" />
+    return <CheckCircle2 size={18} className="text-emerald-400 mt-0.5 shrink-0" />
   }
   if (optional) {
-    return <span className="size-4 mt-0.5 shrink-0 rounded-full border border-zinc-300 dark:border-zinc-700" />
+    return <span className="size-4 mt-0.5 shrink-0 rounded-full bg-[var(--grand-line)]" />
   }
-  return <AlertCircle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+  return <AlertCircle size={18} className="text-amber-500 mt-0.5 shrink-0" />
 }
 
 function SourceLabel({ source }: { source: ConfigSource }) {
@@ -202,29 +202,29 @@ interface ActionCardProps {
 
 function ActionCard({ icon: Icon, title, description, actionLabel, onAction, tone, disabled }: ActionCardProps) {
   return (
-    <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800/60 bg-white dark:bg-zinc-900/40 p-4 flex flex-col gap-3">
-      <div className="flex items-center gap-2.5">
+    <div className="rounded-lg bg-[var(--grand-surface)] p-5 flex flex-col gap-3">
+      <div className="flex items-center gap-3">
         <div
-          className={`size-9 rounded-lg flex items-center justify-center ${
+          className={`size-10 rounded-lg flex items-center justify-center ${
             tone === 'danger'
-              ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-              : 'bg-teal-500/10 text-teal-600 dark:text-teal-400'
+              ? 'bg-rose-500/10 text-rose-500'
+              : 'bg-emerald-500/10 text-emerald-400'
           }`}
         >
-          <Icon size={18} />
+          <Icon size={20} />
         </div>
         <div className="min-w-0">
-          <div className="text-[14px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</div>
+          <div className="text-[15px] font-semibold tracking-tight text-[var(--grand-fg)]">{title}</div>
         </div>
       </div>
-      <p className="text-[12.5px] text-zinc-500 dark:text-zinc-400 leading-relaxed">{description}</p>
+      <p className="text-[13px] text-[var(--grand-muted)] leading-relaxed">{description}</p>
       <div className="mt-auto pt-1">
         <Button
           onClick={onAction}
           disabled={disabled}
           variant={tone === 'danger' ? 'outline' : 'default'}
           size="sm"
-          className={tone === 'danger' ? 'border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10' : ''}
+          className={tone === 'danger' ? 'border-rose-500/40 text-rose-500 hover:bg-rose-500/10' : ''}
         >
           {actionLabel}
         </Button>
