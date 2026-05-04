@@ -1,11 +1,13 @@
-import { forwardRef, useEffect, useRef } from 'react'
-import { Paperclip, Send, Square } from '@/lib/icons'
+import { forwardRef, useCallback, useEffect, useRef } from 'react'
+import { Mic, Paperclip, Send, Square } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import { Textarea } from '@/components/ui/textarea'
 import { ContextMeter } from '../../components/ContextMeter'
 import type { ChatMessage, ContextStatus } from '../../types'
 import { FilePreview } from './FilePreview'
 import { PresetBar } from './PresetBar'
 import type { PendingFile } from './types'
+import { useBrowserSpeechToText } from './useBrowserSpeechToText'
 
 interface ComposerProps {
   input: string
@@ -44,6 +46,17 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
   textareaRef,
 ) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef(input)
+  inputRef.current = input
+
+  const getInputSnapshot = useCallback(() => inputRef.current, [])
+
+  const voice = useBrowserSpeechToText(getInputSnapshot, onChangeInput)
+
+  const handleSend = useCallback(() => {
+    if (voice.listening) voice.stop()
+    onSend()
+  }, [voice.listening, voice.stop, onSend])
 
   useEffect(() => {
     const el = (textareaRef as React.RefObject<HTMLTextAreaElement>).current
@@ -54,7 +67,7 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
   }, [input, textareaRef])
 
   return (
-    <div className="px-6 py-4 bg-[var(--grand-bg)] shrink-0 space-y-3">
+    <div className="shrink-0 space-y-3 border-t border-[var(--grand-line-2)] bg-transparent px-6 py-4">
       <PresetBar />
       {messages.length > 0 && (
         <ContextMeter
@@ -72,8 +85,12 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
           ))}
         </div>
       )}
-      {attachError && (
-        <div className="text-[12px] text-rose-500">{attachError}</div>
+      {(attachError || voice.error) && (
+        <div className="text-[12px] text-rose-500">
+          {attachError}
+          {attachError && voice.error ? ' · ' : null}
+          {voice.error}
+        </div>
       )}
       <div className="flex gap-2 items-end bg-[var(--grand-surface)] border border-[var(--grand-border)] rounded-xl p-2.5 focus-within:border-emerald-400/60 transition-colors">
         <input
@@ -90,6 +107,13 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
           onClick={() => fileInputRef.current?.click()}
           disabled={sending || hasPending}
         />
+        {voice.supported && (
+          <VoiceDictationButton
+            listening={voice.listening}
+            onClick={() => voice.toggle()}
+            disabled={sending || hasPending}
+          />
+        )}
         <Textarea
           ref={textareaRef}
           value={input}
@@ -97,26 +121,66 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault()
-              onSend()
+              handleSend()
             }
           }}
-          placeholder="Type a message — Shift+Enter for newline"
+          placeholder={
+            voice.listening
+              ? 'Listening — text streams in as you speak; click mic to stop'
+              : 'Type a message — Shift+Enter for newline'
+          }
           rows={1}
           className="flex-1 min-h-[36px] max-h-[220px] py-2 px-2 text-[15px]
                      bg-transparent border-0 rounded-none
                      leading-relaxed overflow-y-auto placeholder:text-[var(--grand-muted-2)]
                      focus:bg-transparent focus:ring-0 focus:border-0"
+          readOnly={voice.listening}
           disabled={sending || hasPending}
         />
         {hasPending ? (
           <StopButton onClick={onStop} disabled={stopping} />
         ) : (
-          <SendButton onClick={onSend} disabled={sending || (!input.trim() && files.length === 0)} />
+          <SendButton
+            onClick={handleSend}
+            disabled={sending || (!input.trim() && files.length === 0)}
+          />
         )}
       </div>
     </div>
   )
 })
+
+function VoiceDictationButton({
+  listening,
+  onClick,
+  disabled,
+}: {
+  listening: boolean
+  onClick: () => void
+  disabled: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={
+        listening
+          ? 'Stop dictation'
+          : 'Dictate live (speech streams into the box; language follows the browser / OS)'
+      }
+      className={cn(
+        'shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-md transition-colors',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        listening
+          ? 'text-rose-500 bg-rose-500/12 ring-1 ring-rose-500/35'
+          : 'text-[var(--grand-muted)] hover:text-[var(--grand-fg)] hover:bg-[var(--grand-surface-2)]',
+      )}
+    >
+      <Mic size={18} weight={listening ? 'fill' : 'regular'} />
+    </button>
+  )
+}
 
 function AttachButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
   return (
@@ -138,14 +202,17 @@ function AttachButton({ onClick, disabled }: { onClick: () => void; disabled: bo
 function StopButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       title="Stop generation"
-      className="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-md
-                 text-rose-500 hover:bg-rose-500/10
-                 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-md border border-rose-500/45
+                 bg-rose-500/8 text-rose-500 shadow-sm
+                 hover:border-rose-500/70 hover:bg-rose-500/15
+                 transition-[background-color,border-color,box-shadow] duration-100
+                 disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <Square size={14} className="fill-current" />
+      <Square size={13} className="fill-current" />
     </button>
   )
 }
@@ -153,14 +220,19 @@ function StopButton({ onClick, disabled }: { onClick: () => void; disabled: bool
 function SendButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
-      title="Send"
-      className="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-md
-                 bg-emerald-400 text-zinc-950 hover:bg-emerald-300
-                 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      title="Send message"
+      className={cn(
+        'shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-md transition-[background-color,border-color,box-shadow,color] duration-100',
+        'border shadow-sm',
+        'border-emerald-500/45 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+        'hover:border-emerald-500/70 hover:bg-emerald-500/18',
+        'disabled:cursor-not-allowed disabled:border-[var(--grand-border)] disabled:bg-transparent disabled:text-[var(--grand-muted-2)] disabled:shadow-none disabled:opacity-55',
+      )}
     >
-      <Send size={16} strokeWidth={2} />
+      <Send size={17} strokeWidth={1.75} />
     </button>
   )
 }

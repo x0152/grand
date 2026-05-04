@@ -1,21 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as SelectPrimitive from '@radix-ui/react-select'
-import { Brain, Check, ChevronDown, Layers } from '@/lib/icons'
+import { Brain, Check, ChevronDown, Cloud, Pencil } from '@/lib/icons'
+import { toast } from 'sonner'
 import { api } from '../../api'
 import type { LlmConnection, Model, Preset, Settings } from '../../types'
+import { ProfileDialog } from '../llm/ProfileDialog'
+import { EMPTY_PROFILE_FORM, type ProfileForm } from '../llm/types'
 
-// PresetBar — compact, always-visible row above the composer. Lets the user
-// swap the active chat preset, or swap the chat model inside the active
-// preset, without leaving the conversation. All changes persist immediately
-// (Settings / Preset.chatModelId) so the next message uses the new routing.
+// Bar shows the active chat model and server-side model (each stored on the
+// routed preset’s chatModelId). Pencil opens full profile edit on AI Engine.
+
+const NONE = '__none__'
 
 export function PresetBar() {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [presets, setPresets] = useState<Preset[]>([])
   const [models, setModels] = useState<Model[]>([])
   const [connections, setConnections] = useState<LlmConnection[]>([])
-  const [busy, setBusy] = useState<'preset' | 'model' | null>(null)
+  const [busy, setBusy] = useState<'chat' | 'server' | null>(null)
   const [flash, setFlash] = useState<string | null>(null)
+
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [editingProfile, setEditingProfile] = useState<Preset | null>(null)
+  const [profileForm, setProfileForm] = useState<ProfileForm>(EMPTY_PROFILE_FORM)
 
   const refresh = useCallback(async () => {
     try {
@@ -34,122 +41,219 @@ export function PresetBar() {
 
   useEffect(() => { void refresh() }, [refresh])
 
-  const activePreset = useMemo(
+  const endpointById = useMemo(() => new Map(connections.map(c => [c.id, c])), [connections])
+
+  const chatPreset = useMemo(
     () => presets.find(p => p.id === settings?.chatPresetId) ?? null,
     [presets, settings],
   )
-  const activeChatModel = useMemo(
-    () => models.find(m => m.id === activePreset?.chatModelId) ?? null,
-    [models, activePreset],
+  const serverPreset = useMemo(
+    () => presets.find(p => p.id === settings?.serverPresetId) ?? null,
+    [presets, settings],
   )
-  const connById = useMemo(() => {
-    const m = new Map<string, LlmConnection>()
-    for (const c of connections) m.set(c.id, c)
-    return m
-  }, [connections])
+
+  const chatModel = useMemo(
+    () => (chatPreset?.chatModelId ? models.find(m => m.id === chatPreset.chatModelId) ?? null : null),
+    [chatPreset, models],
+  )
+  const serverModel = useMemo(
+    () => (serverPreset?.chatModelId ? models.find(m => m.id === serverPreset.chatModelId) ?? null : null),
+    [serverPreset, models],
+  )
 
   const triggerFlash = useCallback((msg: string) => {
     setFlash(msg)
     window.setTimeout(() => setFlash(prev => (prev === msg ? null : prev)), 2200)
   }, [])
 
-  async function onPresetChange(next: string) {
-    if (!settings || next === settings.chatPresetId) return
-    setBusy('preset')
-    const prev = settings
+  function openEditPreset(p: Preset | null, label: string) {
+    if (!p) {
+      toast.info(`Set a ${label} preset in AI Engine first, or pick routing there`)
+      return
+    }
+    setEditingProfile(p)
+    setProfileForm({
+      name: p.name,
+      chatModelId: p.chatModelId,
+      summaryModelId: p.summaryModelId,
+      imageModelId: p.imageModelId,
+      fallbackModelId: p.fallbackModelId,
+      temperature: p.temperature != null ? String(p.temperature) : '',
+      systemPrompt: p.systemPrompt,
+    })
+    setProfileOpen(true)
+  }
+
+  const submitProfile = useCallback(async () => {
+    if (!editingProfile) return
     try {
-      const updated = await api.settings.update({
-        chatPresetId: next,
-        serverPresetId: prev.serverPresetId,
-        memoryEnabled: prev.memoryEnabled,
-        userMemories: prev.userMemories ?? [],
+      const payload = {
+        name: profileForm.name,
+        chatModelId: profileForm.chatModelId,
+        summaryModelId: profileForm.summaryModelId,
+        imageModelId: profileForm.imageModelId,
+        fallbackModelId: profileForm.fallbackModelId,
+        temperature: profileForm.temperature ? parseFloat(profileForm.temperature) : null,
+        systemPrompt: profileForm.systemPrompt,
+      }
+      const updated = await api.presets.update(editingProfile.id, payload)
+      setPresets(prev => prev.map(p => (p.id === updated.id ? updated : p)))
+      toast.success('Profile updated')
+      setProfileOpen(false)
+      setEditingProfile(null)
+      await refresh()
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Update failed')
+    }
+  }, [editingProfile, profileForm, refresh])
+
+  async function applyChatModel(next: string) {
+    const modelId = next === NONE ? '' : next
+    if (!chatPreset || modelId === chatPreset.chatModelId) return
+    setBusy('chat')
+    try {
+      const updated = await api.presets.update(chatPreset.id, {
+        name: chatPreset.name,
+        chatModelId: modelId,
+        summaryModelId: chatPreset.summaryModelId,
+        imageModelId: chatPreset.imageModelId,
+        fallbackModelId: chatPreset.fallbackModelId,
+        temperature: chatPreset.temperature,
+        systemPrompt: chatPreset.systemPrompt,
       })
-      setSettings(updated)
-      const name = presets.find(p => p.id === next)?.name ?? 'preset'
-      triggerFlash(`next message uses preset “${name}”`)
+      setPresets(prev => prev.map(p => (p.id === updated.id ? updated : p)))
+      const label = modelId ? models.find(m => m.id === modelId)?.name ?? modelId : 'none'
+      triggerFlash(`chat model · ${label}`)
     } catch {
-      triggerFlash('failed to update preset')
+      triggerFlash('failed to update chat model')
     } finally {
       setBusy(null)
     }
   }
 
-  async function onModelChange(next: string) {
-    if (!activePreset || next === activePreset.chatModelId) return
-    setBusy('model')
+  async function applyServerModel(next: string) {
+    const modelId = next === NONE ? '' : next
+    if (!serverPreset || modelId === serverPreset.chatModelId) return
+    setBusy('server')
     try {
-      const updated = await api.presets.update(activePreset.id, {
-        name: activePreset.name,
-        chatModelId: next,
-        summaryModelId: activePreset.summaryModelId,
-        imageModelId: activePreset.imageModelId,
-        fallbackModelId: activePreset.fallbackModelId,
-        temperature: activePreset.temperature,
-        systemPrompt: activePreset.systemPrompt,
+      const updated = await api.presets.update(serverPreset.id, {
+        name: serverPreset.name,
+        chatModelId: modelId,
+        summaryModelId: serverPreset.summaryModelId,
+        imageModelId: serverPreset.imageModelId,
+        fallbackModelId: serverPreset.fallbackModelId,
+        temperature: serverPreset.temperature,
+        systemPrompt: serverPreset.systemPrompt,
       })
       setPresets(prev => prev.map(p => (p.id === updated.id ? updated : p)))
-      const name = models.find(m => m.id === next)?.name ?? 'model'
-      triggerFlash(`next message uses “${name}”`)
+      const label = modelId ? models.find(m => m.id === modelId)?.name ?? modelId : 'none'
+      triggerFlash(`servers / SSH model · ${label}`)
     } catch {
-      triggerFlash('failed to update model')
+      triggerFlash('failed to update server model')
     } finally {
       setBusy(null)
     }
   }
+
+  const modelItems = models.map(m => {
+    const conn = endpointById.get(m.connectionId)
+    return {
+      value: m.id,
+      label: m.name,
+      sub: conn ? `${conn.provider} · ${conn.id}` : undefined,
+    }
+  })
+
+  const chatModelValue = chatPreset?.chatModelId || NONE
+  const serverModelValue = serverPreset?.chatModelId || NONE
+
+  const editBtnClass =
+    'shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md ' +
+    'text-[var(--grand-muted)] hover:text-emerald-400 hover:bg-[var(--grand-surface-2)] ' +
+    'transition-colors disabled:pointer-events-none disabled:opacity-35 outline-none ' +
+    'focus-visible:ring-1 focus-visible:ring-emerald-400/60'
 
   if (!settings || presets.length === 0) {
     return null
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-[var(--grand-muted)] min-w-0">
-      <SlotSelect
-        icon={<Layers size={13} strokeWidth={1.6} className="text-[var(--grand-muted)]" />}
-        label="preset"
-        value={activePreset?.id ?? ''}
-        displayValue={activePreset?.name ?? '—'}
-        onChange={onPresetChange}
-        disabled={busy === 'preset'}
-        items={presets.map(p => ({
-          value: p.id,
-          label: p.name,
-          sub: modelNameFor(p.chatModelId, models),
-        }))}
-        emptyLabel="no presets"
+    <>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-[var(--grand-muted)] min-w-0">
+        <div className="flex min-w-0 items-center gap-0.5">
+          <SlotSelect
+            icon={<Brain size={13} strokeWidth={1.6} className="text-[var(--grand-muted)]" />}
+            label="chat"
+            value={chatModelValue}
+            displayValue={chatModel?.name ?? 'None'}
+            onChange={applyChatModel}
+            disabled={!chatPreset || busy === 'chat' || models.length === 0}
+            items={[
+              { value: NONE, label: 'None', sub: undefined },
+              ...modelItems,
+            ]}
+            emptyLabel="no models defined — AI Engine"
+          />
+          <button
+            type="button"
+            className={editBtnClass}
+            title="Full preset: roles, temperature, system prompt"
+            disabled={!chatPreset || busy === 'chat'}
+            onClick={() => openEditPreset(chatPreset, 'chat')}
+          >
+            <Pencil size={13} strokeWidth={1.6} />
+          </button>
+        </div>
+
+        <span className="text-[var(--grand-muted-2)]/60 select-none">·</span>
+
+        <div className="flex min-w-0 items-center gap-0.5">
+          <SlotSelect
+            icon={<Cloud size={13} strokeWidth={1.6} className="text-[var(--grand-muted)]" />}
+            label="servers"
+            value={serverModelValue}
+            displayValue={serverModel?.name ?? 'None'}
+            onChange={applyServerModel}
+            disabled={!serverPreset || busy === 'server' || models.length === 0}
+            items={[
+              { value: NONE, label: 'None', sub: undefined },
+              ...modelItems,
+            ]}
+            emptyLabel="no models defined — AI Engine"
+          />
+          <button
+            type="button"
+            className={editBtnClass}
+            title="Full preset: roles, temperature, system prompt"
+            disabled={!serverPreset || busy === 'server'}
+            onClick={() => openEditPreset(serverPreset, 'server')}
+          >
+            <Pencil size={13} strokeWidth={1.6} />
+          </button>
+        </div>
+
+        {flash && (
+          <span className="ml-auto text-[11.5px] text-emerald-400 truncate max-w-[50%]">
+            {flash}
+          </span>
+        )}
+      </div>
+
+      <ProfileDialog
+        open={profileOpen}
+        onOpenChange={open => {
+          setProfileOpen(open)
+          if (!open) setEditingProfile(null)
+        }}
+        editing={editingProfile}
+        form={profileForm}
+        setForm={setProfileForm}
+        onSubmit={() => { void submitProfile() }}
+        models={models}
+        endpointById={endpointById}
       />
-
-      <span className="text-[var(--grand-muted-2)]/60 select-none">·</span>
-
-      <SlotSelect
-        icon={<Brain size={13} strokeWidth={1.6} className="text-[var(--grand-muted)]" />}
-        label="chat model"
-        value={activeChatModel?.id ?? ''}
-        displayValue={activeChatModel?.name ?? '—'}
-        onChange={onModelChange}
-        disabled={!activePreset || busy === 'model'}
-        items={models.map(m => {
-          const conn = connById.get(m.connectionId)
-          return {
-            value: m.id,
-            label: m.name,
-            sub: conn ? `${conn.provider}` : undefined,
-          }
-        })}
-        emptyLabel="no models"
-      />
-
-      {flash && (
-        <span className="ml-auto text-[11.5px] text-emerald-400 truncate max-w-[50%]">
-          {flash}
-        </span>
-      )}
-    </div>
+    </>
   )
-}
-
-function modelNameFor(modelId: string | undefined, models: Model[]): string | undefined {
-  if (!modelId) return undefined
-  return models.find(m => m.id === modelId)?.name
 }
 
 interface SlotSelectProps {

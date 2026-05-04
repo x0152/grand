@@ -95,6 +95,10 @@
   --grand-accent:    #059669;
   --grand-accent-2:  #047857;
   --grand-accent-soft: rgba(5, 150, 105, 0.12);
+
+  /* Chat canvas: grain only (no color washes / gradients) */
+  --grand-chat-grain: rgba(15, 23, 42, 0.078);
+  --grand-chat-grain-2: rgba(15, 23, 42, 0.042);
 }
 
 .dark {
@@ -135,6 +139,9 @@
   --grand-accent:    #34d399;
   --grand-accent-2:  #10b981;
   --grand-accent-soft: rgba(52, 211, 153, 0.14);
+
+  --grand-chat-grain: rgba(255, 255, 255, 0.085);
+  --grand-chat-grain-2: rgba(255, 255, 255, 0.048);
 }
 
 * {
@@ -174,6 +181,20 @@ code, kbd, pre, samp, .font-mono {
 }
 
 @layer components {
+  /**
+   * Chat thread: scrolls with messages (wrapper needs min-h-full).
+   * Neutral dot grain only — flat base (--grand-bg), no gradients.
+   */
+  .grand-chat-canvas {
+    background-color: var(--grand-bg);
+    background-image:
+      radial-gradient(var(--grand-chat-grain) 0.75px, transparent 0.82px),
+      radial-gradient(var(--grand-chat-grain-2) 0.55px, transparent 0.62px);
+    background-size: 16px 16px, 16px 16px;
+    background-position: 0 0, 8px 8px;
+    background-attachment: scroll;
+  }
+
   .markdown :not(pre) > code {
     background: var(--grand-bg);
     border: 1px solid var(--grand-border);

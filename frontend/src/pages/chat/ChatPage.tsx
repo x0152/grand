@@ -298,7 +298,7 @@ export default function ChatPage({ sessionId, onFirstMessage }: Props) {
 
   if (!sessionId) {
     return (
-      <div className="flex items-center justify-center h-full text-[14px] text-[var(--grand-muted)]">
+      <div className="grand-chat-canvas flex h-full min-h-0 w-full items-center justify-center text-[14px] text-[var(--grand-muted)]">
         Select a chat or create a new one
       </div>
     )
@@ -307,42 +307,44 @@ export default function ChatPage({ sessionId, onFirstMessage }: Props) {
   return (
     <div className="flex h-full min-w-0">
       <div
-        className="flex flex-col h-full min-w-0 flex-1 relative"
+        className="flex h-full min-w-0 flex-1 flex-col bg-[var(--grand-bg)] relative"
         onDragEnter={onDragEnter}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
-        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-auto px-6 py-5 space-y-1">
-          {hasMore && messages.length > 0 && (
-            <LoadMoreButton pageSize={PAGE_SIZE} loading={loadingMore} onClick={loadMoreMessages} />
-          )}
-          {messages.length === 0 && (
-            <EmptyState
-              disabled={isPlanSession || sending}
-              onInsert={prompt => {
-                setInput(prompt)
-                textareaRef.current?.focus()
-              }}
-              onSend={prompt => {
-                setInput('')
-                void send(prompt)
-              }}
-            />
-          )}
-          <div className="space-y-3">
-            {messages.map(msg => (
-              <MessageBubble
-                key={msg.id}
-                msg={msg}
-                onStepClick={setActiveStep}
-                canRegenerate={!isPlanSession && msg.id === lastAssistantId && !hasPending && msg.status !== 'pending'}
-                onRegenerate={regenerate}
-                regenerating={regenerating && msg.id === lastAssistantId}
+        <div ref={scrollRef} onScroll={handleScroll} className="min-h-0 flex-1 overflow-auto">
+          <div className="grand-chat-canvas min-h-full space-y-1 px-6 py-5">
+            {hasMore && messages.length > 0 && (
+              <LoadMoreButton pageSize={PAGE_SIZE} loading={loadingMore} onClick={loadMoreMessages} />
+            )}
+            {messages.length === 0 && (
+              <EmptyState
+                disabled={isPlanSession || sending}
+                onInsert={prompt => {
+                  setInput(prompt)
+                  textareaRef.current?.focus()
+                }}
+                onSend={prompt => {
+                  setInput('')
+                  void send(prompt)
+                }}
               />
-            ))}
+            )}
+            <div className="space-y-3">
+              {messages.map(msg => (
+                <MessageBubble
+                  key={msg.id}
+                  msg={msg}
+                  onStepClick={setActiveStep}
+                  canRegenerate={!isPlanSession && msg.id === lastAssistantId && !hasPending && msg.status !== 'pending'}
+                  onRegenerate={regenerate}
+                  regenerating={regenerating && msg.id === lastAssistantId}
+                />
+              ))}
+            </div>
+            <div ref={bottomRef} />
           </div>
-          <div ref={bottomRef} />
         </div>
 
         {dragOver && !isPlanSession && <DropOverlay />}
