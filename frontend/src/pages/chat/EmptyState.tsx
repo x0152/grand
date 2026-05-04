@@ -1,4 +1,5 @@
-import { SUGGESTIONS } from './suggestions'
+import { SUGGESTIONS, type SuggestionKind } from './suggestions'
+import { type IconComponent } from '@/lib/icons'
 
 interface EmptyStateProps {
   disabled?: boolean
@@ -15,19 +16,21 @@ export function EmptyState({ disabled, onInsert, onSend }: EmptyStateProps) {
     )
   }
   return (
-    <div className="flex flex-col items-center justify-center h-full px-4 py-10 max-w-2xl mx-auto w-full">
-      <div className="self-stretch mb-5">
+    <div className="flex flex-col h-full w-full px-2 py-10">
+      <div className="mb-5">
         <h3 className="text-[18px] font-semibold tracking-tight text-[var(--grand-fg)]">What should we try?</h3>
         <p className="text-[13px] text-[var(--grand-muted)] mt-1.5">
           A few ideas tailored to this setup · click to insert · double-click to send
         </p>
       </div>
-      <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="grid w-full grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 items-stretch">
         {SUGGESTIONS.map(s => (
           <SuggestionCard
-            key={s.title}
+            key={s.id}
             icon={s.icon}
             title={s.title}
+            gets={s.gets}
+            kind={s.kind}
             prompt={s.prompt}
             disabled={disabled}
             onInsert={() => onInsert(s.prompt)}
@@ -40,23 +43,38 @@ export function EmptyState({ disabled, onInsert, onSend }: EmptyStateProps) {
 }
 
 interface SuggestionCardProps {
-  icon: import('@/lib/icons').IconComponent
+  icon: IconComponent
   title: string
+  gets: string
+  kind: SuggestionKind
   prompt: string
   disabled?: boolean
   onInsert: () => void
   onSend: () => void
 }
 
-function SuggestionCard({ icon: Icon, title, prompt, disabled, onInsert, onSend }: SuggestionCardProps) {
+// Tone per kind. Artifact outcomes (image/table/chart/gif/answer) get the
+// accent tint so the eye reads "you'll get a thing" instantly. Automation
+// outcomes (action) stay neutral — they set something up rather than returning
+// a single artifact.
+const KIND_CLASS: Record<SuggestionKind, string> = {
+  answer: 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10',
+  image: 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10',
+  table: 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10',
+  chart: 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10',
+  gif: 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10',
+  action: 'text-[var(--grand-fg-2)] border-[var(--grand-border-strong)] bg-[var(--grand-surface-2)]',
+}
+
+function SuggestionCard({ icon: Icon, title, gets, kind, prompt, disabled, onInsert, onSend }: SuggestionCardProps) {
   return (
     <button
       type="button"
       onClick={onInsert}
       onDoubleClick={onSend}
       disabled={disabled}
-      title="Click to insert into the prompt, double-click to send"
-      className="group flex items-start gap-3 text-left px-4 py-3.5 min-w-0 rounded-lg
+      title={`${prompt}\n\nClick to insert · double-click to send`}
+      className="group flex h-full min-h-0 w-full min-w-0 text-left rounded-lg
                  border border-[var(--grand-border)]
                  bg-[var(--grand-surface)]
                  hover:border-emerald-400/60
@@ -65,13 +83,24 @@ function SuggestionCard({ icon: Icon, title, prompt, disabled, onInsert, onSend 
                  hover:text-[var(--grand-fg)]
                  transition-colors disabled:opacity-50 disabled:cursor-not-allowed select-none"
     >
-      <div className="shrink-0 mt-0.5 text-[var(--grand-muted)] group-hover:text-emerald-400">
-        <Icon size={16} strokeWidth={1.5} />
-      </div>
-      <div className="min-w-0">
-        <div className="text-[14px] font-medium truncate">{title}</div>
-        <div className="text-[12.5px] text-[var(--grand-muted)] mt-1 line-clamp-2 leading-snug">
-          {prompt}
+      <div className="flex min-h-0 w-full min-w-0 items-stretch gap-3.5 px-4 py-4">
+        <div className="shrink-0 self-start pt-0.5 text-[var(--grand-muted)] group-hover:text-emerald-400 transition-colors">
+          <Icon size={20} strokeWidth={1.5} />
+        </div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 items-start justify-between gap-3">
+            <div className="text-[15px] font-medium text-[var(--grand-fg)] leading-snug">{title}</div>
+            <span
+              className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-[11.5px]
+                          leading-none ${KIND_CLASS[kind]}`}
+            >
+              <span className="opacity-60">→</span>
+              {gets}
+            </span>
+          </div>
+          <div className="mt-2 flex-1 text-[12.5px] leading-snug text-[var(--grand-muted)] line-clamp-2 group-hover:line-clamp-[8]">
+            {prompt}
+          </div>
         </div>
       </div>
     </button>

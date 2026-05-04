@@ -183,6 +183,111 @@
     .wm-text.huge  { font-size: 56px; letter-spacing: -0.05em; }
     .wm-text.dot   { letter-spacing: 0.32em; }
 
+    /* ────────── Grant's Pipe · realistic smoke logo experiment ────────── */
+    .pipe-stage {
+      height: 360px;
+      display: flex; align-items: flex-end; justify-content: center;
+      padding-bottom: 28px;
+      border-radius: var(--radius);
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 70%, rgba(52,211,153,0.08), transparent 70%),
+        radial-gradient(ellipse at 50% 0%, rgba(52,211,153,0.06), transparent 60%),
+        var(--card);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      position: relative;
+    }
+    .pipe-stage::before {
+      /* faint horizontal "table" line under the pipe */
+      content: "";
+      position: absolute; left: 12%; right: 12%; bottom: 26px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line-2), transparent);
+      pointer-events: none;
+    }
+
+    .pipe-stage svg.pipe-svg {
+      width: 320px; height: 320px;
+    }
+    .pipe-thumb-stage {
+      height: 130px;
+      display: flex; align-items: flex-end; justify-content: center;
+      padding-bottom: 6px;
+      border-radius: 6px;
+      background:
+        radial-gradient(ellipse at center, var(--accent-soft), transparent 70%),
+        var(--card-2);
+      border: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+    .pipe-thumb-stage svg { width: 96px; height: 96px; }
+
+    /* ── pipe geometry colors ── */
+    .pipe-svg .pipe-body   { fill: #1c1d22; stroke: #71717a; stroke-width: 1.2; }
+    .pipe-svg .pipe-stem   { stroke: #52525b; stroke-linecap: round; fill: none; }
+    .pipe-svg .pipe-stem-hi{ stroke: #a1a1aa; stroke-linecap: round; fill: none; opacity: 0.55; }
+    .pipe-svg .pipe-mouth  { fill: #18181b; }
+    .pipe-svg .pipe-rim    { fill: #08080a; stroke: #a1a1aa; stroke-width: 1.4; }
+    .pipe-svg .pipe-rim-hi { stroke: rgba(255,255,255,0.18); stroke-width: 1; fill: none; }
+    [data-theme="light"] .pipe-svg .pipe-body  { fill: #3f3f46; stroke: #18181b; }
+    [data-theme="light"] .pipe-svg .pipe-stem  { stroke: #27272a; }
+    [data-theme="light"] .pipe-svg .pipe-stem-hi { stroke: #71717a; opacity: 0.5; }
+    [data-theme="light"] .pipe-svg .pipe-mouth { fill: #09090b; }
+    [data-theme="light"] .pipe-svg .pipe-rim   { fill: #18181b; stroke: #52525b; }
+
+    /* ── ember in the bowl ── */
+    @keyframes pipe-ember {
+      0%, 100% { opacity: 0.6; }
+      50%      { opacity: 1; }
+    }
+    .pipe-svg .pipe-ember {
+      animation: pipe-ember 2.4s ease-in-out infinite;
+      transform-origin: center;
+    }
+
+    /* ── realistic smoke columns ──
+       each puff is a soft green circle filtered through
+       turbulence + displacement + blur, animated rising and fading. */
+    @keyframes pipe-smoke-rise {
+      0%   { transform: translate(0, 0)      scale(0.35); opacity: 0; }
+      18%  { opacity: 0.85; }
+      55%  { opacity: 0.55; }
+      100% { transform: translate(var(--drift, 4px), -70px) scale(1.7); opacity: 0; }
+    }
+    .pipe-svg .smoke-puff {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pipe-smoke-rise 4s ease-out infinite;
+      animation-delay: var(--delay, 0s);
+      will-change: transform, opacity;
+    }
+    .pipe-svg .smoke-puff.p1 { --delay: 0s;    --drift: -3px; }
+    .pipe-svg .smoke-puff.p2 { --delay: 0.6s;  --drift:  5px; }
+    .pipe-svg .smoke-puff.p3 { --delay: 1.2s;  --drift: -6px; }
+    .pipe-svg .smoke-puff.p4 { --delay: 1.8s;  --drift:  3px; }
+    .pipe-svg .smoke-puff.p5 { --delay: 2.4s;  --drift: -4px; }
+    .pipe-svg .smoke-puff.p6 { --delay: 3.0s;  --drift:  6px; }
+    .pipe-svg .smoke-puff.p7 { --delay: 3.6s;  --drift: -2px; }
+
+    /* a base "haze" that's always visible above the bowl —
+       gives the illusion of continuous smoke even between puffs. */
+    @keyframes pipe-haze {
+      0%, 100% { opacity: 0.45; transform: translateY(0) scaleX(1); }
+      50%      { opacity: 0.7;  transform: translateY(-3px) scaleX(1.08); }
+    }
+    .pipe-svg .pipe-haze {
+      animation: pipe-haze 3.6s ease-in-out infinite;
+      transform-origin: 32px 28px;
+      transform-box: fill-box;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pipe-svg .smoke-puff,
+      .pipe-svg .pipe-haze,
+      .pipe-svg .pipe-ember { animation: none; }
+      .pipe-svg .smoke-puff { opacity: 0.4; }
+    }
+
     /* Palettes */
     .palettes {
       display: grid; gap: 14px;
@@ -1257,6 +1362,182 @@
         </div>
 
       </div>
+    </section>
+
+    <!-- PIPE EXPERIMENT -->
+    <section class="section">
+      <h2>1.5 · Grant's Pipe — experimental</h2>
+      <p class="sub">
+        Отсылка к О. У. Гранту из «Interstate 60» с его волшебной курительной трубкой.
+        Корпус из брайра, эмбер в чашке, дым — реальный SVG: turbulence + displacement-map
+        органично искажают силуэт, gaussian-blur даёт мягкие края, а CSS-анимация
+        поднимает «клубы» и постепенно их рассеивает.
+      </p>
+
+      <div class="pipe-stage" aria-label="Grant's pipe with green smoke rising">
+        <svg class="pipe-svg" viewBox="0 0 96 96" fill="none" role="img"
+             aria-label="GRAND — Grant's pipe">
+          <title>GRAND · Grant's pipe</title>
+
+          <defs>
+            <!-- vertical green gradient: dense at the source, gone near the top -->
+            <linearGradient id="smoke-grad" x1="0" y1="100%" x2="0" y2="0%">
+              <stop offset="0%"  stop-color="#34d399" stop-opacity="0.95"/>
+              <stop offset="35%" stop-color="#34d399" stop-opacity="0.65"/>
+              <stop offset="70%" stop-color="#6ee7b7" stop-opacity="0.30"/>
+              <stop offset="100%" stop-color="#a7f3d0" stop-opacity="0"/>
+            </linearGradient>
+
+            <!-- soft radial fill for puffs -->
+            <radialGradient id="puff-grad" cx="50%" cy="55%" r="55%">
+              <stop offset="0%"  stop-color="#34d399" stop-opacity="0.85"/>
+              <stop offset="55%" stop-color="#34d399" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+            </radialGradient>
+
+            <!-- bowl ember: orange center fading through red into nothing -->
+            <radialGradient id="ember-grad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"  stop-color="#fde68a" stop-opacity="1"/>
+              <stop offset="35%" stop-color="#f59e0b" stop-opacity="0.95"/>
+              <stop offset="75%" stop-color="#dc2626" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0"/>
+            </radialGradient>
+
+            <!-- ambient halo above the bowl rim -->
+            <radialGradient id="halo-grad" cx="50%" cy="100%" r="80%">
+              <stop offset="0%"  stop-color="#34d399" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+            </radialGradient>
+
+            <!-- THE smoke filter: soft turbulence-warped puffs.
+                 turbulence builds an organic noise field, displacementMap
+                 warps the puff edges along that field, gaussianBlur smooths
+                 everything into the look of real smoke. -->
+            <filter id="smoke-fx" x="-50%" y="-50%" width="200%" height="200%"
+                    color-interpolation-filters="sRGB">
+              <feTurbulence type="fractalNoise" baseFrequency="0.022 0.06"
+                            numOctaves="2" seed="7" result="noise"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise"
+                                 scale="6" xChannelSelector="R" yChannelSelector="G"/>
+              <feGaussianBlur stdDeviation="1.6"/>
+            </filter>
+
+            <filter id="smoke-fx-strong" x="-60%" y="-60%" width="220%" height="220%"
+                    color-interpolation-filters="sRGB">
+              <feTurbulence type="fractalNoise" baseFrequency="0.018 0.05"
+                            numOctaves="3" seed="3" result="noise"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise"
+                                 scale="9" xChannelSelector="R" yChannelSelector="G"/>
+              <feGaussianBlur stdDeviation="2.4"/>
+            </filter>
+
+            <!-- pipe inner shadow for the bowl -->
+            <filter id="bowl-shade" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="0.7"/>
+            </filter>
+          </defs>
+
+          <!-- ambient halo behind the bowl rim -->
+          <ellipse cx="32" cy="40" rx="22" ry="14" fill="url(#halo-grad)"/>
+
+          <!-- ── PIPE BODY ───────────────────────────────────────────── -->
+
+          <!-- stem (curved tube going from bowl base to mouthpiece) -->
+          <path class="pipe-stem"
+                d="M40 64 C 56 70, 72 70, 84 66"
+                stroke-width="6.5"/>
+          <!-- stem highlight ridge -->
+          <path class="pipe-stem-hi"
+                d="M42 62 C 56 67.5, 72 67.5, 82 64.5"
+                stroke-width="1.2"/>
+
+          <!-- mouthpiece tip (slightly wider darker bit) -->
+          <ellipse class="pipe-mouth" cx="84" cy="66" rx="4.2" ry="3.4"/>
+
+          <!-- bowl: bell-shaped body -->
+          <path class="pipe-body"
+                d="M22 38
+                   L22 54
+                   Q 22 64 32 64
+                   Q 42 64 42 54
+                   L42 38 Z"
+                filter="url(#bowl-shade)"/>
+
+          <!-- bowl rim (inner darkness, opening of the chamber) -->
+          <ellipse class="pipe-rim" cx="32" cy="38" rx="10.5" ry="3.2"/>
+          <!-- subtle highlight on outer rim edge -->
+          <ellipse class="pipe-rim-hi" cx="32" cy="37.4" rx="10.2" ry="2.4"/>
+
+          <!-- ember: glowing tobacco inside the rim -->
+          <ellipse class="pipe-ember" cx="32" cy="38" rx="7.5" ry="2.1"
+                   fill="url(#ember-grad)"/>
+          <ellipse class="pipe-ember" cx="32" cy="38" rx="3.5" ry="1.1"
+                   fill="#fef3c7" opacity="0.85"/>
+
+          <!-- ── SMOKE ──────────────────────────────────────────────────
+               two layered passes: a strong-warped column for body
+               + crisper individual puffs rising on top. -->
+
+          <!-- continuous "haze" column behind the puffs -->
+          <g class="pipe-haze" filter="url(#smoke-fx-strong)" opacity="0.55">
+            <path d="M22 36
+                     C 18 22, 28 14, 24 0
+                     L 40 0
+                     C 44 14, 38 22, 42 36 Z"
+                  fill="url(#smoke-grad)"/>
+          </g>
+
+          <!-- 7 individual puffs rising from the rim, staggered in time -->
+          <g filter="url(#smoke-fx)">
+            <circle class="smoke-puff p1" cx="32" cy="34" r="6"  fill="url(#puff-grad)"/>
+            <circle class="smoke-puff p2" cx="30" cy="34" r="5"  fill="url(#puff-grad)"/>
+            <circle class="smoke-puff p3" cx="34" cy="34" r="5.5" fill="url(#puff-grad)"/>
+            <circle class="smoke-puff p4" cx="29" cy="34" r="4.5" fill="url(#puff-grad)"/>
+            <circle class="smoke-puff p5" cx="35" cy="34" r="6"  fill="url(#puff-grad)"/>
+            <circle class="smoke-puff p6" cx="31" cy="34" r="5"  fill="url(#puff-grad)"/>
+            <circle class="smoke-puff p7" cx="33" cy="34" r="4.8" fill="url(#puff-grad)"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="grid" style="margin-top: 22px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+
+        <!-- thumb: 96x96 to see how it scales down -->
+        <div class="card">
+          <div class="pipe-thumb-stage">
+            <svg class="pipe-svg" viewBox="0 0 96 96" fill="none" aria-hidden="true">
+              <use href="#pipe-mark-thumb"/>
+            </svg>
+          </div>
+          <div class="meta"><span class="name">Grant's Pipe</span><span class="id">11</span></div>
+          <div class="desc">Брайровая трубка O.&#8239;W.&#8239;Granta. Дым — настоящие SVG-фильтры (turbulence + blur), эмбер пульсирует, клубы поднимаются и рассеиваются.</div>
+        </div>
+
+      </div>
+
+      <!-- the actual reusable mark for the thumbnail (same geometry, simpler animation) -->
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+          <symbol id="pipe-mark-thumb" viewBox="0 0 96 96">
+            <ellipse cx="32" cy="40" rx="22" ry="14" fill="url(#halo-grad)"/>
+            <path class="pipe-stem"   d="M40 64 C 56 70, 72 70, 84 66" stroke-width="6.5"/>
+            <path class="pipe-stem-hi" d="M42 62 C 56 67.5, 72 67.5, 82 64.5" stroke-width="1.2"/>
+            <ellipse class="pipe-mouth" cx="84" cy="66" rx="4.2" ry="3.4"/>
+            <path class="pipe-body"
+                  d="M22 38 L22 54 Q 22 64 32 64 Q 42 64 42 54 L42 38 Z"/>
+            <ellipse class="pipe-rim" cx="32" cy="38" rx="10.5" ry="3.2"/>
+            <ellipse class="pipe-rim-hi" cx="32" cy="37.4" rx="10.2" ry="2.4"/>
+            <ellipse class="pipe-ember" cx="32" cy="38" rx="7.5" ry="2.1" fill="url(#ember-grad)"/>
+            <ellipse class="pipe-ember" cx="32" cy="38" rx="3.5" ry="1.1" fill="#fef3c7" opacity="0.85"/>
+            <g filter="url(#smoke-fx)">
+              <circle class="smoke-puff p1" cx="32" cy="34" r="6"   fill="url(#puff-grad)"/>
+              <circle class="smoke-puff p3" cx="34" cy="34" r="5.5" fill="url(#puff-grad)"/>
+              <circle class="smoke-puff p5" cx="30" cy="34" r="6"   fill="url(#puff-grad)"/>
+              <circle class="smoke-puff p7" cx="33" cy="34" r="4.8" fill="url(#puff-grad)"/>
+            </g>
+          </symbol>
+        </defs>
+      </svg>
     </section>
 
     <!-- WORDMARKS -->

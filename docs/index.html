@@ -403,34 +403,40 @@
 
       <div class="grid-3" data-stagger="70">
         <div class="card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
           <h3>Fleet diagnostics</h3>
-          <p>Run diagnostics across many hosts from isolated sandboxes; get a clear summary, not raw terminal noise.</p>
+          <p class="lead">One clear summary across many hosts — not raw terminal noise.</p>
+          <p class="sub">Runs checks from isolated sandboxes, aggregates output, surfaces the few lines that matter.</p>
         </div>
         <div class="card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-bolt"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-bolt"/></svg></span>
           <h3>Scripted remediation</h3>
-          <p>Restart services or apply playbooks via skills declared in the guard profile. Everything outside the whitelist is rejected.</p>
+          <p class="lead">Restart services or apply playbooks — only the actions on the whitelist.</p>
+          <p class="sub">Skills are declared in the guard profile; anything outside it is rejected before execution.</p>
         </div>
         <div class="card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-cluster"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-cluster"/></svg></span>
           <h3>Specialized sandboxes</h3>
-          <p><code>base</code> for CLI, <code>browser</code> for web checks, <code>python</code> for scripting, <code>ffmpeg</code> for media, <code>db</code> for SQL.</p>
+          <p class="lead">The right environment per job — CLI, browser, Python, media, SQL.</p>
+          <p class="sub"><code>base</code> · <code>browser</code> · <code>python</code> · <code>ffmpeg</code> · <code>db</code> — sibling containers, swap in your own.</p>
         </div>
         <div class="card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-shield"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-shield"/></svg></span>
           <h3>Guard profiles</h3>
-          <p>Capabilities and command whitelists per host. Deterministic rejection — free-form shell on production never happens.</p>
+          <p class="lead">Deterministic rejection — free-form shell on production never happens.</p>
+          <p class="sub">Capabilities and command whitelists declared per host; every tool call is authorized before it runs.</p>
         </div>
         <div class="card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-route"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-route"/></svg></span>
           <h3>Constrained SSH</h3>
-          <p>Sandboxes reach your servers over SSH with scoped users and keys configured per connection — not your shell credentials.</p>
+          <p class="lead">Agents reach your servers under scoped users — not your shell credentials.</p>
+          <p class="sub">Per-connection users and keys. Blast radius is defined by the server, not by the agent's creativity.</p>
         </div>
         <div class="card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-doc"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-doc"/></svg></span>
           <h3>Session logs</h3>
-          <p>Every prompt, tool call, step, and guard decision persisted per connection. Queryable in the UI and the database.</p>
+          <p class="lead">Every prompt, tool call, and guard decision — queryable.</p>
+          <p class="sub">Persisted per connection in PostgreSQL; browse from the UI or query directly.</p>
         </div>
       </div>
     </div>
@@ -446,33 +452,57 @@
 
       <div class="grid-3" data-stagger="60">
         <div class="card prompt-card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-eye"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-eye"/></svg></span>
           <h3>Screenshot a website</h3>
+          <div class="outcomes">
+            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>png image</span>
+            <span class="outcome muted">sandbox · browser</span>
+          </div>
           <p class="prompt">Take a screenshot of the Hacker News homepage and send me the picture.</p>
         </div>
         <div class="card prompt-card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-cluster"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-cluster"/></svg></span>
           <h3>Trending repos this week</h3>
+          <div class="outcomes">
+            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>table · 5 rows</span>
+            <span class="outcome muted">sandbox · browser</span>
+          </div>
           <p class="prompt">Find the 5 most popular GitHub projects from the last 7 days. Show name, description, stars, and a link.</p>
         </div>
         <div class="card prompt-card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
           <h3>Plot Bitcoin price</h3>
+          <div class="outcomes">
+            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>line chart · png</span>
+            <span class="outcome muted">sandbox · python</span>
+          </div>
           <p class="prompt">Get the Bitcoin price for the last 30 days, draw a simple line chart, and send me the picture.</p>
         </div>
         <div class="card prompt-card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-bolt"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-bolt"/></svg></span>
           <h3>Schedule a daily brief</h3>
+          <div class="outcomes">
+            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>digest · mon–fri 09:00</span>
+            <span class="outcome muted">recurring plan</span>
+          </div>
           <p class="prompt">Every weekday at 9:00, grab the top 5 Hacker News stories, summarize each in one sentence, and send me the digest.</p>
         </div>
         <div class="card prompt-card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-terminal"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-terminal"/></svg></span>
           <h3>Spin up a Rust workspace</h3>
+          <div class="outcomes">
+            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>running hello-world</span>
+            <span class="outcome muted">sandbox · base</span>
+          </div>
           <p class="prompt">Set up a fresh environment with Rust and Cargo, then write and run a tiny hello-world so I see it works.</p>
         </div>
         <div class="card prompt-card reveal">
-          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-shield"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-shield"/></svg></span>
           <h3>Quick security scan</h3>
+          <div class="outcomes">
+            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>open ports · short table</span>
+            <span class="outcome muted">sandbox · base</span>
+          </div>
           <p class="prompt">Run a quick scan of scanme.nmap.org. Show open ports and what is listening, in a short table.</p>
         </div>
       </div>

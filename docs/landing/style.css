@@ -736,38 +736,61 @@ code, kbd, pre, samp, .mono {
 }
 
 .card {
-  border-radius: var(--radius);
+  border-radius: 10px;
   background: var(--card);
   border: 1px solid var(--line-strong);
-  padding: 22px;
-  transition: border-color 160ms ease, background 160ms ease;
+  padding: 26px 24px;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 .card:hover {
   border-color: var(--accent-line);
+  background: color-mix(in oklab, var(--card) 96%, var(--accent-soft));
 }
 
 .card .icon {
-  width: 34px; height: 34px; border-radius: 7px;
+  width: 42px; height: 42px; border-radius: 9px;
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--accent-soft);
   color: var(--accent-bright);
   border: 1px solid var(--accent-line);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  flex: none;
 }
 
 .card h3 {
-  margin: 0 0 6px;
-  font-size: 15px;
+  margin: 0 0 8px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
   color: var(--fg);
 }
 .card p {
   margin: 0;
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--fg-2);
   line-height: 1.55;
 }
+
+/* two-layer copy: .lead reads first (outcome in one line),
+   .sub is the supporting detail */
+.card p.lead {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--fg);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  margin-bottom: 6px;
+}
+.card p.sub {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .card code {
   font-size: 12.5px;
   background: var(--bg);
@@ -777,31 +800,57 @@ code, kbd, pre, samp, .mono {
 }
 
 /* prompt cards · "try asking" examples on the landing
-   the .prompt paragraph reads as a one-line terminal command */
+   outcomes chips tell you what the run returns at a glance;
+   the .prompt paragraph stays as the literal terminal-style text */
 .prompt-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+}
+.prompt-card .outcomes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.prompt-card .outcome {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-bright);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  border-radius: 4px;
+  padding: 3px 8px;
+  letter-spacing: -0.005em;
+  text-transform: lowercase;
+}
+.prompt-card .outcome svg { flex: none; }
+.prompt-card .outcome.muted {
+  color: var(--muted);
+  background: var(--card-2);
+  border-color: var(--line-strong);
 }
 .prompt-card .prompt {
   margin-top: auto;
   background: var(--bg);
   border: 1px solid var(--line-strong);
   border-radius: 6px;
-  padding: 10px 12px;
+  padding: 11px 13px 11px 28px;
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.5;
-  color: var(--fg-2);
+  color: var(--muted);
   white-space: normal;
   position: relative;
-  padding-left: 26px;
 }
 .prompt-card .prompt::before {
   content: "›";
   position: absolute;
-  left: 12px;
-  top: 10px;
+  left: 13px;
+  top: 11px;
   color: var(--accent-bright);
   font-weight: 600;
 }
@@ -809,12 +858,12 @@ code, kbd, pre, samp, .mono {
 .grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 @media (max-width: 860px) {
   .grid-3 { grid-template-columns: 1fr; }
@@ -1254,7 +1303,6 @@ code, kbd, pre, samp, .mono {
   .comparison .row > div:first-child { border-top: 0; }
 }
 
-.capabilities .grid-3 .card { padding: 18px; }
 .capabilities .card .codeline {
   margin-top: 12px;
   padding: 8px 10px;

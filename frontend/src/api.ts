@@ -60,8 +60,8 @@ export const api = {
       request<LlmConnection>(`/llm-connections/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     listAvailableModels: (id: string) =>
       request<ProviderModel[]>(`/llm-connections/${id}/available-models`),
-    getInferenceLimit: (id: string) =>
-      request<InferenceLimit>(`/llm-connections/${id}/inference-limit`),
+    getInferenceLimit: (id: string, signal?: AbortSignal) =>
+      request<InferenceLimit>(`/llm-connections/${id}/inference-limit`, { signal }),
     delete: (id: string) => request<void>(`/llm-connections/${id}`, { method: 'DELETE' }),
   },
   models: {

@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ContextMeter } from '../../components/ContextMeter'
 import type { ChatMessage, ContextStatus } from '../../types'
 import { FilePreview } from './FilePreview'
+import { PresetBar } from './PresetBar'
 import type { PendingFile } from './types'
 
 interface ComposerProps {
@@ -54,6 +55,7 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
 
   return (
     <div className="px-6 py-4 bg-[var(--grand-bg)] shrink-0 space-y-3">
+      <PresetBar />
       {messages.length > 0 && (
         <ContextMeter
           messages={messages}

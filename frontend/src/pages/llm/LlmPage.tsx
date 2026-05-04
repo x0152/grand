@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Layers, Link2 } from '@/lib/icons'
 import { toast } from 'sonner'
 import { Stepper } from '@/components/StepperSection'
@@ -45,6 +45,13 @@ export default function LlmPage() {
   const [loadingAvailableModels, setLoadingAvailableModels] = useState(false)
   const [availableModelsByEndpoint, setAvailableModelsByEndpoint] = useState<Record<string, ProviderModel[]>>({})
   const [endpointLimits, setEndpointLimits] = useState<Record<string, InferenceLimit>>({})
+  /** Per-endpoint: true while /inference-limit is in flight (must not block the page). */
+  const [endpointLimitLoading, setEndpointLimitLoading] = useState<Record<string, boolean>>({})
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [editingProfile, setEditingProfile] = useState<Preset | null>(null)
@@ -53,6 +60,55 @@ export default function LlmPage() {
   const [deleteEndpointId, setDeleteEndpointId] = useState<string | null>(null)
   const [deleteModelId, setDeleteModelId] = useState<string | null>(null)
   const [deleteProfileId, setDeleteProfileId] = useState<string | null>(null)
+
+  const fetchInferenceLimits = useCallback(async (eps: LlmConnection[]) => {
+    if (eps.length === 0) {
+      if (mountedRef.current) {
+        setEndpointLimits({})
+        setEndpointLimitLoading({})
+      }
+      return
+    }
+    const loadingInit = Object.fromEntries(eps.map(e => [e.id, true]))
+    if (mountedRef.current) {
+      setEndpointLimitLoading(loadingInit)
+      setEndpointLimits(prev => {
+        const next = { ...prev }
+        for (const id of Object.keys(next)) {
+          if (!eps.some(e => e.id === id)) delete next[id]
+        }
+        return next
+      })
+    }
+
+    await Promise.all(
+      eps.map(async ep => {
+        const ctrl = new AbortController()
+        const tid = window.setTimeout(() => ctrl.abort(), 8_000)
+        try {
+          const limit = await api.llmConnections.getInferenceLimit(ep.id, ctrl.signal)
+          if (mountedRef.current) {
+            setEndpointLimits(prev => ({ ...prev, [ep.id]: limit }))
+          }
+        } catch {
+          if (mountedRef.current) {
+            setEndpointLimits(prev => ({
+              ...prev,
+              [ep.id]: {
+                type: 'unlimited',
+                label: 'Usage unavailable (bad URL, timeout, or server error)',
+              } satisfies InferenceLimit,
+            }))
+          }
+        } finally {
+          window.clearTimeout(tid)
+          if (mountedRef.current) {
+            setEndpointLimitLoading(prev => ({ ...prev, [ep.id]: false }))
+          }
+        }
+      }),
+    )
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -63,6 +119,7 @@ export default function LlmPage() {
         api.presets.list(),
         api.settings.get(),
       ])
+      if (!mountedRef.current) return
       setEndpoints(eps)
       setModels(mdls)
       setProfiles(prs)
@@ -70,23 +127,17 @@ export default function LlmPage() {
         chatPresetId: settings.chatPresetId || '',
         serverPresetId: settings.serverPresetId || '',
       })
-      const limitEntries = await Promise.all(
-        eps.map(async ep => {
-          try {
-            const limit = await api.llmConnections.getInferenceLimit(ep.id)
-            return [ep.id, limit] as const
-          } catch {
-            return [ep.id, { type: 'unlimited', label: 'No inference limit reported' } satisfies InferenceLimit] as const
-          }
-        }),
+      // Show per-row “checking usage” immediately; limits fetch never blocks the page.
+      setEndpointLimitLoading(
+        eps.length > 0 ? Object.fromEntries(eps.map(e => [e.id, true])) : {},
       )
-      setEndpointLimits(Object.fromEntries(limitEntries))
+      void fetchInferenceLimits(eps)
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to load')
     } finally {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
     }
-  }, [])
+  }, [fetchInferenceLimits])
 
   const loadAvailableModels = useCallback(async (connectionId: string, force = false) => {
     if (!connectionId) return
@@ -335,6 +386,7 @@ export default function LlmPage() {
           endpoints={endpoints}
           modelsByEndpoint={modelsByEndpoint}
           endpointLimits={endpointLimits}
+          endpointLimitLoading={endpointLimitLoading}
           onCreate={openCreateEndpoint}
           onEdit={openEditEndpoint}
           onDelete={setDeleteEndpointId}

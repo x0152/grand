@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2, Link2, Wallet, Infinity as InfinityIcon } from '@/lib/icons'
+import { Pencil, Plus, Trash2, Link2, Wallet, Infinity as InfinityIcon, Loader2 } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Section, EmptyHint } from '@/components/StepperSection'
@@ -8,12 +8,21 @@ interface Props {
   endpoints: LlmConnection[]
   modelsByEndpoint: Map<string, Model[]>
   endpointLimits: Record<string, InferenceLimit>
+  endpointLimitLoading: Record<string, boolean>
   onCreate: () => void
   onEdit: (e: LlmConnection) => void
   onDelete: (id: string) => void
 }
 
-export function EndpointsSection({ endpoints, modelsByEndpoint, endpointLimits, onCreate, onEdit, onDelete }: Props) {
+export function EndpointsSection({
+  endpoints,
+  modelsByEndpoint,
+  endpointLimits,
+  endpointLimitLoading,
+  onCreate,
+  onEdit,
+  onDelete,
+}: Props) {
   return (
     <Section
       n={1}
@@ -34,6 +43,7 @@ export function EndpointsSection({ endpoints, modelsByEndpoint, endpointLimits, 
               ep={ep}
               count={modelsByEndpoint.get(ep.id)?.length ?? 0}
               limit={endpointLimits[ep.id] ?? { type: 'unlimited', label: 'No inference limit reported' }}
+              limitLoading={!!endpointLimitLoading[ep.id]}
               onEdit={() => onEdit(ep)}
               onDelete={() => onDelete(ep.id)}
             />
@@ -48,11 +58,36 @@ interface RowProps {
   ep: LlmConnection
   count: number
   limit: InferenceLimit
+  limitLoading: boolean
   onEdit: () => void
   onDelete: () => void
 }
 
-function EndpointRow({ ep, count, limit, onEdit, onDelete }: RowProps) {
+function EndpointRow({ ep, count, limit, limitLoading, onEdit, onDelete }: RowProps) {
+  if (limitLoading) {
+    return (
+      <div className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Link2 size={13} className="text-zinc-400 shrink-0" />
+          <span className="font-medium text-sm text-zinc-800 dark:text-zinc-200 shrink-0">{ep.id}</span>
+          <Badge variant="muted">{ep.provider}</Badge>
+          <span className="text-[11px] text-zinc-500 dark:text-zinc-600 font-mono truncate flex-1 min-w-0">{ep.baseUrl}</span>
+          <span className="text-[11px] text-zinc-500 whitespace-nowrap shrink-0">
+            {count} {count === 1 ? 'model' : 'models'}
+          </span>
+          <div className="flex gap-0.5 shrink-0">
+            <Button variant="ghost" size="icon" onClick={onEdit}><Pencil size={13} /></Button>
+            <Button variant="destructive" size="icon" onClick={onDelete}><Trash2 size={13} /></Button>
+          </div>
+        </div>
+        <div className="mt-2.5 flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-500">
+          <Loader2 size={12} className="animate-spin text-teal-500 shrink-0" />
+          <span>Checking inference usage…</span>
+        </div>
+      </div>
+    )
+  }
+
   const limitType = (limit.type || 'unlimited').toLowerCase()
   const isQuota = limitType === 'quota'
   const isBalance = limitType === 'balance'
