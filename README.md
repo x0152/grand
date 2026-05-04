@@ -3,11 +3,13 @@
   &nbsp;Mantis
 </h1>
 
+[![Website](https://img.shields.io/badge/website-x0152.github.io%2Fmantis-1d9c92?style=flat-square)](https://x0152.github.io/mantis/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-1d9c92?style=flat-square)](LICENSE)
+[![GitHub Pages](https://img.shields.io/badge/docs-%2Fdocs-1d9c92?style=flat-square)](docs/)
+
 Multi-agent system where an LLM orchestrates a pool of isolated agents, each running on a dedicated SSH sandbox container with specialized tools. Designed for managing large server infrastructure — from quick one-off tasks to complex multi-step workflows. You interact via Telegram or Web UI — the LLM routes tasks to the right agent, commands pass through a guard layer before execution.
 
 > Early development — works end-to-end but expect rough edges.
-
-**Website:** [x0152.github.io/mantis](https://x0152.github.io/mantis/) — overview, architecture, and trust model. Source under [`docs/`](docs/) (publishable from GitHub Pages, source = `main` / `/docs`).
 
 ![demo](docs/demo.gif)
 
