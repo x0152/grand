@@ -378,7 +378,7 @@
           <text x="412" y="448" class="edge-label edge-label-ssh">ssh</text>
           <text x="542" y="448" class="edge-label edge-label-ssh">ssh</text>
 
-          <path class="ssh" d="M590 381 H685 V549 H780" marker-end="url(#m-ssh)"/>
+          <path class="ssh" d="M590 381 H750 V549 H780" marker-end="url(#m-ssh)"/>
           <text x="600" y="372" class="edge-label edge-label-ssh">ssh · external</text>
         </svg>
 
@@ -431,6 +431,49 @@
           <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-doc"/></svg></span>
           <h3>Session logs</h3>
           <p>Every prompt, tool call, step, and guard decision persisted per connection. Queryable in the UI and the database.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section examples" id="examples">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span>try asking</span></span>
+        <h2>One sentence in chat. <em>Real work in the cluster.</em></h2>
+        <p>A few of the prompts shipped with GRAND — every one of them passes through the guard and runs from a sandbox, not your laptop.</p>
+      </div>
+
+      <div class="grid-3" data-stagger="60">
+        <div class="card prompt-card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-eye"/></svg></span>
+          <h3>Screenshot a website</h3>
+          <p class="prompt">Take a screenshot of the Hacker News homepage and send me the picture.</p>
+        </div>
+        <div class="card prompt-card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-cluster"/></svg></span>
+          <h3>Trending repos this week</h3>
+          <p class="prompt">Find the 5 most popular GitHub projects from the last 7 days. Show name, description, stars, and a link.</p>
+        </div>
+        <div class="card prompt-card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
+          <h3>Plot Bitcoin price</h3>
+          <p class="prompt">Get the Bitcoin price for the last 30 days, draw a simple line chart, and send me the picture.</p>
+        </div>
+        <div class="card prompt-card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-bolt"/></svg></span>
+          <h3>Schedule a daily brief</h3>
+          <p class="prompt">Every weekday at 9:00, grab the top 5 Hacker News stories, summarize each in one sentence, and send me the digest.</p>
+        </div>
+        <div class="card prompt-card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-terminal"/></svg></span>
+          <h3>Spin up a Rust workspace</h3>
+          <p class="prompt">Set up a fresh environment with Rust and Cargo, then write and run a tiny hello-world so I see it works.</p>
+        </div>
+        <div class="card prompt-card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-shield"/></svg></span>
+          <h3>Quick security scan</h3>
+          <p class="prompt">Run a quick scan of scanme.nmap.org. Show open ports and what is listening, in a short table.</p>
         </div>
       </div>
     </div>

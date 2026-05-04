@@ -776,6 +776,36 @@ code, kbd, pre, samp, .mono {
   padding: 1px 5px;
 }
 
+/* prompt cards · "try asking" examples on the landing
+   the .prompt paragraph reads as a one-line terminal command */
+.prompt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prompt-card .prompt {
+  margin-top: auto;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg-2);
+  white-space: normal;
+  position: relative;
+  padding-left: 26px;
+}
+.prompt-card .prompt::before {
+  content: "›";
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  color: var(--accent-bright);
+  font-weight: 600;
+}
+
 .grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
