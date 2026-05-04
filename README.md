@@ -7,6 +7,8 @@ Multi-agent system where an LLM orchestrates a pool of isolated agents, each run
 
 > Early development — works end-to-end but expect rough edges.
 
+**Website:** [x0152.github.io/mantis](https://x0152.github.io/mantis/) — overview, architecture, and trust model. Source under [`docs/`](docs/) (publishable from GitHub Pages, source = `main` / `/docs`).
+
 ![demo](docs/demo.gif)
 
 ## What it does
@@ -89,7 +91,7 @@ each image is checked first and the build is skipped if nothing changed.
 
 ```bash
 cp .env.example .env
-# edit .env and set at least: AUTH_TOKEN, VITE_LLM_BASE_URL, VITE_LLM_API_KEY, VITE_LLM_MODEL
+# edit .env and set at least: AUTH_TOKEN, MANTIS_LLM_BASE_URL, MANTIS_LLM_API_KEY, MANTIS_LLM_MODEL
 docker compose up --build -d
 ```
 
@@ -130,13 +132,15 @@ docker push ${REGISTRY}/mantis-frontend:${TAG}
 ```bash
 helm upgrade --install mantis ./helm/mantis \
   --namespace mantis --create-namespace \
-  --set app.image.repository=${REGISTRY}/mantis \
-  --set app.image.tag=${TAG} \
+  --set apps.global.image.repository=${REGISTRY}/mantis \
+  --set apps.global.image.tag=${TAG} \
   --set frontend.image.repository=${REGISTRY}/mantis-frontend \
   --set frontend.image.tag=${TAG} \
-  --set secrets.authToken='change-me-to-a-long-random-string' \
   --set ingress.enabled=false
 ```
+
+By default the chart uses `secrets.authToken=mantis-dev-token` for a quick
+first boot. Override it in real environments.
 
 #### 3) Access without Ingress (recommended for first run)
 
@@ -153,8 +157,8 @@ If your cluster has an ingress controller:
 ```bash
 helm upgrade --install mantis ./helm/mantis \
   --namespace mantis --create-namespace \
-  --set app.image.repository=${REGISTRY}/mantis \
-  --set app.image.tag=${TAG} \
+  --set apps.global.image.repository=${REGISTRY}/mantis \
+  --set apps.global.image.tag=${TAG} \
   --set frontend.image.repository=${REGISTRY}/mantis-frontend \
   --set frontend.image.tag=${TAG} \
   --set secrets.authToken='change-me-to-a-long-random-string' \
@@ -171,15 +175,27 @@ For production TLS, cert-manager, external secrets, and runtime mode details, se
 Drop these into `.env` before anything else:
 
 ```bash
-AUTH_TOKEN=long-random-string                 # your sign-in token
-VITE_LLM_BASE_URL=https://api.openai.com/v1   # or local Ollama / LM Studio
-VITE_LLM_API_KEY=sk-...                       # "dummy" for local
-VITE_LLM_MODEL=gpt-4o-mini                    # comma-separated for multiple
+AUTH_TOKEN=long-random-string                   # your sign-in token
+MANTIS_LLM_BASE_URL=https://api.openai.com/v1   # or local Ollama / LM Studio
+MANTIS_LLM_API_KEY=sk-...                       # "dummy" for local
+MANTIS_LLM_MODEL=gpt-4o-mini                    # comma-separated for multiple
 ```
+
+`MANTIS_LLM_*` values prefill setup wizard fields via backend config resolution and are re-read after a configuration reset.
 
 On first start the backend creates a single admin user tied to `AUTH_TOKEN` (change `AUTH_USER_NAME` if you want something other than `admin`). The login endpoint is rate-limited — defaults to 5 failed attempts per 15 minutes per IP; tune with `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW`.
 
-Optional: `VITE_TG_BOT_TOKEN` + `VITE_TG_USER_IDS` (Telegram), `ASR_API_URL` / `OCR_API_URL` / `TTS_API_URL` (speech/OCR services), `MANTIS_BACKEND_PORT` / `MANTIS_FRONTEND_PORT` / `MANTIS_PORT` (host ports). Full list in `.env.example`.
+Optional: `MANTIS_TG_BOT_TOKEN` + `MANTIS_TG_USER_IDS` (Telegram), `ASR_API_URL` / `OCR_API_URL` / `TTS_API_URL` (speech/OCR services), `MANTIS_BACKEND_PORT` / `MANTIS_FRONTEND_PORT` / `MANTIS_PORT` (host ports). Full list in `.env.example`.
+
+## Setup wizard
+
+The first sign-in opens a step-by-step wizard that connects an LLM provider, picks chat / summary / vision models, and (optionally) a Telegram bot. Every value lands in a single `app_config` row on the backend; environment variables (`MANTIS_LLM_*`, `MANTIS_TG_*`, `GONKA_*`) act as prefill only.
+
+The same wizard lives under **Setup** in the sidebar:
+
+- **Continue** — resume the wizard from the first unfinished step.
+- **Re-run wizard** — walk every step again with current values prefilled.
+- **Reset** — clear `app_config` and reopen the wizard. Existing AI engine, hosts, and channels stay; you can still edit them on their pages.
 
 ## Generation limits
 
@@ -215,7 +231,7 @@ Multi-stage builds, frontend served by nginx, single port `:${MANTIS_PORT:-8080}
 
 | Service | Env var | Repo |
 |---------|---------|------|
-| Speech-to-text | `ASR_API_URL` | [russian-asr](https://github.com/x0152/russian-asr) |
+| Speech-to-text | `ASR_API_URL` | [russian-asr](https://github.com/x0152/russian-asr) / [whisper.cpp](https://github.com/ggerganov/whisper.cpp) / OpenAI Whisper |
 | OCR | `OCR_API_URL` | [easy-ocr-api](https://github.com/x0152/easy-ocr-api) |
 | Text-to-speech | `TTS_API_URL` | [cosyvoice-tts-api](https://github.com/x0152/cosyvoice-tts-api) |
 
@@ -225,7 +241,7 @@ docker run -p 8017:8017 ghcr.io/x0152/easy-ocr-api
 docker run -p 8020:8020 ghcr.io/x0152/cosyvoice-tts-api
 ```
 
-Set the URLs in `.env` (see `.env.example`).
+Set the URLs in `.env` (see `.env.example`). Since the ASR integration uses an OpenAI Whisper-compatible interface, you can use standard Whisper endpoints, `whisper.cpp` server, or other compatible services for `ASR_API_URL`.
 
 ## License
 

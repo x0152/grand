@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+
+  <title>Mantis — A security boundary for AI agents</title>
+  <meta name="description" content="Mantis is a secure control plane for infrastructure agents. Agents run in isolated sandboxes inside your cluster; every command — from chat, a reusable plan, or a scheduled run — passes a deterministic guard before it ever reaches a server." />
+
+  <link rel="icon" type="image/svg+xml" href="./logo.svg" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Mantis — A security boundary for AI agents" />
+  <meta property="og:description" content="From chat-triggered runs to scheduled automation — under one guard boundary. Agents run in isolated sandboxes; every command passes a deterministic guard before it reaches a server." />
+  <meta property="og:image" content="./landing/assets/og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Mantis — A security boundary for AI agents" />
+  <meta name="twitter:description" content="From chat-triggered runs to scheduled automation — under one guard boundary. Agents run in isolated sandboxes; every command passes a deterministic guard before it reaches a server." />
+  <meta name="twitter:image" content="./landing/assets/og.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="./landing/style.css" />
+</head>
+
+<body>
+  <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+    <defs>
+      <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
+      </symbol>
+      <symbol id="i-github" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.92.58.1.79-.25.79-.56 0-.27-.01-1-.02-1.96-3.2.7-3.88-1.54-3.88-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.9-.39s1.98.13 2.9.39c2.21-1.49 3.18-1.18 3.18-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.13 0 1.54-.01 2.78-.01 3.16 0 .31.21.67.8.55 4.56-1.53 7.85-5.84 7.85-10.92C23.5 5.65 18.35.5 12 .5z"/>
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+      </symbol>
+      <symbol id="i-cluster" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.4"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.4"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.4"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.4"/>
+      </symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m4 9 4 3-4 3"/><path d="M11 16h9"/><rect x="2" y="4" width="20" height="16" rx="2"/>
+      </symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+      </symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>
+      </symbol>
+      <symbol id="i-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 3h6"/><path d="M10 3v7L4.5 19A2 2 0 0 0 6.2 22h11.6a2 2 0 0 0 1.7-3L14 10V3"/>
+      </symbol>
+      <symbol id="i-stethoscope" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 3v6a4 4 0 0 0 8 0V3"/><path d="M10 17a3 3 0 1 0 6 0v-2"/><circle cx="19" cy="13" r="2"/>
+      </symbol>
+      <symbol id="i-route" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a4 4 0 0 0 0-8h-6a4 4 0 0 1 0-8h3"/>
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m4 12 5 5L20 6"/>
+      </symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>
+      </symbol>
+      <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>
+      </symbol>
+      <symbol id="i-mantis" viewBox="0 0 64 64" fill="none">
+        <radialGradient id="m-aura" cx="32" cy="32" r="28" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="currentColor" stop-opacity="0.32" />
+          <stop offset="55%" stop-color="currentColor" stop-opacity="0.06" />
+          <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="m-head" x1="32" y1="10" x2="32" y2="44" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="currentColor" stop-opacity="0.34" />
+          <stop offset="100%" stop-color="currentColor" stop-opacity="0.04" />
+        </linearGradient>
+        <circle cx="32" cy="32" r="26" fill="url(#m-aura)" />
+        <path d="M27 13 Q 20 5 12 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
+        <path d="M37 13 Q 44 5 52 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
+        <circle cx="12" cy="4" r="1.9" fill="currentColor" />
+        <circle cx="52" cy="4" r="1.9" fill="currentColor" />
+        <path d="M32 10 L52 22 L46 38 L32 44 L18 38 L12 22 Z" fill="url(#m-head)" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" />
+        <path d="M22 18 L28 24 L22 30 L17 24 Z" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+        <path d="M42 18 L47 24 L42 30 L36 24 Z" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+        <circle cx="22" cy="24" r="1.6" fill="currentColor" />
+        <circle cx="42" cy="24" r="1.6" fill="currentColor" />
+        <path d="M27 42 L18 51 L28 57" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M37 42 L46 51 L36 57" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="28" cy="57" r="1.6" fill="currentColor" />
+        <circle cx="36" cy="57" r="1.6" fill="currentColor" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="site-header">
+    <div class="container row">
+      <a class="brand" href="#top" aria-label="Mantis home">
+        <svg class="mlogo" width="26" height="26" aria-hidden="true"><use href="#i-mantis"/></svg>
+        <span class="word">mantis</span>
+        <span class="meta">v0 · control</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#architecture" class="label-only">Architecture</a>
+        <a href="https://github.com/x0152/mantis" class="gh" rel="noopener noreferrer">
+          <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
+          <span>GitHub</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+
+  <section class="hero">
+    <div class="container">
+      <div class="grid">
+        <div class="copy reveal">
+          <span class="stamp">
+            <span class="dot" aria-hidden="true"></span>
+            <span>open source · v0</span>
+          </span>
+
+          <h1>
+            Run powerful AI agents <em>without trusting them</em> with your machine.
+          </h1>
+
+          <p class="lede">
+            Mantis runs agents in isolated sandboxes inside your cluster. Every command goes through a deterministic guard — whether it comes from chat, a reusable plan, or a scheduled run.
+          </p>
+
+          <div class="ctas">
+            <a class="btn btn-primary" href="https://github.com/x0152/mantis" rel="noopener noreferrer">
+              <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
+              View on GitHub
+              <svg class="arrow" width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg>
+            </a>
+            <a class="cta-inline" href="#architecture">See architecture</a>
+          </div>
+
+          <div class="meta-row" aria-label="Project metadata">
+            <span><svg width="11" height="11" aria-hidden="true"><use href="#i-cluster"/></svg> kubernetes-native</span>
+            <span class="dot-sep" aria-hidden="true"></span>
+            <span><svg width="11" height="11" aria-hidden="true"><use href="#i-shield"/></svg> guard layer</span>
+            <span class="dot-sep" aria-hidden="true"></span>
+            <span><svg width="11" height="11" aria-hidden="true"><use href="#i-doc"/></svg> auditable</span>
+            <span class="dot-sep" aria-hidden="true"></span>
+            <span>mit license</span>
+          </div>
+        </div>
+
+        <div class="chat-mock reveal" aria-hidden="true">
+          <div class="app-shell">
+            <aside class="app-side">
+              <div class="app-side-head">
+                <div class="app-brand">
+                  <svg class="mlogo" width="24" height="24" aria-hidden="true"><use href="#i-mantis"/></svg>
+                  <div>
+                    <div class="app-brand-name">mantis</div>
+                    <div class="app-brand-meta">v0 · control</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="app-new-chat">
+                <svg width="11" height="11" aria-hidden="true"><use href="#i-check"/></svg>
+                new chat
+              </div>
+
+              <div class="app-sessions">
+                <div class="app-session active">
+                  <svg width="11" height="11" aria-hidden="true"><use href="#i-terminal"/></svg>
+                  <div>
+                    <span>disk pressure edge-*</span>
+                    <small>today</small>
+                  </div>
+                </div>
+                <div class="app-session">
+                  <svg width="11" height="11" aria-hidden="true"><use href="#i-terminal"/></svg>
+                  <div>
+                    <span>node oom summary</span>
+                    <small>yesterday</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="app-nav">
+                <div class="app-kicker"><span class="num">02</span><span class="sep">/</span>activity</div>
+                <div class="app-nav-row">plans</div>
+                <div class="app-nav-row">logs</div>
+                <div class="app-kicker"><span class="num">03</span><span class="sep">/</span>configuration</div>
+                <div class="app-nav-row active">ai engine</div>
+                <div class="app-nav-row">hosts</div>
+                <div class="app-nav-row">skills</div>
+              </div>
+            </aside>
+
+            <div class="app-main">
+              <div class="app-chat">
+                <div class="app-chat-scroll">
+                  <div class="app-user-bubble">Investigate disk pressure on edge-* and propose safe cleanup.</div>
+                  <div class="app-assistant-bubble">
+                    <div class="app-assistant-meta">ops-default / gpt-4o-mini · 12s · ~840 tok</div>
+                    <p>Three edge hosts exceed 90% on <code>/var/lib/docker</code>. Guard blocked prune because command is outside profile whitelist.</p>
+                    <div class="app-step-badges">
+                      <span><svg width="10" height="10" aria-hidden="true"><use href="#i-shield"/></svg>ssh.diagnostic · allowed</span>
+                      <span class="denied"><svg width="10" height="10" aria-hidden="true"><use href="#i-shield"/></svg>docker.prune · denied</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="app-composer">
+                  <span class="ic"><svg width="12" height="12" aria-hidden="true"><use href="#i-doc"/></svg></span>
+                  <span class="input">type a message — shift+enter for newline</span>
+                  <span class="send"><svg width="12" height="12" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+                </div>
+              </div>
+
+              <aside class="app-resources">
+                <div class="app-kicker"><span class="num">01</span><span class="sep">/</span>resources</div>
+                <div class="app-resource-card">
+                  <b>active step</b>
+                  <span>guard.inspect / 2.1s</span>
+                </div>
+                <div class="app-resource-card">
+                  <b>connection</b>
+                  <span>edge-prod (ssh scoped)</span>
+                </div>
+                <div class="app-resource-card">
+                  <b>session</b>
+                  <span>sess_8a3f · live</span>
+                </div>
+              </aside>
+            </div>
+          </div>
+          <span class="scan-line" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section problem">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span class="num">01</span><span class="sep">/</span>the trust problem</span>
+        <h2>Local agents put your workstation inside the blast radius.</h2>
+      </div>
+
+      <div class="grid">
+        <p class="quote reveal">
+          If an agent can <em>generate code</em>, <em>open SSH sessions</em>,
+          and <em>read your secrets</em>, your laptop is the security boundary —
+          and there isn't one.
+        </p>
+
+        <ul data-stagger="80">
+          <li class="reveal">
+            <svg width="16" height="16" aria-hidden="true"><use href="#i-alert"/></svg>
+            <div>
+              <b>Implicit trust</b>
+              <span>Most runtimes execute tools, edits, and commands directly on the user's machine. There is no enforced boundary between the agent and your system.</span>
+            </div>
+          </li>
+          <li class="reveal">
+            <svg width="16" height="16" aria-hidden="true"><use href="#i-alert"/></svg>
+            <div>
+              <b>Unbounded access</b>
+              <span>An agent that can SSH into infrastructure typically inherits whatever credentials your shell has. Mistakes scale fast — across every host you can reach.</span>
+            </div>
+          </li>
+          <li class="reveal">
+            <svg width="16" height="16" aria-hidden="true"><use href="#i-alert"/></svg>
+            <div>
+              <b>No audit trail</b>
+              <span>Local action logs are easy to lose, easy to skip, and impossible to enforce. Reviewing what an agent actually did becomes detective work.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section architecture" id="architecture">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span class="num">02</span><span class="sep">/</span>architecture</span>
+        <h2>One trust boundary, enforced before execution.</h2>
+        <p>Users talk to Mantis through Telegram or web chat. The Agent Loop reasons through the LLM and proposes tool calls. The Guard authorizes each call against capability profiles — denied calls stop before execution. Allowed calls fan out to per-task agents that SSH into in-cluster sandboxes (base, browser, ffmpeg, python, db). The same scoped SSH reaches your external servers. Every step lands in PostgreSQL.</p>
+      </div>
+
+      <div class="diagram-wrap reveal">
+        <svg class="diagram" viewBox="0 0 1100 660" role="img" aria-label="Mantis architecture. Telegram and web chat feed the Mantis container, which runs Web Panel, Agent Loop and LLM client (talking to an external LLM provider over API), backed by PostgreSQL. Every tool call from the Agent Loop passes through the Guard; denied calls go to a blocked outcome, allowed calls fan out into per-task agents. Each agent opens scoped SSH — to in-cluster sandbox containers (base, browser, ffmpeg, python, db) for specialized tools, and to your external servers and APIs for the actual operation.">
+          <defs>
+            <marker id="m-allow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#14b8a6"/>
+            </marker>
+            <marker id="m-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#f43f5e"/>
+            </marker>
+            <marker id="m-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#71717a"/>
+            </marker>
+            <marker id="m-flow-bi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#71717a"/>
+            </marker>
+            <marker id="m-ssh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#14b8a6"/>
+            </marker>
+          </defs>
+
+          <rect class="node trig" x="60" y="22" width="120" height="38"/>
+          <text x="120" y="40" text-anchor="middle" class="node-label">telegram</text>
+          <text x="120" y="54" text-anchor="middle" class="node-sub">bot</text>
+
+          <rect class="node trig" x="200" y="22" width="120" height="38"/>
+          <text x="260" y="40" text-anchor="middle" class="node-label">web chat</text>
+          <text x="260" y="54" text-anchor="middle" class="node-sub">react ui</text>
+
+          <rect class="node external" x="900" y="18" width="180" height="46"/>
+          <text x="990" y="38" text-anchor="middle" class="node-label">llm provider</text>
+          <text x="990" y="54" text-anchor="middle" class="node-sub">openai · ollama · local</text>
+
+          <rect class="container-box" x="40" y="92" width="1020" height="384" rx="10"/>
+          <text x="58" y="112" class="container-title">Mantis · docker-compose / k8s</text>
+
+          <rect class="node" x="66" y="130" width="170" height="58"/>
+          <text x="151" y="155" text-anchor="middle" class="node-label">web panel</text>
+          <text x="151" y="172" text-anchor="middle" class="node-sub">react</text>
+
+          <rect class="node node-accent" x="290" y="130" width="240" height="58"/>
+          <text x="410" y="155" text-anchor="middle" class="node-label">agent loop</text>
+          <text x="410" y="172" text-anchor="middle" class="node-sub">control plane · llm reasoning</text>
+
+          <rect class="node" x="900" y="130" width="140" height="58"/>
+          <text x="970" y="155" text-anchor="middle" class="node-label">llm client</text>
+          <text x="970" y="172" text-anchor="middle" class="node-sub">openai-compatible</text>
+
+          <rect class="node" x="66" y="232" width="170" height="58"/>
+          <text x="151" y="257" text-anchor="middle" class="node-label">postgresql</text>
+          <text x="151" y="274" text-anchor="middle" class="node-sub">session log · audit</text>
+
+          <rect class="node guard-node" x="340" y="222" width="160" height="78" rx="8"/>
+          <text x="420" y="252" text-anchor="middle" class="guard-label">GUARD</text>
+          <text x="420" y="270" text-anchor="middle" class="node-sub">profiles · whitelist</text>
+          <text x="420" y="286" text-anchor="middle" class="guard-tag">authorize</text>
+
+          <rect class="node block-node" x="560" y="232" width="150" height="58"/>
+          <text x="635" y="257" text-anchor="middle" class="node-label">blocked</text>
+          <text x="635" y="274" text-anchor="middle" class="node-sub">denied before exec</text>
+
+          <rect class="node node-accent" x="90" y="356" width="110" height="50"/>
+          <text x="145" y="378" text-anchor="middle" class="node-label">agent</text>
+          <text x="145" y="392" text-anchor="middle" class="node-sub">per-task</text>
+
+          <rect class="node node-accent" x="220" y="356" width="110" height="50"/>
+          <text x="275" y="378" text-anchor="middle" class="node-label">agent</text>
+          <text x="275" y="392" text-anchor="middle" class="node-sub">per-task</text>
+
+          <rect class="node node-accent" x="350" y="356" width="110" height="50"/>
+          <text x="405" y="378" text-anchor="middle" class="node-label">agent</text>
+          <text x="405" y="392" text-anchor="middle" class="node-sub">per-task</text>
+
+          <rect class="node node-accent" x="480" y="356" width="110" height="50"/>
+          <text x="535" y="378" text-anchor="middle" class="node-label">agent</text>
+          <text x="535" y="392" text-anchor="middle" class="node-sub">per-task</text>
+
+          <rect class="sb-wrap" x="70" y="494" width="660" height="110" rx="8"/>
+
+          <rect class="node sb-item" x="90" y="510" width="110" height="56"/>
+          <text x="145" y="532" text-anchor="middle" class="node-label">base</text>
+          <text x="145" y="549" text-anchor="middle" class="node-sub">ssh :2222</text>
+
+          <rect class="node sb-item" x="220" y="510" width="110" height="56"/>
+          <text x="275" y="532" text-anchor="middle" class="node-label">browser</text>
+          <text x="275" y="549" text-anchor="middle" class="node-sub">ssh :2223</text>
+
+          <rect class="node sb-item" x="350" y="510" width="110" height="56"/>
+          <text x="405" y="532" text-anchor="middle" class="node-label">ffmpeg</text>
+          <text x="405" y="549" text-anchor="middle" class="node-sub">ssh :2224</text>
+
+          <rect class="node sb-item" x="480" y="510" width="110" height="56"/>
+          <text x="535" y="532" text-anchor="middle" class="node-label">python</text>
+          <text x="535" y="549" text-anchor="middle" class="node-sub">ssh :2225</text>
+
+          <rect class="node sb-item" x="610" y="510" width="110" height="56"/>
+          <text x="665" y="532" text-anchor="middle" class="node-label">db</text>
+          <text x="665" y="549" text-anchor="middle" class="node-sub">ssh :2226</text>
+
+          <text x="400" y="590" text-anchor="middle" class="container-title">sandboxes · in-cluster · sibling containers</text>
+
+          <rect class="node external" x="780" y="494" width="290" height="110"/>
+          <text x="925" y="528" text-anchor="middle" class="node-label">your infra</text>
+          <text x="925" y="546" text-anchor="middle" class="node-sub">linux · vm · bare metal · apis</text>
+          <text x="925" y="562" text-anchor="middle" class="node-sub">scoped ssh · per-host credentials</text>
+          <text x="925" y="590" text-anchor="middle" class="container-title">your servers · external</text>
+
+          <text x="555" y="638" text-anchor="middle" class="caption">sandboxes are sibling containers shipped with Mantis · the same scoped ssh from any agent reaches your external servers</text>
+
+          <path class="flow" d="M120 60 V92" marker-end="url(#m-flow)"/>
+          <path class="flow" d="M260 60 V92" marker-end="url(#m-flow)"/>
+
+          <path class="flow" d="M970 64 V130" marker-start="url(#m-flow-bi)" marker-end="url(#m-flow-bi)"/>
+          <text x="980" y="110" class="edge-label">api</text>
+
+          <path class="flow" d="M530 159 H900" marker-start="url(#m-flow-bi)" marker-end="url(#m-flow-bi)"/>
+
+          <path class="flow" d="M410 188 V222" marker-end="url(#m-flow)"/>
+          <text x="418" y="208" class="edge-label">tool calls</text>
+
+          <path class="deny" d="M500 261 H560" marker-end="url(#m-deny)"/>
+          <text x="528" y="252" text-anchor="middle" class="edge-label edge-label-deny">DENY</text>
+
+          <path class="allow" d="M420 300 V330"/>
+          <path class="allow" d="M145 330 H535"/>
+          <path class="allow" d="M145 330 V356" marker-end="url(#m-allow)"/>
+          <path class="allow" d="M275 330 V356" marker-end="url(#m-allow)"/>
+          <path class="allow" d="M405 330 V356" marker-end="url(#m-allow)"/>
+          <path class="allow" d="M535 330 V356" marker-end="url(#m-allow)"/>
+          <text x="436" y="320" class="edge-label edge-label-allow">ALLOW</text>
+
+          <path class="ssh" d="M145 406 V510" marker-end="url(#m-ssh)"/>
+          <path class="ssh" d="M275 406 V510" marker-end="url(#m-ssh)"/>
+          <path class="ssh" d="M405 406 V510" marker-end="url(#m-ssh)"/>
+          <path class="ssh" d="M535 406 V510" marker-end="url(#m-ssh)"/>
+          <text x="152" y="448" class="edge-label edge-label-ssh">ssh</text>
+          <text x="282" y="448" class="edge-label edge-label-ssh">ssh</text>
+          <text x="412" y="448" class="edge-label edge-label-ssh">ssh</text>
+          <text x="542" y="448" class="edge-label edge-label-ssh">ssh</text>
+
+          <path class="ssh" d="M590 381 H770 V540 H780" marker-end="url(#m-ssh)"/>
+          <text x="600" y="372" class="edge-label edge-label-ssh">ssh · external</text>
+        </svg>
+
+        <div class="legend" aria-hidden="true">
+          <span><i class="allow"></i> allow</span>
+          <span><i class="deny"></i> deny</span>
+          <span><i class="ssh"></i> ssh</span>
+          <span><i class="solid"></i> control flow</span>
+          <span><i class="container"></i> Mantis container</span>
+          <span><i class="cluster"></i> sandboxes · in-cluster</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section capabilities">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span class="num">03</span><span class="sep">/</span>use cases</span>
+        <h2>Operational tasks, not chat-shaped novelty.</h2>
+        <p>Narrow, credible infrastructure work — the kind you'd otherwise script, ticket, or page someone for.</p>
+      </div>
+
+      <div class="grid-3" data-stagger="80">
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
+          <h3>Fleet diagnostics</h3>
+          <p>Run diagnostics across many hosts from isolated sandboxes; get a clear summary, not raw terminal noise.</p>
+          <div class="codeline"><span class="prompt">&gt;</span> why is api-edge-7 dropping connections?</div>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-flask"/></svg></span>
+          <h3>Infrastructure audits</h3>
+          <p>Sweep configs, certs, services, and exposed ports with findings stored in audit-friendly form.</p>
+          <div class="codeline"><span class="prompt">&gt;</span> list hosts with sshd PasswordAuthentication on</div>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-bolt"/></svg></span>
+          <h3>Scripted remediation</h3>
+          <p>Restart services or apply playbooks via skills declared in the guard profile; everything outside the whitelist is rejected.</p>
+          <div class="codeline"><span class="prompt">&gt;</span> restart nginx on edge-* if last 5xx rate &gt; 2%</div>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-cluster"/></svg></span>
+          <h3>Specialized sandboxes</h3>
+          <p>Pick the right environment per task: <code>base</code> for SSH/CLI, <code>browser</code> for web checks, <code>python</code> for scripting, <code>ffmpeg</code> for media, <code>db</code> for SQL clients.</p>
+          <div class="codeline"><span class="prompt">&gt;</span> use python sandbox to parse last night's nginx logs</div>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-terminal"/></svg></span>
+          <h3>Safe remote execution</h3>
+          <p>Execute from cluster sandboxes, not your laptop, via scoped SSH and per-connection credentials.</p>
+          <div class="codeline"><span class="prompt">&gt;</span> tail journald on prod-db-1 since 14:00</div>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-eye"/></svg></span>
+          <h3>Operational reports</h3>
+          <p>Send short, traceable notifications to Telegram or web with links back to the exact run.</p>
+          <div class="codeline"><span class="prompt">&gt;</span> notify if any node OOMs after deploy</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section plans" id="plans">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span class="num">04</span><span class="sep">/</span>guarded automation</span>
+        <h2>Turn one safe run into a reusable plan. Schedule it. Keep the same guard.</h2>
+        <p>Plans add branching, retries, typed parameters, and cron triggers — but they do not bypass the boundary. The same guard that checks a chat-triggered run also checks every scheduled step before it executes.</p>
+      </div>
+
+      <div class="plans-grid reveal">
+        <div class="canvas-frame">
+          <div class="canvas-head">
+            <span class="stamp"><span class="dot"></span><span>plan · nightly-disk-watch</span></span>
+            <span class="head-tags">
+              <span class="cron-pill mono"><svg width="11" height="11" aria-hidden="true"><use href="#i-bolt"/></svg>cron · 0 3 * * *</span>
+              <span class="guard-pill mono"><svg width="11" height="11" aria-hidden="true"><use href="#i-shield"/></svg>guard · ops-default</span>
+            </span>
+          </div>
+          <svg class="canvas" viewBox="0 0 760 280" role="img" aria-label="Plan canvas with start, ssh.diagnostic action, decision node, notify.telegram action, and end node connected by edges.">
+            <defs>
+              <marker id="planarrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" />
+              </marker>
+            </defs>
+
+            <rect class="pn pn-start" x="20" y="120" width="92" height="40" rx="6"/>
+            <text x="66" y="144" text-anchor="middle" class="pn-label">start</text>
+
+            <rect class="pn pn-action" x="142" y="120" width="184" height="40" rx="6"/>
+            <text x="234" y="138" text-anchor="middle" class="pn-label">ssh.diagnostic</text>
+            <text x="234" y="152" text-anchor="middle" class="pn-sub">edge-* · disk,inode</text>
+
+            <polygon class="pn pn-decision" points="376,140 460,98 544,140 460,182"/>
+            <text x="460" y="138" text-anchor="middle" class="pn-label">any host</text>
+            <text x="460" y="152" text-anchor="middle" class="pn-label">&gt; 90%?</text>
+
+            <rect class="pn pn-action" x="582" y="60" width="158" height="40" rx="6"/>
+            <text x="661" y="78" text-anchor="middle" class="pn-label">notify.telegram</text>
+            <text x="661" y="92" text-anchor="middle" class="pn-sub">ops channel</text>
+
+            <rect class="pn pn-action" x="582" y="180" width="158" height="40" rx="6"/>
+            <text x="661" y="198" text-anchor="middle" class="pn-label">log.report</text>
+            <text x="661" y="212" text-anchor="middle" class="pn-sub">session log</text>
+
+            <path class="pe" d="M112 140 H142" marker-end="url(#planarrow)"/>
+            <path class="pe" d="M326 140 H376" marker-end="url(#planarrow)"/>
+            <path class="pe" d="M544 140 C 564 140, 564 80, 582 80" marker-end="url(#planarrow)"/>
+            <path class="pe" d="M544 140 C 564 140, 564 200, 582 200" marker-end="url(#planarrow)"/>
+
+            <text class="pe-label" x="558" y="106">yes</text>
+            <text class="pe-label" x="558" y="178">no</text>
+          </svg>
+          <div class="canvas-foot mono">every action node passes through the same guard before it executes</div>
+        </div>
+
+        <div class="plans-side" data-stagger="60">
+          <div class="plans-item reveal">
+            <b>Visual editor</b>
+            <span>React Flow canvas with action and decision nodes, branching, retries, and clear-context steps; a real graph editor, not a textarea.</span>
+          </div>
+          <div class="plans-item reveal">
+            <b>Cron triggers</b>
+            <span>Each plan can run on a schedule. Same execution path as a manual run, same guard, same session logs.</span>
+          </div>
+          <div class="plans-item reveal">
+            <b>Typed parameters</b>
+            <span>Plans declare JSON Schema inputs; node prompts use Go templates like <code class="mono">{{.target}}</code> for dynamic values.</span>
+          </div>
+          <div class="plans-item reveal">
+            <b>Agent-authored plans</b>
+            <span>The chat agent can write multi-step plans in a small DSL, including scheduled tasks — review and run, or edit and run.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section guardrails" id="guardrails">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span class="num">05</span><span class="sep">/</span>guardrails</span>
+        <h2>Concrete controls, not security vibes.</h2>
+        <p>The boundary isn't a policy doc — it's wired into how the runtime executes.</p>
+      </div>
+
+      <div class="grid-3" data-stagger="70">
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-cluster"/></svg></span>
+          <h3>Isolated sandboxes</h3>
+          <p>Every agent runs in a dedicated container — base, browser, python, ffmpeg, db — with a curated tool surface, separate from the host.</p>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-shield"/></svg></span>
+          <h3>Guard profiles</h3>
+          <p>Capabilities and command whitelists are declared per host. The guard inspects every command and rejects anything outside the profile.</p>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-lock"/></svg></span>
+          <h3>Deny by default</h3>
+          <p>The guard is deterministic: only declared skills and whitelisted commands pass. Free-form shell on production never happens.</p>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-route"/></svg></span>
+          <h3>Constrained SSH</h3>
+          <p>Sandboxes reach your servers over SSH using scoped users and keys configured per connection, not whatever your shell happens to have.</p>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-doc"/></svg></span>
+          <h3>Session logs</h3>
+          <p>Every prompt, tool call, step, and guard decision is persisted per connection, per session — queryable in the UI and the database.</p>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="16" height="16" aria-hidden="true"><use href="#i-bolt"/></svg></span>
+          <h3>Hard limits</h3>
+          <p>Per-message timeouts, per-step timeouts, and tool-call budgets keep runaway loops contained, with explicit, traceable stop reasons.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section scenario">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span class="num">06</span><span class="sep">/</span>a real run</span>
+        <h2>"Investigate disk pressure on 12 servers."</h2>
+        <p>One sentence in chat. Six controlled steps in the cluster.</p>
+      </div>
+
+      <div class="frame reveal">
+        <div class="head">
+          <svg width="13" height="13" aria-hidden="true"><use href="#i-terminal"/></svg>
+          <span>session · sess_8a3f · agent: ops</span>
+          <span class="live"><span class="pulse"></span> live</span>
+        </div>
+        <ol data-stagger="60">
+          <li class="reveal">
+            <span class="step"><span class="num">01</span> routed</span>
+            <div class="body">
+              <b>Prompt picks up the ops agent</b>
+              <span>Control plane resolves the connection and its active guard profile.</span>
+            </div>
+            <span class="tag">routed</span>
+          </li>
+          <li class="reveal">
+            <span class="step"><span class="num">02</span> sandbox</span>
+            <div class="body">
+              <b>Short-lived sandbox starts inside the cluster</b>
+              <span>A <code>base</code> container with curated tools; your laptop is never in the path.</span>
+            </div>
+            <span class="tag">isolated</span>
+          </li>
+          <li class="reveal">
+            <span class="step"><span class="num">03</span> guard · allow</span>
+            <div class="body">
+              <b>Read-only diagnostic passes the guard</b>
+              <span>The skill matches the <code>ops-default</code> profile and is authorized before any SSH happens.</span>
+              <code>ssh.diagnostic --target edge-* --check disk,inode</code>
+            </div>
+            <span class="tag ok">allowed</span>
+          </li>
+          <li class="reveal">
+            <span class="step"><span class="num">04</span> ssh out</span>
+            <div class="body">
+              <b>Sandbox SSHs out to 12 servers</b>
+              <span>Scoped user from the connection config; structured output streams back to the session.</span>
+            </div>
+            <span class="tag ok">12 / 12 ok</span>
+          </li>
+          <li class="reveal">
+            <span class="step"><span class="num">05</span> guard · deny</span>
+            <div class="body">
+              <b>Cleanup attempt blocked by the guard</b>
+              <span>The agent proposes a prune; not in the profile whitelist. Rejected before SSH.</span>
+              <code>docker system prune --filter "until=72h" -f</code>
+            </div>
+            <span class="tag deny">denied</span>
+          </li>
+          <li class="reveal">
+            <span class="step"><span class="num">06</span> session log</span>
+            <div class="body">
+              <b>Prompts, tool calls, steps and guard decisions persisted</b>
+              <span>Queryable per connection and session; notifications fire on the configured channel.</span>
+            </div>
+            <span class="tag">logged</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="section comparison">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span class="num">07</span><span class="sep">/</span>trust models</span>
+        <h2>Where the agent runs — and where the guard sits — decides what it can break.</h2>
+        <p>This isn't a feature comparison — it's a boundary comparison. The same model can be safer or riskier depending on where it executes.</p>
+      </div>
+
+      <div class="table reveal">
+        <div class="row head">
+          <div>concern</div>
+          <div><span class="b">Local agent runtime <small>your laptop</small></span></div>
+          <div><span class="b">Mantis <small>cluster-hosted</small></span></div>
+        </div>
+        <div class="row">
+          <div>where it runs</div>
+          <div class="neg">on your workstation alongside your shell, browser, secrets</div>
+          <div class="pos">in isolated sandboxes deployed alongside Mantis (compose or helm)</div>
+        </div>
+        <div class="row">
+          <div>trust model</div>
+          <div class="neg">implicit — the agent inherits your access</div>
+          <div class="pos">explicit — capabilities and commands are declared per profile</div>
+        </div>
+        <div class="row">
+          <div>blast radius</div>
+          <div class="neg">your machine + everything it can reach</div>
+          <div class="pos">a short-lived sandbox + only the hosts its profile allows</div>
+        </div>
+        <div class="row">
+          <div>infrastructure access</div>
+          <div class="neg">your SSH keys, your kubeconfig, your shell history</div>
+          <div class="pos">scoped users and keys configured per connection</div>
+        </div>
+        <div class="row">
+          <div>policy enforcement</div>
+          <div class="neg">whatever the model decides, runs</div>
+          <div class="pos">guard rejects every command outside the profile, deterministically</div>
+        </div>
+        <div class="row">
+          <div>audit</div>
+          <div class="neg">scattered logs, easy to skip</div>
+          <div class="pos">prompts, tool calls, steps, and guard decisions — all persisted</div>
+        </div>
+        <div class="row">
+          <div>cluster fit</div>
+          <div class="neg">none — it's a desktop process</div>
+          <div class="pos">helm chart, ingress, runtime mode, deploys like a service</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section deployment" id="deployment">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker"><span class="num">08</span><span class="sep">/</span>deploy</span>
+        <h2>Cloud-hosted by design.</h2>
+        <p>Mantis is shipped as a Helm chart. It runs where your other infrastructure runs — not on the operator's laptop.</p>
+      </div>
+
+      <div class="grid">
+        <div class="reveal">
+          <div class="code-block">
+            <div class="head">helm · install</div>
+<pre><span class="c-key">export</span> TAG=$(git rev-parse --short HEAD)
+<span class="c-key">export</span> REGISTRY=ghcr.io/<span class="c-str">your-org</span>
+
+docker build -f Dockerfile.prod \
+  -t ${REGISTRY}/mantis:${TAG} .
+
+docker push ${REGISTRY}/mantis:${TAG}
+
+helm upgrade --install mantis ./helm/mantis \
+  --namespace mantis --create-namespace \
+  --set app.image.repository=${REGISTRY}/mantis \
+  --set app.image.tag=${TAG} \
+  --set secrets.authToken=<span class="c-str">'change-me'</span>
+</pre>
+          </div>
+        </div>
+
+        <div class="points reveal" data-stagger="60">
+          <div class="item reveal">
+            <b>Kubernetes-native runtime</b>
+            <span>Sandboxes are pods. Short-lived, replaceable, observable through the same tools you already use.</span>
+          </div>
+          <div class="item reveal">
+            <b>Off the operator's laptop</b>
+            <span>Control plane, guard and sandboxes all live in the cluster. Your machine isn't on the path.</span>
+          </div>
+          <div class="item reveal">
+            <b>Single-host friendly too</b>
+            <span>Running a homelab? <code class="mono" style="font-size:11.5px">docker compose up</code> brings up the full stack — sandboxes included.</span>
+          </div>
+          <div class="item reveal">
+            <b>Bring your own model</b>
+            <span>Any OpenAI-compatible API works — cloud or local. Fallback presets are first-class.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="container reveal">
+      <span class="kicker"><span class="num">·</span><span>open source · mit · early</span></span>
+      <h2>A sharper boundary between agents and infrastructure.</h2>
+      <p>Mantis is early, but end-to-end today. If you don't trust agents on your laptop, you're the target user.</p>
+      <div class="ctas">
+        <a class="btn btn-primary" href="https://github.com/x0152/mantis" rel="noopener noreferrer">
+          <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
+          View on GitHub
+          <svg class="arrow" width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </a>
+      </div>
+      <a class="cta-inline" href="https://github.com/x0152/mantis#readme" rel="noopener noreferrer">Read docs</a>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container row">
+      <div>
+        <span>mantis · v0 · control</span>
+        <span style="margin-left:12px">© <span data-year>2025</span> mantis contributors</span>
+      </div>
+      <div class="links">
+        <a href="https://github.com/x0152/mantis">github</a>
+        <a href="https://github.com/x0152/mantis#readme">readme</a>
+        <a href="https://github.com/x0152/mantis/blob/main/helm/mantis/README.md">helm</a>
+        <a href="https://github.com/x0152/mantis/issues">issues</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./landing/script.js" defer></script>
+</body>
+</html>

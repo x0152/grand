@@ -11,10 +11,8 @@ import (
 const MinBalanceGNK = "0.1"
 
 type Options struct {
-	BinaryPath       string
-	DefaultNodeURL   string
-	HasPresetPK      bool
-	HasPresetNodeURL bool
+	BinaryPath     string
+	DefaultNodeURL string
 }
 
 type App struct {
@@ -32,10 +30,8 @@ func NewApp(opts Options) *App {
 			GetBalance:    usecases.NewGetBalance(),
 			GetAccount:    usecases.NewGetAccount(),
 			GetConfig: usecases.NewGetConfig(runner, usecases.GetConfigOptions{
-				DefaultNodeURL:   opts.DefaultNodeURL,
-				HasPresetPK:      opts.HasPresetPK,
-				HasPresetNodeURL: opts.HasPresetNodeURL,
-				MinBalanceGNK:    MinBalanceGNK,
+				DefaultNodeURL: opts.DefaultNodeURL,
+				MinBalanceGNK:  MinBalanceGNK,
 			}),
 		}),
 	}

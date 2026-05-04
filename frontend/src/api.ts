@@ -1,4 +1,4 @@
-import type { Settings, Model, Preset, Connection, Skill, Plan, PlanRun, GuardProfile, ChatSession, ChatMessage, SessionLog, LlmConnection, ProviderModel, InferenceLimit, Channel, User, ContextStatus, SandboxStatus, GonkaConfig, GonkaWallet, GonkaBalance, GonkaAccountStatus, TelegramWizardBot, TelegramWizardUser } from './types'
+import type { Settings, Model, Preset, Connection, Skill, Plan, PlanRun, GuardProfile, ChatSession, ChatMessage, SessionLog, LlmConnection, ProviderModel, InferenceLimit, Channel, User, ContextStatus, SandboxStatus, GonkaConfig, GonkaWallet, GonkaBalance, GonkaAccountStatus, TelegramWizardBot, TelegramWizardUser, GlobalConfig, GlobalConfigDraft } from './types'
 
 export class UnauthorizedError extends Error {
   constructor(message = 'Unauthorized') {
@@ -43,6 +43,13 @@ export const api = {
     get: () => request<Settings>('/settings'),
     update: (data: Omit<Settings, 'id'>) =>
       request<Settings>('/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  },
+  config: {
+    get: () => request<GlobalConfig>('/config'),
+    update: (draft: GlobalConfigDraft) =>
+      request<GlobalConfig>('/config', { method: 'PUT', body: JSON.stringify(draft) }),
+    apply: () => request<{ ok: boolean }>('/config/apply', { method: 'POST' }),
+    reset: () => request<GlobalConfig>('/config/reset', { method: 'POST' }),
   },
   llmConnections: {
     list: () => request<LlmConnection[]>('/llm-connections'),

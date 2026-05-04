@@ -1,24 +1,31 @@
-{{- if and .Values.app.enabled .Values.app.autoscaling.enabled }}
-{{- $fullName := include "mantis.fullname" . -}}
+{{- $global := .Values.apps.global -}}
+{{- range $appName, $appCfg := .Values.apps }}
+{{- if ne $appName "global" }}
+{{- $autoscaling := default $global.autoscaling $appCfg.autoscaling }}
+{{- if $autoscaling.enabled }}
+{{- $name := include "mantis.appName" (dict "ctx" $ "app" $appName) }}
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ $fullName }}-app
+  name: {{ $name }}
   labels:
-    {{- include "mantis.labels" . | nindent 4 }}
-    app.kubernetes.io/component: app
+    {{- include "mantis.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $appName }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ $fullName }}-app
-  minReplicas: {{ .Values.app.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.app.autoscaling.maxReplicas }}
+    name: {{ $name }}
+  minReplicas: {{ $autoscaling.minReplicas | default 1 }}
+  maxReplicas: {{ $autoscaling.maxReplicas | default 5 }}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: {{ .Values.app.autoscaling.targetCPUUtilizationPercentage }}
+          averageUtilization: {{ $autoscaling.targetCPUUtilizationPercentage | default 70 }}
+{{- end }}
+{{- end }}
 {{- end }}

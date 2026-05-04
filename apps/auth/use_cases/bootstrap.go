@@ -28,7 +28,19 @@ func (uc *Bootstrap) Execute(ctx context.Context, name, token string) (types.Use
 		return types.User{}, err
 	}
 	if len(existing) > 0 {
-		return existing[0], nil
+		user := existing[0]
+		hashed := auth.HashToken(token)
+		if user.APIKeyHash != hashed {
+			user.APIKeyHash = hashed
+			updated, err := uc.store.Update(ctx, []types.User{user})
+			if err != nil {
+				return types.User{}, err
+			}
+			if len(updated) > 0 {
+				return updated[0], nil
+			}
+		}
+		return user, nil
 	}
 	user := types.User{
 		ID:         uuid.NewString(),

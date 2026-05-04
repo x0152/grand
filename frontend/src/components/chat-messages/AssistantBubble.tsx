@@ -54,7 +54,10 @@ export function AssistantBubble({ msg, onStepClick, canRegenerate, onRegenerate,
   const images = (msg.attachments ?? []).filter(isImage)
   const otherFiles = (msg.attachments ?? []).filter(a => !isImage(a))
 
-  const estimatedTokens = msg.tokens ?? estimateTokens(msg.content)
+  const hasMeasuredTokens = typeof msg.tokens === 'number' && msg.tokens > 0
+  const showMeasuredTokens = hasMeasuredTokens && !isPending
+  const visibleContent = stripThinking(msg.content)
+  const estimatedTokens = showMeasuredTokens ? msg.tokens! : estimateTokens(visibleContent)
   const showTokens = estimatedTokens > 0
   const showHeader = !!(msg.modelName || msg.presetName || msg.modelRole === 'fallback' || showMsgDuration || showTokens)
   const hasText = parts.some(p => p.type === 'text')
@@ -79,6 +82,7 @@ export function AssistantBubble({ msg, onStepClick, canRegenerate, onRegenerate,
             msgElapsed={msgElapsed}
             showTokens={showTokens}
             estimatedTokens={estimatedTokens}
+            hasMeasuredTokens={showMeasuredTokens}
           />
         )}
         {parts.map((part, i) => {
@@ -154,9 +158,19 @@ interface HeaderProps {
   msgElapsed: number
   showTokens: boolean
   estimatedTokens: number
+  hasMeasuredTokens: boolean
 }
 
-function Header({ presetName, modelName, modelRole, showMsgDuration, msgElapsed, showTokens, estimatedTokens }: HeaderProps) {
+function Header({
+  presetName,
+  modelName,
+  modelRole,
+  showMsgDuration,
+  msgElapsed,
+  showTokens,
+  estimatedTokens,
+  hasMeasuredTokens,
+}: HeaderProps) {
   return (
     <div className="flex items-center gap-x-2 gap-y-1 flex-wrap font-mono text-[10px] lowercase tracking-tight text-zinc-500 dark:text-zinc-500">
       {presetName && <span className="text-zinc-600 dark:text-zinc-400">{presetName.toLowerCase()}</span>}
@@ -178,8 +192,11 @@ function Header({ presetName, modelName, modelRole, showMsgDuration, msgElapsed,
       {showTokens && (
         <>
           <span className="text-zinc-300 dark:text-zinc-700">·</span>
-          <span className="tabular-nums" title="Estimated tokens in this message">
-            ~{fmtTokens(estimatedTokens)} tok
+          <span
+            className="tabular-nums"
+            title={hasMeasuredTokens ? 'Model-reported tokens in this message' : 'Estimated tokens in visible response text'}
+          >
+            {hasMeasuredTokens ? fmtTokens(estimatedTokens) : `~${fmtTokens(estimatedTokens)}`} tok
           </span>
         </>
       )}

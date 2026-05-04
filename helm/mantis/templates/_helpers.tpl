@@ -49,6 +49,23 @@ imagePullSecrets:
 {{- end }}
 {{- end -}}
 
+{{- define "mantis.appName" -}}
+{{- $ctx := .ctx -}}
+{{- $app := .app -}}
+{{- printf "%s-%s" (include "mantis.fullname" $ctx) $app | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "mantis.appServiceName" -}}
+{{- $ctx := .ctx -}}
+{{- $app := .app -}}
+{{- $cfg := .cfg -}}
+{{- if $cfg.serviceName -}}
+{{- $cfg.serviceName -}}
+{{- else -}}
+{{- $app -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "mantis.databaseUrl" -}}
 postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
 {{- end -}}
@@ -118,6 +135,33 @@ postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_POR
     secretKeyRef:
       name: {{ include "mantis.secretName" . }}
       key: AUTH_TOKEN
+      optional: true
+- name: MANTIS_LLM_BASE_URL
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "mantis.configName" . }}
+      key: MANTIS_LLM_BASE_URL
+- name: MANTIS_LLM_MODEL
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "mantis.configName" . }}
+      key: MANTIS_LLM_MODEL
+- name: MANTIS_TG_USER_IDS
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "mantis.configName" . }}
+      key: MANTIS_TG_USER_IDS
+- name: MANTIS_LLM_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "mantis.secretName" . }}
+      key: MANTIS_LLM_API_KEY
+      optional: true
+- name: MANTIS_TG_BOT_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "mantis.secretName" . }}
+      key: MANTIS_TG_BOT_TOKEN
       optional: true
 - name: ASR_API_URL
   valueFrom:

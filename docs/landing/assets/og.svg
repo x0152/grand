@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#14b8a6" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="aura" cx="32" cy="32" r="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5eead4" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#14b8a6" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0d9488" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="head" x1="32" y1="10" x2="32" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5eead4" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#0d9488" stop-opacity="0.10"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0 L0 0 0 48" fill="none" stroke="#3f3f46" stroke-opacity="0.18" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="#09090b"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#bgGlow)"/>
+
+  <g transform="translate(80,84)">
+    <rect x="0" y="0" width="186" height="26" rx="3" fill="none" stroke="#52525b" stroke-width="1"/>
+    <circle cx="14" cy="13" r="3.5" fill="#5eead4"/>
+    <text x="26" y="17" font-family="Geist Mono, ui-monospace, Menlo, monospace" font-size="11"
+          letter-spacing="1.2" fill="#a1a1aa">OPEN SOURCE · V0 · CONTROL</text>
+  </g>
+
+  <g transform="translate(80,150)">
+    <text font-family="Geist, system-ui, sans-serif" font-weight="500"
+          font-size="72" fill="#fafafa" letter-spacing="-2">
+      <tspan x="0" dy="0">Run powerful AI agents</tspan>
+      <tspan x="0" dy="84"><tspan fill="#5eead4">without trusting them</tspan></tspan>
+      <tspan x="0" dy="84">with your machine.</tspan>
+    </text>
+  </g>
+
+  <text x="80" y="490" font-family="Geist, system-ui, sans-serif"
+        font-size="22" fill="#a1a1aa" letter-spacing="-0.2">
+    Cloud-hosted · Kubernetes-native · policy-aware · auditable.
+  </text>
+
+  <g transform="translate(80,548)">
+    <g transform="translate(0,0) scale(0.8)" stroke="#5eead4" fill="#5eead4">
+      <circle cx="32" cy="32" r="26" fill="url(#aura)"/>
+      <path d="M27 13 Q 20 5 12 4" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M37 13 Q 44 5 52 4" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <circle cx="12" cy="4" r="1.9"/>
+      <circle cx="52" cy="4" r="1.9"/>
+      <path d="M32 10 L52 22 L46 38 L32 44 L18 38 L12 22 Z" fill="url(#head)" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M22 18 L28 24 L22 30 L17 24 Z" fill="#14b8a6" fill-opacity="0.28" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M42 18 L47 24 L42 30 L36 24 Z" fill="#14b8a6" fill-opacity="0.28" stroke-width="1.4" stroke-linejoin="round"/>
+      <circle cx="22" cy="24" r="1.6" stroke="none"/>
+      <circle cx="42" cy="24" r="1.6" stroke="none"/>
+      <path d="M27 42 L18 51 L28 57" fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M37 42 L46 51 L36 57" fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="28" cy="57" r="1.6" stroke="none"/>
+      <circle cx="36" cy="57" r="1.6" stroke="none"/>
+    </g>
+    <text x="68" y="36" font-family="Geist, system-ui, sans-serif" font-size="22"
+          font-weight="500" fill="#fafafa" letter-spacing="-0.4">mantis</text>
+    <text x="68" y="56" font-family="Geist Mono, ui-monospace, Menlo, monospace"
+          font-size="12" fill="#71717a" letter-spacing="0.4">a security boundary for ai agents</text>
+  </g>
+
+  <g transform="translate(740,170)" font-family="Geist Mono, ui-monospace, Menlo, monospace">
+    <rect x="0" y="0" width="380" height="280" rx="10" fill="none" stroke="#3f3f46" stroke-width="1"/>
+    <text x="14" y="22" fill="#71717a" font-size="11" letter-spacing="0.6">CLUSTER</text>
+
+    <rect x="20" y="46" width="160" height="46" rx="6" fill="rgba(45,212,191,0.10)" stroke="#0d9488"/>
+    <text x="100" y="68" text-anchor="middle" fill="#fafafa" font-size="12">control plane</text>
+    <text x="100" y="83" text-anchor="middle" fill="#71717a" font-size="10">router · plans</text>
+
+    <rect x="200" y="46" width="160" height="46" rx="6" fill="rgba(45,212,191,0.10)" stroke="#0d9488"/>
+    <text x="280" y="68" text-anchor="middle" fill="#fafafa" font-size="12">guard</text>
+    <text x="280" y="83" text-anchor="middle" fill="#71717a" font-size="10">profiles · whitelist</text>
+
+    <rect x="20" y="118" width="105" height="44" rx="6" fill="rgba(244,244,245,0.04)" stroke="#3f3f46"/>
+    <text x="72" y="138" text-anchor="middle" fill="#fafafa" font-size="11">sandbox</text>
+    <text x="72" y="153" text-anchor="middle" fill="#71717a" font-size="10">base · ssh</text>
+
+    <rect x="138" y="118" width="105" height="44" rx="6" fill="rgba(244,244,245,0.04)" stroke="#3f3f46"/>
+    <text x="190" y="138" text-anchor="middle" fill="#fafafa" font-size="11">sandbox</text>
+    <text x="190" y="153" text-anchor="middle" fill="#71717a" font-size="10">browser</text>
+
+    <rect x="256" y="118" width="105" height="44" rx="6" fill="rgba(244,244,245,0.04)" stroke="#3f3f46"/>
+    <text x="308" y="138" text-anchor="middle" fill="#fafafa" font-size="11">sandbox</text>
+    <text x="308" y="153" text-anchor="middle" fill="#71717a" font-size="10">python</text>
+
+    <rect x="20" y="190" width="340" height="44" rx="6" fill="rgba(244,244,245,0.04)" stroke="#3f3f46"/>
+    <text x="190" y="210" text-anchor="middle" fill="#fafafa" font-size="11">audit log</text>
+    <text x="190" y="225" text-anchor="middle" fill="#71717a" font-size="10">prompts · tool calls · steps · guard</text>
+
+    <g stroke="#5eead4" stroke-width="1.2" stroke-dasharray="4 5" fill="none" opacity="0.7">
+      <path d="M180 69 H200"/>
+      <path d="M280 92 V118"/>
+      <path d="M280 92 C 280 105, 72 105, 72 118"/>
+      <path d="M280 92 C 280 105, 190 105, 190 118"/>
+    </g>
+    <g stroke="#3f3f46" stroke-width="1" fill="none">
+      <path d="M100 92 V174 H190 V190"/>
+      <path d="M280 92 V174 H190 V190"/>
+    </g>
+  </g>
+</svg>

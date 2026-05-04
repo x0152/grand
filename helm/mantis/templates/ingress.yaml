@@ -27,13 +27,20 @@ spec:
     - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
-          - path: /api
+          {{- range $appName, $appCfg := .Values.apps }}
+          {{- if and (ne $appName "global") $appCfg.ingressPaths }}
+          {{- $svcName := include "mantis.appServiceName" (dict "ctx" $ "app" $appName "cfg" $appCfg) }}
+          {{- range $path := $appCfg.ingressPaths }}
+          - path: {{ $path }}
             pathType: Prefix
             backend:
               service:
-                name: app
+                name: {{ $svcName }}
                 port:
-                  number: {{ .Values.app.port }}
+                  number: {{ $appCfg.port | default 8080 }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
           {{- if .Values.frontend.enabled }}
           - path: /
             pathType: Prefix

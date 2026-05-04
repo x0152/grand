@@ -95,7 +95,7 @@ func (w *Wizard) Verify(ctx context.Context, token string) (*WizardBot, error) {
 func (w *Wizard) Status(ctx context.Context, token string) (*WizardUser, error) {
 	t := strings.TrimSpace(token)
 	if t == "" {
-		return nil, fmt.Errorf("%w: token is required", base.ErrValidation)
+		return nil, nil
 	}
 
 	w.mu.Lock()

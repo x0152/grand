@@ -100,6 +100,7 @@ export function TelegramStep({
   }
 
   const inputsDisabled = skip
+  const canVerify = !!token.trim()
 
   return (
     <div className="space-y-3">
@@ -138,7 +139,7 @@ export function TelegramStep({
             type="button"
             variant="outline"
             size="sm"
-            disabled={!token.trim() || verifying || inputsDisabled}
+            disabled={!canVerify || verifying || inputsDisabled}
             onClick={() => void verify(token)}
             className="h-9 text-[12px] shrink-0"
           >

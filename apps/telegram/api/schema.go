@@ -14,7 +14,7 @@ type WizardVerifyOutput struct {
 
 type WizardStatusInput struct {
 	Body struct {
-		Token string `json:"token" required:"true" minLength:"1"`
+		Token string `json:"token" required:"false"`
 	}
 }
 

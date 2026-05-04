@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ScrollText, Sparkles, ShieldAlert, Wrench, GitBranch, LogOut, Container } from '@/lib/icons'
+import { ScrollText, Sparkles, ShieldAlert, Wrench, GitBranch, LogOut, Container, Wand2 } from '@/lib/icons'
 import { Toaster } from '@/components/ui/sonner'
 import { Button } from '@/components/ui/button'
 import LlmPage from './pages/LlmPage'
@@ -11,6 +11,8 @@ import GuardProfilesPage from './pages/GuardProfilesPage'
 import SkillsPage from './pages/SkillsPage'
 import PlansPage from './pages/PlansPage'
 import SetupWizard from './pages/SetupWizard'
+import SetupPage from './pages/SetupPage'
+import { deriveStatus } from './pages/wizard/status'
 import LoginPage from './pages/LoginPage'
 import ChatSidebar from './components/ChatSidebar'
 import { MantisLogo } from './components/MantisLogo'
@@ -43,6 +45,7 @@ const nav: NavSection[] = [
     title: 'System',
     items: [
       { id: 'guard-profiles', label: 'Guard Profiles', icon: ShieldAlert },
+      { id: 'setup', label: 'Setup', icon: Wand2 },
     ],
   },
 ]
@@ -81,8 +84,8 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return
-    api.llmConnections.list()
-      .then(list => setNeedsSetup(list.length === 0))
+    api.config.get()
+      .then(cfg => setNeedsSetup(!deriveStatus(cfg).done))
       .catch(() => setNeedsSetup(false))
   }, [user])
 
@@ -140,7 +143,7 @@ export default function App() {
   if (!authChecked) return null
   if (!user) return <LoginPage onLogin={setUser} />
   if (needsSetup === null) return null
-  if (needsSetup) return <SetupWizard onDone={() => setNeedsSetup(false)} />
+  if (needsSetup) return <SetupWizard mode="full" onDone={() => setNeedsSetup(false)} />
 
   const renderNav = (items: NavItem[]) => items.map(item => (
     <button
@@ -224,6 +227,7 @@ export default function App() {
         {route.page === 'plans' && <PlansPage deepPlanId={planId} key={planId ?? '_'} />}
         {route.page === 'logs' && <LogsPage />}
         {route.page === 'guard-profiles' && <GuardProfilesPage />}
+        {route.page === 'setup' && <SetupPage />}
       </main>
       <Toaster />
     </div>

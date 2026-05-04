@@ -1,18 +1,24 @@
-{{- if and .Values.app.enabled (eq (.Values.runtime.mode | default "dind") "dind") .Values.runtime.dind.storage.enabled }}
+{{- if .Values.runtime.dind.storage.enabled }}
+{{- range $appName, $appCfg := .Values.apps }}
+{{- if and (ne $appName "global") (default false $appCfg.dind) }}
+{{- $name := include "mantis.appName" (dict "ctx" $ "app" $appName) }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "mantis.fullname" . }}-dind-storage
+  name: {{ $name }}-dind-storage
   labels:
-    {{- include "mantis.labels" . | nindent 4 }}
-    app.kubernetes.io/component: app
+    {{- include "mantis.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $appName }}
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.runtime.dind.storage.size }}
-  {{- with .Values.runtime.dind.storage.storageClassName }}
+      storage: {{ $.Values.runtime.dind.storage.size }}
+  {{- with $.Values.runtime.dind.storage.storageClassName }}
   storageClassName: {{ . | quote }}
   {{- end }}
+{{- end }}
+{{- end }}
 {{- end }}

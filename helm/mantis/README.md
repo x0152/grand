@@ -68,8 +68,8 @@ helm upgrade --install mantis ./helm/mantis \
   -f ./helm/mantis/values.yaml \
   -f ./helm/mantis/values-prod.yaml \
   --set ingress.host=mantis.example.com \
-  --set app.image.repository=registry.example.com/mantis \
-  --set app.image.tag=$(git rev-parse --short HEAD) \
+  --set apps.global.image.repository=registry.example.com/mantis \
+  --set apps.global.image.tag=$(git rev-parse --short HEAD) \
   --set frontend.image.repository=registry.example.com/mantis-frontend \
   --set frontend.image.tag=$(git rev-parse --short HEAD)
 
@@ -92,7 +92,9 @@ the migration, and the entire stack converges before `--wait` returns.
 Two ways:
 
 **Default — Secret rendered from `values.secrets.*` in `templates/secrets.yaml`.**
-Convenient for local installs, never for prod.
+Convenient for local installs, never for prod. The chart ships with a dev
+bootstrap token (`secrets.authToken=mantis-dev-token`) so first run works
+without extra flags.
 
 **Prod — out-of-band Secret.** Two flavors, pick one:
 
@@ -115,12 +117,14 @@ Required keys (used by `_helpers.tpl` `mantis.commonEnv`):
 | `POSTGRES_USER` | DB user |
 | `POSTGRES_PASSWORD` | DB password |
 | `POSTGRES_DB` | DB name |
-| `AUTH_TOKEN` | Bootstrap token for the admin user (optional) |
+| `AUTH_TOKEN` | Bootstrap token for the admin user (defaults to `mantis-dev-token` for local quick start) |
+| `MANTIS_LLM_API_KEY` | Default API key used by setup wizard prefill |
+| `MANTIS_TG_BOT_TOKEN` | Default Telegram bot token used by setup wizard prefill |
 | `GONKA_PRIVATE_KEY` | Optional preset Gonka wallet key |
 
 ## ConfigMap
 
-Non-sensitive env (host/port/SSL mode, AUTH_*, GONKA_*, ASR/OCR/TTS API URLs)
+Non-sensitive env (host/port/SSL mode, AUTH_*, MANTIS_LLM_*, MANTIS_TG_USER_IDS, GONKA_*, ASR/OCR/TTS API URLs)
 lives in `mantis-config`. Override via `config.*` in values, or replace
 externally via `--set global.configName=<existing-cm>`.
 

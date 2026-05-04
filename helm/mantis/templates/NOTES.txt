@@ -1,23 +1,39 @@
 
 Mantis {{ .Chart.AppVersion }} → release "{{ .Release.Name }}" / namespace "{{ .Release.Namespace }}"
 
-Components:
-  app          : enabled = {{ .Values.app.enabled }} ({{ .Values.app.replicaCount }} replicas, port {{ .Values.app.port }})
-  frontend     : enabled = {{ .Values.frontend.enabled }} ({{ .Values.frontend.replicaCount }} replicas, port {{ .Values.frontend.port }})
-  postgres     : enabled = {{ .Values.postgres.enabled }}
-  migration    : enabled = {{ .Values.migration.enabled }}
-  runtime mode : {{ .Values.runtime.mode | default "dind" }}
-  ingress      : enabled = {{ .Values.ingress.enabled }}{{ if .Values.ingress.enabled }}, host = {{ .Values.ingress.host }}{{ end }}
+Apps:
+{{- range $appName, $appCfg := .Values.apps }}
+{{- if ne $appName "global" }}
+  {{ printf "%-10s" $appName }} : replicas {{ $appCfg.replicaCount | default 1 }}, port {{ $appCfg.port | default 8080 }}, mounts "{{ $appCfg.apps | default "all" }}"{{ if $appCfg.dind }}, dind sidecar{{ end }}
+{{- end }}
+{{- end }}
+
+Infra:
+  frontend : enabled = {{ .Values.frontend.enabled }} ({{ .Values.frontend.replicaCount }} replicas, port {{ .Values.frontend.port }})
+  postgres : enabled = {{ .Values.postgres.enabled }}
+  migration: enabled = {{ .Values.migration.enabled }}
+  ingress  : enabled = {{ .Values.ingress.enabled }}{{ if .Values.ingress.enabled }}, host = {{ .Values.ingress.host }}{{ end }}
 
 {{- if .Values.ingress.enabled }}
 
 Endpoints:
-  https://{{ .Values.ingress.host }}/        → frontend
-  https://{{ .Values.ingress.host }}/api     → app
+  https://{{ .Values.ingress.host }}/  → frontend
+{{- range $appName, $appCfg := .Values.apps }}
+{{- if and (ne $appName "global") $appCfg.ingressPaths }}
+{{- range $path := $appCfg.ingressPaths }}
+  https://{{ $.Values.ingress.host }}{{ $path }} → {{ $appName }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- else }}
 
-  kubectl -n {{ .Release.Namespace }} port-forward svc/app {{ .Values.app.port }}:{{ .Values.app.port }}
-  kubectl -n {{ .Release.Namespace }} port-forward svc/frontend 8081:{{ .Values.frontend.port }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/frontend 27173:{{ .Values.frontend.port }}
+{{- range $appName, $appCfg := .Values.apps }}
+{{- if ne $appName "global" }}
+{{- $svcName := include "mantis.appServiceName" (dict "ctx" $ "app" $appName "cfg" $appCfg) }}
+  kubectl -n {{ $.Release.Namespace }} port-forward svc/{{ $svcName }} {{ $appCfg.port | default 8080 }}:{{ $appCfg.port | default 8080 }}
+{{- end }}
+{{- end }}
 {{- end }}
 
   kubectl -n {{ .Release.Namespace }} get pods,svc,ingress,pvc

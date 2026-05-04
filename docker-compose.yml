@@ -54,6 +54,11 @@ services:
       AUTH_USER_NAME: "${AUTH_USER_NAME:-admin}"
       AUTH_RATE_LIMIT_MAX: "${AUTH_RATE_LIMIT_MAX:-}"
       AUTH_RATE_LIMIT_WINDOW: "${AUTH_RATE_LIMIT_WINDOW:-}"
+      MANTIS_LLM_BASE_URL: "${MANTIS_LLM_BASE_URL:-}"
+      MANTIS_LLM_API_KEY: "${MANTIS_LLM_API_KEY:-}"
+      MANTIS_LLM_MODEL: "${MANTIS_LLM_MODEL:-}"
+      MANTIS_TG_BOT_TOKEN: "${MANTIS_TG_BOT_TOKEN:-}"
+      MANTIS_TG_USER_IDS: "${MANTIS_TG_USER_IDS:-}"
       ASR_API_URL: "${ASR_API_URL:-}"
       OCR_API_URL: "${OCR_API_URL:-}"
       TTS_API_URL: "${TTS_API_URL:-}"
@@ -91,11 +96,6 @@ services:
       API_URL: http://app:8080
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
-      VITE_LLM_BASE_URL: "${VITE_LLM_BASE_URL:-}"
-      VITE_LLM_API_KEY: "${VITE_LLM_API_KEY:-}"
-      VITE_LLM_MODEL: "${VITE_LLM_MODEL:-}"
-      VITE_TG_BOT_TOKEN: "${VITE_TG_BOT_TOKEN:-}"
-      VITE_TG_USER_IDS: "${VITE_TG_USER_IDS:-}"
     volumes:
       - ./frontend:/app
       - /app/node_modules

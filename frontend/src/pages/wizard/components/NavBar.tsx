@@ -78,8 +78,11 @@ function isNextDisabled(stepId: StepId, state: State): boolean {
       const hasChat = state.modelRows.some(r => r.role === 'chat' && r.name.trim())
       return !hasChat
     }
-    case 'telegram':
-      return !state.tgSkip && !state.tgLinkedUser
+    case 'telegram': {
+      if (state.tgSkip || state.tgLinkedUser) return false
+      if (state.tgTokenKnown && !state.tgToken.trim()) return false
+      return true
+    }
     case 'finish':
       return false
   }

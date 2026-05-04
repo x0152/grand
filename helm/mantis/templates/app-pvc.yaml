@@ -1,18 +1,25 @@
-{{- if .Values.app.enabled }}
+{{- $fullName := include "mantis.fullname" . -}}
+{{- $needsAttachments := false -}}
+{{- range $appName, $appCfg := .Values.apps -}}
+{{- if and (ne $appName "global") (default false $appCfg.attachments) -}}
+{{- $needsAttachments = true -}}
+{{- end -}}
+{{- end -}}
+{{- if $needsAttachments }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "mantis.fullname" . }}-attachments
+  name: {{ $fullName }}-attachments
   labels:
     {{- include "mantis.labels" . | nindent 4 }}
-    app.kubernetes.io/component: app
+    app.kubernetes.io/component: attachments
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.app.attachments.storage }}
-  {{- with .Values.app.attachments.storageClassName }}
+      storage: {{ .Values.attachments.storage }}
+  {{- with .Values.attachments.storageClassName }}
   storageClassName: {{ . | quote }}
   {{- end }}
 {{- end }}

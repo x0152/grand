@@ -1,9 +1,9 @@
 {{- if .Values.migration.enabled }}
+{{- $img := .Values.apps.global.image -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # tag in name keeps Jobs unique across upgrades (Jobs are immutable)
-  name: {{ include "mantis.fullname" . }}-migrate-{{ .Values.app.image.tag | replace "." "-" | replace "+" "-" | replace "_" "-" | trunc 40 }}
+  name: {{ include "mantis.fullname" . }}-migrate-{{ $img.tag | replace "." "-" | replace "+" "-" | replace "_" "-" | trunc 40 }}
   labels:
     {{- include "mantis.labels" . | nindent 4 }}
     app.kubernetes.io/component: migrate
@@ -46,9 +46,8 @@ spec:
                   key: POSTGRES_USER
       containers:
         - name: migrate
-          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
-          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
-          # migrations are baked at /migrations in Dockerfile.prod
+          image: "{{ $img.repository }}:{{ $img.tag }}"
+          imagePullPolicy: {{ $img.pullPolicy }}
           command: ["goose"]
           args:
             - "-dir"

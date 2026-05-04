@@ -5,11 +5,11 @@ import { MantisLogo } from '@/components/MantisLogo'
 import { ModeToggle } from '@/components/mode-toggle'
 import { AlertCircle } from '@/lib/icons'
 import { api } from '@/api'
-import type { GonkaConfig, ProviderModel } from '@/types'
-import type { ModelRow, Provider, State, StepId, WalletMode } from './types'
+import type { GlobalConfig, GlobalConfigDraft, GonkaConfig, ProviderModel } from '@/types'
+import type { ModelRow, Provider, State, StepId, WalletMode, WizardMode } from './types'
 import { DEFAULT_GONKA_NODE, MIN_BALANCE_GNK } from './seeds'
 import { buildPath } from './path'
-import { completeSetup } from './completeSetup'
+import { deriveStatus } from './status'
 import { telegramSummary } from './utils'
 import { StepHeader } from './components/StepHeader'
 import { NavBar } from './components/NavBar'
@@ -24,53 +24,38 @@ import { GonkaModelsStep } from './steps/GonkaModelsStep'
 import { TelegramStep } from './steps/TelegramStep'
 import { FinishStep } from './steps/FinishStep'
 
-export default function SetupWizard({ onDone }: { onDone: () => void }) {
-  const envOpenAIBaseUrl = (import.meta.env.VITE_LLM_BASE_URL as string | undefined) ?? ''
-  const envOpenAIApiKey = (import.meta.env.VITE_LLM_API_KEY as string | undefined) ?? ''
-  const envOpenAIModels = ((import.meta.env.VITE_LLM_MODEL as string | undefined) ?? '')
-    .split(',').map(s => s.trim()).filter(Boolean)
-  const envGonkaPrivateKey = (import.meta.env.VITE_GONKA_PRIVATE_KEY as string | undefined) ?? ''
-  const envGonkaNodeUrl = (import.meta.env.VITE_GONKA_NODE_URL as string | undefined) ?? ''
-  const envTgToken = (import.meta.env.VITE_TG_BOT_TOKEN as string | undefined) ?? ''
-  const envTgUserIds = (import.meta.env.VITE_TG_USER_IDS as string | undefined) ?? ''
+interface SetupWizardProps {
+  mode?: WizardMode
+  onDone: () => void
+}
 
-  const defaultModelRowsFor = useCallback((p: Provider): ModelRow[] => {
-    if (p === 'openai' && envOpenAIModels.length > 0) {
-      return envOpenAIModels.map((name, i) => ({
-        name,
-        role: i === 0 ? 'chat' : (i === envOpenAIModels.length - 1 && envOpenAIModels.length > 1 ? 'summary' : ''),
-      }))
-    }
-    return [{ name: '', role: 'chat' }]
-  }, [envOpenAIModels])
-
-  const [state, setState] = useState<State>(() => ({
-    provider: 'openai',
-    openaiBaseUrl: envOpenAIBaseUrl,
-    openaiApiKey: envOpenAIApiKey,
-    modelRows: defaultModelRowsFor('openai'),
-    walletMode: 'create',
-    gonkaNodeUrl: envGonkaNodeUrl || '',
-    gonkaPrivateKey: envGonkaPrivateKey,
-    gonkaAddress: '',
-    gonkaMnemonicWords: [],
-    mnemonicAcknowledged: false,
-    bypassBalance: false,
-    gonkaBalance: null,
-    tgToken: envTgToken,
-    tgLinkedUser: null,
-    tgEnvUserIds: envTgUserIds,
-    tgSkip: false,
-  }))
-
+export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps) {
+  const [state, setState] = useState<State | null>(null)
   const [stepId, setStepId] = useState<StepId>('provider')
   const [gonkaConfig, setGonkaConfig] = useState<GonkaConfig | null>(null)
+  const [resolved, setResolved] = useState<GlobalConfig | null>(null)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const [availableModels, setAvailableModels] = useState<ProviderModel[] | null>(null)
   const [loadingModels, setLoadingModels] = useState(false)
   const [modelsError, setModelsError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([api.config.get(), api.gonka.config().catch(() => null)]).then(([cfg, gonka]) => {
+      if (cancelled) return
+      setResolved(cfg)
+      const fallback = gonka?.defaultNodeUrl || DEFAULT_GONKA_NODE
+      setGonkaConfig(gonka ?? { defaultNodeUrl: fallback, inferencedAvailable: false, minBalanceGnk: String(MIN_BALANCE_GNK) })
+      setState(initialState(cfg, fallback))
+      const status = deriveStatus(cfg)
+      if (mode === 'resume' && status.firstMissing) {
+        setStepId(status.firstMissing)
+      }
+    })
+    return () => { cancelled = true }
+  }, [mode])
 
   const loadModels = useCallback(
     async (provider: Provider, baseUrl: string, apiKey: string): Promise<ProviderModel[]> => {
@@ -103,10 +88,11 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     setAvailableModels(null)
     setModelsError('')
-  }, [state.provider])
+  }, [state?.provider])
 
   const gonkaAutoLoadedRef = useRef(false)
   useEffect(() => {
+    if (!state) return
     if (stepId !== 'gonka-models') return
     if (gonkaAutoLoadedRef.current) return
     if (availableModels !== null || loadingModels) return
@@ -114,47 +100,36 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
     gonkaAutoLoadedRef.current = true
     void (async () => {
       const list = await loadModels('gonka', state.gonkaNodeUrl, state.gonkaPrivateKey)
-      setState(prev => {
-        const rows = prev.modelRows
-        const isEmpty = rows.length === 0 || (rows.length === 1 && !rows[0].name.trim())
-        if (isEmpty && list.length > 0) {
-          return { ...prev, modelRows: [{ name: list[0].id, role: 'chat' }] }
-        }
-        return prev
-      })
+      setState(prev => prev ? autoFillFirstModel(prev, list) : prev)
     })()
-  }, [stepId, availableModels, loadingModels, state.gonkaNodeUrl, state.gonkaPrivateKey, loadModels])
+  }, [state, stepId, availableModels, loadingModels, loadModels])
 
   useEffect(() => {
     gonkaAutoLoadedRef.current = false
-  }, [state.provider, state.gonkaNodeUrl, state.gonkaPrivateKey])
+  }, [state?.provider, state?.gonkaNodeUrl, state?.gonkaPrivateKey])
 
-  useEffect(() => {
-    api.gonka
-      .config()
-      .then(cfg => {
-        setGonkaConfig(cfg)
-        setState(prev => ({
-          ...prev,
-          gonkaNodeUrl: prev.gonkaNodeUrl || cfg.defaultNodeUrl || DEFAULT_GONKA_NODE,
-        }))
-      })
-      .catch(() =>
-        setGonkaConfig({
-          defaultNodeUrl: DEFAULT_GONKA_NODE,
-          inferencedAvailable: false,
-          hasPresetPrivateKey: false,
-          hasPresetNodeUrl: false,
-          minBalanceGnk: String(MIN_BALANCE_GNK),
-        }),
-      )
-  }, [])
+  const path = useMemo(() => {
+    if (!state) return [] as StepId[]
+    return buildPath({
+      state,
+      gonkaConfig,
+      mode,
+      status: deriveStatus(resolved),
+    })
+  }, [state, gonkaConfig, resolved, mode])
 
-  const path = useMemo(() => buildPath(state, gonkaConfig), [state, gonkaConfig])
-  const currentIdx = Math.max(0, path.indexOf(stepId))
+  const currentIdx = state ? Math.max(0, path.indexOf(stepId)) : 0
+
+  if (!state) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-6 text-sm text-zinc-500">
+        Loading setup…
+      </div>
+    )
+  }
 
   const update = <K extends keyof State>(key: K, value: State[K]) =>
-    setState(prev => ({ ...prev, [key]: value }))
+    setState(prev => (prev ? { ...prev, [key]: value } : prev))
 
   const goNext = () => {
     setError('')
@@ -168,10 +143,13 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
   }
 
   const onCompleteClick = async () => {
+    if (!state) return
     setSubmitting(true)
     setError('')
     try {
-      await completeSetup(state)
+      const draft = buildDraft(state)
+      await api.config.update(draft)
+      await api.config.apply()
       onDone()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Setup failed')
@@ -181,14 +159,18 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
   }
 
   const onProviderSelect = (p: Provider) => {
-    setState(prev => (prev.provider === p ? prev : { ...prev, provider: p, modelRows: defaultModelRowsFor(p) }))
+    setState(prev => {
+      if (!prev) return prev
+      if (prev.provider === p) return prev
+      return { ...prev, provider: p, modelRows: [{ name: '', role: 'chat' }] }
+    })
     if (p === 'openai') setStepId('openai')
     else setStepId('wallet-choice')
   }
 
-  const onWalletModeSelect = (mode: WalletMode) => {
-    setState(prev => ({ ...prev, walletMode: mode }))
-    setStepId(mode === 'create' ? 'wallet-create' : 'wallet-import')
+  const onWalletModeSelect = (walletMode: WalletMode) => {
+    update('walletMode', walletMode)
+    setStepId(walletMode === 'create' ? 'wallet-create' : 'wallet-import')
   }
 
   const onCreateWallet = async () => {
@@ -196,13 +178,14 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
     setError('')
     try {
       const wallet = await api.gonka.createWallet()
-      setState(prev => ({
+      setState(prev => prev ? {
         ...prev,
         gonkaPrivateKey: wallet.privateKeyHex,
+        gonkaPrivateKeyKnown: true,
         gonkaAddress: wallet.address,
         gonkaMnemonicWords: wallet.words,
         mnemonicAcknowledged: false,
-      }))
+      } : prev)
       setStepId('wallet-reveal')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Wallet creation failed')
@@ -216,7 +199,7 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
     setError('')
     try {
       const { address } = await api.gonka.deriveAddress(state.gonkaPrivateKey.trim())
-      update('gonkaAddress', address)
+      setState(prev => prev ? { ...prev, gonkaAddress: address, gonkaPrivateKeyKnown: true } : prev)
       setStepId('wallet-balance')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid private key')
@@ -227,22 +210,12 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
 
   const onLoadOpenAIModels = async () => {
     const list = await loadModels('openai', state.openaiBaseUrl, state.openaiApiKey)
-    setState(prev => {
-      const rows = prev.modelRows
-      const isEmpty = rows.length === 0 || (rows.length === 1 && !rows[0].name.trim())
-      if (isEmpty && list.length > 0) return { ...prev, modelRows: [{ name: list[0].id, role: 'chat' }] }
-      return prev
-    })
+    setState(prev => prev ? autoFillFirstModel(prev, list) : prev)
   }
 
   const onReloadGonkaModels = async () => {
     const list = await loadModels('gonka', state.gonkaNodeUrl, state.gonkaPrivateKey)
-    setState(prev => {
-      const rows = prev.modelRows
-      const isEmpty = rows.length === 0 || (rows.length === 1 && !rows[0].name.trim())
-      if (isEmpty && list.length > 0) return { ...prev, modelRows: [{ name: list[0].id, role: 'chat' }] }
-      return prev
-    })
+    setState(prev => prev ? autoFillFirstModel(prev, list) : prev)
   }
 
   return (
@@ -255,7 +228,9 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
             <h1 className="font-mono text-[20px] font-medium lowercase tracking-tight text-zinc-900 dark:text-zinc-50">
               mantis
             </h1>
-            <p className="font-mono text-[11px] lowercase tracking-tight text-zinc-500 mt-0.5">let’s set you up</p>
+            <p className="font-mono text-[11px] lowercase tracking-tight text-zinc-500 mt-0.5">
+              {mode === 'resume' ? 'finishing setup' : 'let’s set you up'}
+            </p>
           </div>
           <div className="absolute right-0 top-0">
             <ModeToggle />
@@ -385,4 +360,62 @@ export default function SetupWizard({ onDone }: { onDone: () => void }) {
       </div>
     </div>
   )
+}
+
+function initialState(cfg: GlobalConfig, defaultGonkaNode: string): State {
+  const provider = (cfg.provider.value || 'openai') as Provider
+  return {
+    provider,
+    openaiBaseUrl: cfg.openai.baseUrl.value,
+    openaiApiKey: cfg.openai.apiKey.value || '',
+    openaiApiKeyKnown: cfg.openai.apiKey.set,
+    modelRows: cfg.models.length ? cfg.models.map(m => ({ name: m.name, role: m.role })) : [{ name: '', role: 'chat' }],
+    walletMode: 'create',
+    gonkaNodeUrl: cfg.gonka.nodeUrl.value || defaultGonkaNode,
+    gonkaPrivateKey: '',
+    gonkaPrivateKeyKnown: cfg.gonka.privateKey.set,
+    gonkaAddress: '',
+    gonkaMnemonicWords: [],
+    mnemonicAcknowledged: false,
+    bypassBalance: false,
+    gonkaBalance: null,
+    tgToken: cfg.telegram.token.value || '',
+    tgTokenKnown: cfg.telegram.token.set,
+    tgLinkedUser: null,
+    tgAllowedUserIds: cfg.telegram.allowedUserIds ?? [],
+    tgSkip: cfg.telegram.skipped,
+  }
+}
+
+function autoFillFirstModel(prev: State, list: ProviderModel[]): State {
+  const rows = prev.modelRows
+  const isEmpty = rows.length === 0 || (rows.length === 1 && !rows[0].name.trim())
+  if (isEmpty && list.length > 0) {
+    return { ...prev, modelRows: [{ name: list[0].id, role: 'chat' }] }
+  }
+  return prev
+}
+
+function buildDraft(state: State): GlobalConfigDraft {
+  const validRows: ModelRow[] = state.modelRows.filter(r => r.name.trim()).map(r => ({ name: r.name.trim(), role: r.role }))
+  const allowedFromState = state.tgAllowedUserIds ?? []
+  const linkedId = state.tgLinkedUser?.id
+  const merged = linkedId ? Array.from(new Set<number>([linkedId, ...allowedFromState])) : allowedFromState
+  return {
+    provider: state.provider,
+    openai: {
+      baseUrl: state.openaiBaseUrl.trim(),
+      apiKey: state.openaiApiKey.trim(),
+    },
+    gonka: {
+      nodeUrl: state.gonkaNodeUrl.trim(),
+      privateKey: state.gonkaPrivateKey.trim(),
+    },
+    models: validRows,
+    telegram: {
+      token: state.tgToken.trim(),
+      allowedUserIds: state.tgSkip ? [] : merged,
+      skipped: state.tgSkip,
+    },
+  }
 }

@@ -24,8 +24,6 @@ export interface InferenceLimit {
 export interface GonkaConfig {
   defaultNodeUrl: string
   inferencedAvailable: boolean
-  hasPresetPrivateKey: boolean
-  hasPresetNodeUrl: boolean
   minBalanceGnk: string
 }
 
@@ -72,6 +70,73 @@ export interface Settings {
   serverPresetId: string
   memoryEnabled: boolean
   userMemories: string[]
+}
+
+export type ConfigSource = 'unset' | 'env' | 'db' | 'default'
+
+export interface ConfigField {
+  value: string
+  source: ConfigSource
+}
+
+export interface ConfigSecret {
+  set: boolean
+  value: string
+  source: ConfigSource
+}
+
+export interface ConfigModelRow {
+  name: string
+  role: 'chat' | 'summary' | 'vision' | ''
+}
+
+export interface OpenAIConfigResolved {
+  baseUrl: ConfigField
+  apiKey: ConfigSecret
+}
+
+export interface GonkaConfigResolved {
+  nodeUrl: ConfigField
+  privateKey: ConfigSecret
+}
+
+export interface TelegramConfigResolved {
+  token: ConfigSecret
+  allowedUserIds: number[]
+  skipped: boolean
+  source: ConfigSource
+}
+
+export interface GlobalConfig {
+  provider: ConfigField
+  openai: OpenAIConfigResolved
+  gonka: GonkaConfigResolved
+  models: ConfigModelRow[]
+  telegram: TelegramConfigResolved
+}
+
+export interface OpenAIDraft {
+  baseUrl: string
+  apiKey: string
+}
+
+export interface GonkaDraft {
+  nodeUrl: string
+  privateKey: string
+}
+
+export interface TelegramDraft {
+  token: string
+  allowedUserIds: number[]
+  skipped: boolean
+}
+
+export interface GlobalConfigDraft {
+  provider: string
+  openai: OpenAIDraft
+  gonka: GonkaDraft
+  models: ConfigModelRow[]
+  telegram: TelegramDraft
 }
 
 export interface Model {

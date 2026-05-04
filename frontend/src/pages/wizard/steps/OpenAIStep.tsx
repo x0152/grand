@@ -38,7 +38,7 @@ export function OpenAIStep({
       </FormField>
       <FormField label="API key" hint="Anyone with this key can use your account — keep it private.">
         <Input
-          type="password"
+          type="text"
           value={apiKey}
           onChange={e => onChangeApiKey(e.target.value)}
           placeholder="sk-..."

@@ -22,6 +22,8 @@ import (
 
 	authapp "mantis/apps/auth"
 	"mantis/apps/chat"
+	configapp "mantis/apps/config"
+	configusecases "mantis/apps/config/use_cases"
 	gonkaapp "mantis/apps/gonka"
 	"mantis/apps/logs"
 	"mantis/apps/metadata"
@@ -55,6 +57,8 @@ import (
 func main() {
 	dsn := env("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/mantis?sslmode=disable")
 	port := env("PORT", "8080")
+	enabled := parseEnabledApps(env("MANTIS_APPS", ""))
+	log.Printf("apps: %s", enabledAppsLabel(enabled))
 
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	db := bun.NewDB(sqldb, pgdialect.New())
@@ -145,6 +149,12 @@ func main() {
 		mappers.UserToRow,
 		mappers.UserFromRow,
 	)
+	appConfigStore := store.NewPostgres[string, types.AppConfig, models.GlobalConfigRow](
+		db,
+		func(c types.AppConfig) string { return c.ID },
+		mappers.AppConfigToRow,
+		mappers.AppConfigFromRow,
+	)
 
 	openaiAdapter := llm.NewOpenAI()
 	gonkaAdapter := llm.NewGonka()
@@ -201,18 +211,24 @@ func main() {
 	chatApp.SetAttachmentDir(attachmentDir)
 	plansApp.SetAttachmentDir(attachmentDir)
 
-	go telegramApp.Start(context.Background())
-	go plansApp.Start(context.Background())
+	if isEnabled(enabled, "telegram") {
+		go telegramApp.Start(context.Background())
+	}
+	if isEnabled(enabled, "plans") || isEnabled(enabled, "metadata") {
+		go plansApp.Start(context.Background())
+	}
 
 	authApp := authapp.NewApp(userStore)
-	if token := env("AUTH_TOKEN", ""); token != "" {
-		user, err := authApp.Bootstrap(context.Background(), env("AUTH_USER_NAME", "admin"), token)
-		if err != nil {
-			log.Fatalf("auth bootstrap failed: %v", err)
+	if isEnabled(enabled, "auth") {
+		if token := env("AUTH_TOKEN", ""); token != "" {
+			user, err := authApp.Bootstrap(context.Background(), env("AUTH_USER_NAME", "admin"), token)
+			if err != nil {
+				log.Fatalf("auth bootstrap failed: %v", err)
+			}
+			log.Printf("auth: ready, user %q (%s)", user.Name, user.ID)
+		} else {
+			log.Println("auth: AUTH_TOKEN not set, API will reject all requests until a user is created")
 		}
-		log.Printf("auth: ready, user %q (%s)", user.Name, user.ID)
-	} else {
-		log.Println("auth: AUTH_TOKEN not set, API will reject all requests until a user is created")
 	}
 
 	r := chi.NewMux()
@@ -227,21 +243,47 @@ func main() {
 
 	api := humachi.New(r, huma.DefaultConfig("Mantis API", "1.0.0"))
 
-	authApp.Register(api)
-	metadataApp.Register(api)
-	chatApp.Register(api)
-	logsApp.Register(api)
+	if isEnabled(enabled, "auth") {
+		authApp.Register(api)
+	}
+	if isEnabled(enabled, "metadata") {
+		metadataApp.Register(api)
+	}
+	if isEnabled(enabled, "chat") {
+		chatApp.Register(api)
+	}
+	if isEnabled(enabled, "logs") {
+		logsApp.Register(api)
+	}
+	// Keep wizard endpoints available on every API instance.
+	// This allows frontend-side /api proxying to work even when the
+	// telegram worker itself is deployed separately.
 	telegramApp.Register(api)
 
-	gonkaApp := gonkaapp.NewApp(gonkaapp.Options{
-		BinaryPath:       env("GONKA_INFERENCED_BIN", ""),
-		DefaultNodeURL:   env("GONKA_DEFAULT_NODE_URL", "http://node1.gonka.ai:8000"),
-		HasPresetPK:      os.Getenv("GONKA_PRIVATE_KEY") != "",
-		HasPresetNodeURL: os.Getenv("GONKA_NODE_URL") != "",
-	})
-	gonkaApp.Register(api)
+	if isEnabled(enabled, "gonka") {
+		gonkaApp := gonkaapp.NewApp(gonkaapp.Options{
+			BinaryPath:     env("GONKA_INFERENCED_BIN", ""),
+			DefaultNodeURL: env("GONKA_DEFAULT_NODE_URL", "http://node1.gonka.ai:8000"),
+		})
+		gonkaApp.Register(api)
+	}
 
-	if mode := env("RUNTIME_MODE", ""); mode == "docker" {
+	if isEnabled(enabled, "config") {
+		configApp := configapp.NewApp(configapp.Stores{
+			AppConfig: appConfigStore,
+			LlmConn:   llmConnStore,
+			Model:     modelStore,
+			Preset:    presetStore,
+			Settings:  settingsStore,
+			Channel:   channelStore,
+			Conn:      connectionStore,
+			Skill:     skillStore,
+			Plan:      planStore,
+		}, loadConfigEnv())
+		configApp.Register(api)
+	}
+
+	if mode := env("RUNTIME_MODE", ""); mode == "docker" && isEnabled(enabled, "runtime") {
 		caps, privileged := parseSandboxCaps(env("RUNTIME_SANDBOX_CAPS", "NET_RAW,NET_ADMIN"))
 		rt := dockerruntime.New(dockerruntime.Options{
 			SocketPath:  env("DOCKER_SOCKET", ""),
@@ -271,7 +313,17 @@ func main() {
 		}()
 	}
 
-	r.Get("/api/artifacts/{sessionId}/{artifactId}", func(w http.ResponseWriter, r *http.Request) {
+	if isEnabled(enabled, "chat") || isEnabled(enabled, "telegram") {
+		r.Get("/api/artifacts/{sessionId}/{artifactId}", artifactHandler(artifactMgr, attachmentDir))
+	}
+
+	log.Printf("listening on :%s", port)
+	log.Printf("docs: http://localhost:%s/docs", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
+}
+
+func artifactHandler(artifactMgr *artifactplugin.Manager, attachmentDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID := chi.URLParam(r, "sessionId")
 		artifactID := chi.URLParam(r, "artifactId")
 
@@ -295,11 +347,44 @@ func main() {
 			_ = json.Unmarshal(raw, &meta)
 		}
 		serveBinary(w, data, meta.MIME, meta.Name)
-	})
+	}
+}
 
-	log.Printf("listening on :%s", port)
-	log.Printf("docs: http://localhost:%s/docs", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), r))
+func parseEnabledApps(raw string) map[string]bool {
+	clean := strings.TrimSpace(raw)
+	if clean == "" {
+		return nil
+	}
+	set := make(map[string]bool)
+	for _, p := range strings.Split(clean, ",") {
+		p = strings.TrimSpace(strings.ToLower(p))
+		if p == "" {
+			continue
+		}
+		set[p] = true
+	}
+	if len(set) == 0 {
+		return nil
+	}
+	return set
+}
+
+func isEnabled(set map[string]bool, name string) bool {
+	if set == nil {
+		return true
+	}
+	return set[strings.ToLower(name)]
+}
+
+func enabledAppsLabel(set map[string]bool) string {
+	if set == nil {
+		return "all"
+	}
+	names := make([]string, 0, len(set))
+	for k := range set {
+		names = append(names, k)
+	}
+	return strings.Join(names, ",")
 }
 
 func isPublicPathFactory(runtimeToken string) func(*http.Request) bool {
@@ -326,6 +411,54 @@ func env(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func loadConfigEnv() configusecases.EnvSnapshot {
+	return configusecases.EnvSnapshot{
+		LLMBaseURL:      env("MANTIS_LLM_BASE_URL", env("VITE_LLM_BASE_URL", "")),
+		LLMAPIKey:       env("MANTIS_LLM_API_KEY", env("VITE_LLM_API_KEY", "")),
+		LLMModels:       splitCSV(env("MANTIS_LLM_MODEL", env("VITE_LLM_MODEL", ""))),
+		GonkaNodeURL:    env("GONKA_NODE_URL", env("MANTIS_GONKA_NODE_URL", "")),
+		GonkaPrivateKey: env("GONKA_PRIVATE_KEY", env("MANTIS_GONKA_PRIVATE_KEY", "")),
+		TGBotToken:      env("MANTIS_TG_BOT_TOKEN", env("VITE_TG_BOT_TOKEN", "")),
+		TGUserIDs:       parseUserIDs(env("MANTIS_TG_USER_IDS", env("VITE_TG_USER_IDS", ""))),
+	}
+}
+
+func splitCSV(raw string) []string {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		clean := strings.TrimSpace(p)
+		if clean == "" {
+			continue
+		}
+		out = append(out, clean)
+	}
+	return out
+}
+
+func parseUserIDs(raw string) []int64 {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]int64, 0, len(parts))
+	for _, p := range parts {
+		clean := strings.TrimSpace(p)
+		if clean == "" {
+			continue
+		}
+		n, err := strconv.ParseInt(clean, 10, 64)
+		if err != nil {
+			continue
+		}
+		out = append(out, n)
+	}
+	return out
 }
 
 func envInt(key string, fallback int) int {
