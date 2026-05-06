@@ -5,8 +5,8 @@ Host for working with the web, images, and audio. The main tool is **Jina** (sea
 ## System info
 
 - OS: Ubuntu 24.04 (Noble) — Microsoft Playwright image
-- User: `mantis`
-- Home directory: `/home/mantis`
+- User: `sandbox`
+- Home directory: `/home/sandbox`
 - Shell: `/bin/bash`
 - Node.js: preinstalled
 - Browser: Chromium (headless, driven via Playwright)
@@ -76,7 +76,7 @@ Use these rules to avoid unnecessary failures and retries:
    - Required cases: login flows, clicking, submitting forms, waiting for post-click state, screenshots, JS-only content that text tools cannot read.
 
 3. **Prefer script files over long one-liners**
-   - If the command is longer than a few lines, write it to `/home/mantis/<name>.js` and run `node /home/mantis/<name>.js`.
+   - If the command is longer than a few lines, write it to `/home/sandbox/<name>.js` and run `node /home/sandbox/<name>.js`.
    - This avoids shell escaping issues and makes debugging easier.
 
 4. **Never put `$$eval` inside double-quoted shell strings**
@@ -95,7 +95,7 @@ If `OCR_API_URL` is set, you can recognize text in an image via curl:
 
 ```bash
 curl -sS "${OCR_API_URL}/ocr" \
-  -F "file=@/home/mantis/image.png" \
+  -F "file=@/home/sandbox/image.png" \
   | jq -r '.text'
 ```
 
@@ -120,7 +120,7 @@ If `ASR_API_URL` is set, you can transcribe an audio file:
 
 ```bash
 curl -sS "${ASR_API_URL}/transcribe" \
-  -F "file=@/home/mantis/audio.ogg" \
+  -F "file=@/home/sandbox/audio.ogg" \
   | jq -r '.text'
 ```
 
@@ -276,7 +276,7 @@ const { chromium } = require('playwright');
 Instead of long one-liners you can store scripts in files:
 
 ```bash
-cat > /home/mantis/scrape.js << 'SCRIPT'
+cat > /home/sandbox/scrape.js << 'SCRIPT'
 const { chromium } = require('playwright');
 
 (async () => {
@@ -293,7 +293,7 @@ const { chromium } = require('playwright');
 })();
 SCRIPT
 
-node /home/mantis/scrape.js https://example.com
+node /home/sandbox/scrape.js https://example.com
 ```
 
 ## Installing additional npm packages

@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	dockerfileHashLabel = "mantis.sandbox.dockerfile_hash"
-	pubkeyEnvVar        = "MANTIS_SSH_PUBLIC_KEY"
+	dockerfileHashLabel = "sandbox.dockerfile_hash"
+	pubkeyEnvVar        = "SANDBOX_SSH_PUBLIC_KEY"
 )
 
 type Bootstrapper struct {
@@ -54,6 +54,10 @@ func (b *Bootstrapper) Run(ctx context.Context) error {
 		return fmt.Errorf("issue sandbox key: %w", err)
 	}
 
+	if err := b.ensureBaseImages(ctx); err != nil {
+		log.Printf("runtime bootstrap: ensure base images: %v", err)
+	}
+
 	if err := b.seedBuiltins(ctx, key); err != nil {
 		log.Printf("runtime bootstrap: seed builtins: %v", err)
 	}
@@ -70,6 +74,41 @@ func (b *Bootstrapper) Run(ctx context.Context) error {
 		if err := b.ensureSandbox(ctx, conn, sandboxName, key); err != nil {
 			log.Printf("runtime bootstrap: sandbox %s: %v", sandboxName, err)
 		}
+		// Reattach gateway every time. Running containers stay attached to
+		// their per-sandbox networks across restarts of the gateway, but the
+		// gateway itself loses those dynamic endpoint attachments when its
+		// container is recreated. Without this re-sync the sandbox keeps
+		// pointing its DNS at a stale IP and every lookup times out.
+		if err := b.rt.EnsureGatewayAttached(ctx, sandboxName); err != nil {
+			log.Printf("runtime bootstrap: gateway attach %s: %v", sandboxName, err)
+		}
+	}
+	return nil
+}
+
+func (b *Bootstrapper) ensureBaseImages(ctx context.Context) error {
+	bases, err := templates.Bases()
+	if err != nil {
+		return err
+	}
+	for _, t := range bases {
+		hash := dockerfileHash(t.Dockerfile)
+		if labels, err := b.rt.ImageLabels(ctx, t.Name); err == nil && labels != nil && labels[dockerfileHashLabel] == hash {
+			continue
+		}
+		log.Printf("runtime bootstrap: building base image %s", t.Name)
+		stream, err := b.rt.BuildWithLabels(ctx, t.Name, []byte(t.Dockerfile), map[string]string{dockerfileHashLabel: hash})
+		if err != nil {
+			log.Printf("runtime bootstrap: base %s build start: %v", t.Name, err)
+			continue
+		}
+		if _, err := io.Copy(io.Discard, stream); err != nil {
+			stream.Close()
+			log.Printf("runtime bootstrap: base %s build stream: %v", t.Name, err)
+			continue
+		}
+		stream.Close()
+		log.Printf("runtime bootstrap: base image %s ready", t.Name)
 	}
 	return nil
 }

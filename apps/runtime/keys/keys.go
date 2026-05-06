@@ -59,7 +59,7 @@ func generateEd25519() (privatePEM, publicAuthorized string, err error) {
 	if err != nil {
 		return "", "", fmt.Errorf("generate ed25519: %w", err)
 	}
-	pemBlock, err := ssh.MarshalPrivateKey(priv, "mantis-sandbox")
+	pemBlock, err := ssh.MarshalPrivateKey(priv, "sandbox")
 	if err != nil {
 		return "", "", fmt.Errorf("marshal private key: %w", err)
 	}

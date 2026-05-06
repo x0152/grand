@@ -25,6 +25,7 @@ import (
 	configapp "mantis/apps/config"
 	configusecases "mantis/apps/config/use_cases"
 	gonkaapp "mantis/apps/gonka"
+	guardapp "mantis/apps/guard"
 	"mantis/apps/logs"
 	"mantis/apps/metadata"
 	plansapp "mantis/apps/plans"
@@ -35,7 +36,6 @@ import (
 	"mantis/core/agents"
 	"mantis/core/auth"
 	artifactplugin "mantis/core/plugins/artifact"
-	"mantis/core/plugins/guard"
 	"mantis/core/plugins/memory"
 	"mantis/core/plugins/pipeline"
 	"mantis/core/plugins/summarizer"
@@ -43,6 +43,7 @@ import (
 	"mantis/core/types"
 	artifactadapter "mantis/infrastructure/adapters/artifact"
 	"mantis/infrastructure/adapters/asr"
+	egressadapter "mantis/infrastructure/adapters/egress"
 	"mantis/infrastructure/adapters/llm"
 	"mantis/infrastructure/adapters/ocr"
 	dockerruntime "mantis/infrastructure/adapters/runtime/docker"
@@ -137,6 +138,12 @@ func main() {
 		mappers.GuardProfileToRow,
 		mappers.GuardProfileFromRow,
 	)
+	guardEventStore := store.NewPostgres[string, types.GuardEvent, models.GuardEventRow](
+		db,
+		func(e types.GuardEvent) string { return e.ID },
+		mappers.GuardEventToRow,
+		mappers.GuardEventFromRow,
+	)
 	channelStore := store.NewPostgres[string, types.Channel, models.ChannelRow](
 		db,
 		func(c types.Channel) string { return c.ID },
@@ -167,7 +174,16 @@ func main() {
 		"gonka":  gonkaAdapter,
 	}
 	sessionLogger := shared.NewSessionLogger(logStore)
-	commandGuard := guard.New(guardProfileStore)
+
+	egressReloader := egressadapter.NewHTTPReloader(env("EGRESS_GATEWAY_URL", ""))
+	guardApp := guardapp.NewApp(guardapp.Options{
+		Profiles:    guardProfileStore,
+		Events:      guardEventStore,
+		Connections: connectionStore,
+		Reloader:    egressReloader,
+		IngestToken: env("GUARD_INGEST_TOKEN", ""),
+	})
+	commandGuard := guardApp
 
 	var asrAdapter protocols.ASR
 	if u := env("ASR_API_URL", ""); u != "" {
@@ -203,7 +219,7 @@ func main() {
 	plansApp := plansapp.NewApp(settingsStore, sessionStore, messageStore, modelStore, presetStore, planStore, planRunStore, mantisAgent, artifactMgr, memoryExtractor, summ, buf)
 	mantisAgent.SetPlanRunner(plansApp.Runner())
 
-	metadataApp := metadata.NewApp(settingsStore, llmConnStore, modelStore, presetStore, connectionStore, skillStore, planStore, planRunStore, plansApp.Runner(), guardProfileStore, channelStore, llmCatalogs)
+	metadataApp := metadata.NewApp(settingsStore, llmConnStore, modelStore, presetStore, connectionStore, skillStore, planStore, planRunStore, plansApp.Runner(), channelStore, llmCatalogs)
 	chatApp := chat.NewApp(sessionStore, messageStore, modelStore, presetStore, channelStore, settingsStore, mantisAgent, buf, artifactMgr, memoryExtractor, summ, cancellations, plansApp.Runner())
 	logsApp := logs.NewApp(logStore)
 	telegramApp := telegram.NewApp(channelStore, sessionStore, messageStore, modelStore, presetStore, settingsStore, mantisAgent, buf, artifactMgr, asrAdapter, ttsAdapter, memoryExtractor, summ, cancellations, plansApp.Runner())
@@ -249,6 +265,9 @@ func main() {
 	if isEnabled(enabled, "metadata") {
 		metadataApp.Register(api)
 	}
+	if isEnabled(enabled, "guard") {
+		guardApp.Register(api)
+	}
 	if isEnabled(enabled, "chat") {
 		chatApp.Register(api)
 	}
@@ -286,10 +305,11 @@ func main() {
 	if mode := env("RUNTIME_MODE", ""); mode == "docker" && isEnabled(enabled, "runtime") {
 		caps, privileged := parseSandboxCaps(env("RUNTIME_SANDBOX_CAPS", "NET_RAW,NET_ADMIN"))
 		rt := dockerruntime.New(dockerruntime.Options{
-			SocketPath:  env("DOCKER_SOCKET", ""),
-			Network:     env("RUNTIME_NETWORK", ""),
-			DefaultCaps: caps,
-			Privileged:  privileged,
+			SocketPath:       env("DOCKER_SOCKET", ""),
+			Network:          env("RUNTIME_NETWORK", ""),
+			DefaultCaps:      caps,
+			Privileged:       privileged,
+			GatewayContainer: env("EGRESS_GATEWAY_CONTAINER", ""),
 		})
 		sandboxKeyStore := store.NewPostgres[string, types.SandboxKey, models.SandboxKeyRow](
 			db,
@@ -300,7 +320,7 @@ func main() {
 		keyIssuer := runtimekeys.NewIssuer(sandboxKeyStore)
 		specBuilder := runtimespec.NewBuilder(guardProfileStore, rt.Network())
 
-		runtimeApp := runtimeapp.NewApp(rt, connectionStore, keyIssuer, specBuilder, env("RUNTIME_API_TOKEN", ""))
+		runtimeApp := runtimeapp.NewApp(rt, connectionStore, guardProfileStore, keyIssuer, specBuilder, env("RUNTIME_API_TOKEN", ""))
 		runtimeApp.Mount(r)
 		mantisAgent.SetRuntime(rt)
 		log.Printf("runtime: docker adapter ready (network=%s)", rt.Network())
@@ -388,11 +408,20 @@ func enabledAppsLabel(set map[string]bool) string {
 }
 
 func isPublicPathFactory(runtimeToken string) func(*http.Request) bool {
+	guardIngestToken := env("GUARD_INGEST_TOKEN", "")
 	return func(r *http.Request) bool {
 		p := r.URL.Path
 		switch p {
 		case "/api/auth/login", "/api/auth/logout", "/docs", "/openapi.json", "/openapi.yaml":
 			return true
+		}
+		if p == "/api/guard/events/ingest" {
+			if guardIngestToken == "" {
+				return true
+			}
+			if r.Header.Get("X-Guard-Ingest-Token") != "" {
+				return true
+			}
 		}
 		if strings.HasPrefix(p, "/api/runtime/") {
 			if runtimeToken == "" {

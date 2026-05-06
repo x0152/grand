@@ -2,9 +2,9 @@ package sshcfg
 
 import "encoding/json"
 
-const ContainerHostPrefix = "mantis-sb-"
+const ContainerHostPrefix = "sandbox-"
 
-const SandboxUser = "mantis"
+const SandboxUser = "sandbox"
 
 func HostFor(name, ip string) string {
 	if ip != "" {

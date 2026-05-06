@@ -7,8 +7,8 @@ A host for network diagnostics and light pentesting: ports, HTTP, TLS, DNS, dire
 ## System info
 
 - OS: Ubuntu 24.04 (Noble)
-- User: `mantis` / `mantis`
-- Home directory: `/home/mantis`
+- User: `sandbox` / `sandbox`
+- Home directory: `/home/sandbox`
 - Shell: `/bin/bash`
 
 ## Pre-installed tooling
@@ -90,7 +90,7 @@ net-whois example.com
 ```bash
 net-dir https://example.com                 # small wordlist ~50 paths
 net-dir https://example.com dirb-common     # ~4600 paths, up to 60s
-net-dir https://example.com /home/mantis/custom.txt
+net-dir https://example.com /home/sandbox/custom.txt
 ```
 
 ### Identify a hash type and try to crack it
@@ -98,7 +98,7 @@ net-dir https://example.com /home/mantis/custom.txt
 net-hash-id 5f4dcc3b5aa765d61d8327deb882cf99
 net-hash-crack 5f4dcc3b5aa765d61d8327deb882cf99 raw-md5
 net-hash-crack '$2a$10$...'    bcrypt john     # bcrypt with john's wordlist
-net-hash-crack '$1$xy$...'     md5crypt /home/mantis/mydict.txt
+net-hash-crack '$1$xy$...'     md5crypt /home/sandbox/mydict.txt
 ```
 
 Formats supported by the wrapper: `raw-md5`, `raw-sha1`, `raw-sha256`, `raw-sha512`, `nt`, `md5crypt`, `sha256crypt`, `sha512crypt`, `bcrypt`. Implementation is Python + passlib (works reliably without OpenCL/GPU on short wordlists). For heavy brute-forcing use `hashcat` / `john` directly.
@@ -116,7 +116,7 @@ net-vuln https://example.com    # Nikto, limited, up to 2 minutes
 
 ## Wordlists
 
-Small wordlists optimised for fast checks live in `/usr/share/wordlists/mantis/`:
+Small wordlists optimised for fast checks live in `/usr/share/wordlists/sandbox/`:
 
 - `passwords-top.txt` — ~50 most common passwords
 - `paths-top.txt` — ~50 web paths (admin, api, .env, backup, …)
@@ -131,7 +131,7 @@ Larger wordlists shipped with system packages:
 
 Additional wordlists can be pulled in:
 ```bash
-git clone --depth=1 https://github.com/danielmiessler/SecLists /home/mantis/SecLists
+git clone --depth=1 https://github.com/danielmiessler/SecLists /home/sandbox/SecLists
 ```
 
 ## Using raw utilities
@@ -143,7 +143,7 @@ timeout 60 nmap -sV -sC -T4 --top-ports 100 target
 timeout 90 sqlmap -u "https://example.com/?id=1" --batch --level=1 --risk=1 --random-agent
 timeout 60 ffuf -u "https://example.com/FUZZ" -w /usr/share/dirb/wordlists/common.txt -mc 200,301,302,403 -t 40
 timeout 120 gobuster dir -u https://example.com -w /usr/share/dirb/wordlists/common.txt -t 40 -q
-timeout 120 hashcat -m 0 -a 0 hash.txt /usr/share/wordlists/mantis/passwords-top.txt --runtime=100
+timeout 120 hashcat -m 0 -a 0 hash.txt /usr/share/wordlists/sandbox/passwords-top.txt --runtime=100
 ```
 
 ## Ethical constraints

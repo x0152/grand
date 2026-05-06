@@ -5,10 +5,8 @@ RUN apk add --no-cache \
         ffmpeg mediainfo imagemagick \
         curl wget file jq \
         coreutils \
-    && adduser -D -s /bin/bash mantis
+    && adduser -D -s /bin/bash sandbox
 
-COPY README.md /etc/mantis/README.md
-COPY README.md /home/mantis/README.md
-RUN chown mantis:mantis /home/mantis/README.md
+COPY README.md /etc/sandbox/README.md
 
 EXPOSE 22

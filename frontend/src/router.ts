@@ -6,7 +6,7 @@ export type Route =
   | { page: 'skills' }
   | { page: 'logs' }
   | { page: 'llm' }
-  | { page: 'guard-profiles' }
+  | { page: 'guard-profiles'; profileId?: string }
   | { page: 'setup' }
 
 export type PageId = Route['page']
@@ -23,6 +23,7 @@ const patterns: [RegExp, (m: RegExpMatchArray) => Route][] = [
   [/^\/skills\/?$/, () => ({ page: 'skills' })],
   [/^\/logs\/?$/, () => ({ page: 'logs' })],
   [/^\/llm\/?$/, () => ({ page: 'llm' })],
+  [/^\/guard-profiles\/(.+)$/, m => ({ page: 'guard-profiles', profileId: m[1] })],
   [/^\/guard-profiles\/?$/, () => ({ page: 'guard-profiles' })],
   [/^\/setup\/?$/, () => ({ page: 'setup' })],
 ]
@@ -39,6 +40,7 @@ export function routePath(route: Route): string {
   switch (route.page) {
     case 'chat': return route.sessionId ? `/chat/${route.sessionId}` : '/chat'
     case 'plans': return route.planId ? `/plans/${route.planId}` : '/plans'
+    case 'guard-profiles': return route.profileId ? `/guard-profiles/${route.profileId}` : '/guard-profiles'
     default: return `/${route.page}`
   }
 }

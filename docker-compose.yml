@@ -33,7 +33,7 @@ services:
     working_dir: /app
     environment:
       DOCKER_SOCKET: /var/run/docker.sock
-      RUNTIME_NETWORK: "${RUNTIME_NETWORK:-mantis-sandbox-net}"
+      RUNTIME_NETWORK: "${RUNTIME_NETWORK:-sandbox-net}"
       GOFLAGS: "-buildvcs=false"
     volumes:
       - .:/app
@@ -68,9 +68,11 @@ services:
       MANTIS_SERVER_TIMEOUT: "${MANTIS_SERVER_TIMEOUT:-}"
       MANTIS_PLAN_STEP_TIMEOUT: "${MANTIS_PLAN_STEP_TIMEOUT:-}"
       RUNTIME_MODE: "${RUNTIME_MODE:-docker}"
-      RUNTIME_NETWORK: "${RUNTIME_NETWORK:-mantis-sandbox-net}"
+      RUNTIME_NETWORK: "${RUNTIME_NETWORK:-sandbox-net}"
       RUNTIME_API_TOKEN: "${RUNTIME_API_TOKEN:-}"
       DOCKER_SOCKET: /var/run/docker.sock
+      EGRESS_GATEWAY_URL: "${EGRESS_GATEWAY_URL:-http://egress-gateway:9999}"
+      EGRESS_GATEWAY_CONTAINER: "${EGRESS_GATEWAY_CONTAINER:-mantis-egress-gateway}"
       GOFLAGS: "-buildvcs=false"
     volumes:
       - .:/app
@@ -87,6 +89,34 @@ services:
         condition: service_completed_successfully
       sandbox-prebuild:
         condition: service_completed_successfully
+      egress-gateway:
+        condition: service_started
+
+  egress-gateway:
+    build: .
+    container_name: mantis-egress-gateway
+    entrypoint: ["go", "run", "./cmd/egress-gateway"]
+    working_dir: /app
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      RUNTIME_STATE_URL: "http://app:8080/api/runtime/egress/state"
+      RUNTIME_API_TOKEN: "${RUNTIME_API_TOKEN:-}"
+      GUARD_INGEST_URL: "${GUARD_INGEST_URL:-http://app:8080}"
+      GUARD_INGEST_TOKEN: "${GUARD_INGEST_TOKEN:-}"
+      DNS_LISTEN: "${EGRESS_DNS_LISTEN:-:53}"
+      HTTP_LISTEN: ":9999"
+      POLL_INTERVAL: "${EGRESS_POLL_INTERVAL:-30s}"
+      EGRESS_DRY_RUN: "${EGRESS_DRY_RUN:-true}"
+      GOFLAGS: "-buildvcs=false"
+    volumes:
+      - .:/app
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    networks:
+      - default
+      - sandbox
 
   frontend:
     build: frontend
@@ -112,4 +142,4 @@ volumes:
 networks:
   default:
   sandbox:
-    name: mantis-sandbox-net
+    name: sandbox-net

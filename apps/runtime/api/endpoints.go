@@ -18,6 +18,7 @@ import (
 	"mantis/apps/runtime/progress"
 	"mantis/apps/runtime/spec"
 	"mantis/apps/runtime/sshcfg"
+	"mantis/apps/runtime/templates"
 	"mantis/core/auth"
 	"mantis/core/protocols"
 	"mantis/core/types"
@@ -25,32 +26,35 @@ import (
 
 const (
 	registeredConnectionPrefix = "sb-"
-	pubkeyEnvVar               = "MANTIS_SSH_PUBLIC_KEY"
+	pubkeyEnvVar               = "SANDBOX_SSH_PUBLIC_KEY"
 )
 
 type Endpoints struct {
-	rt              protocols.Runtime
-	connectionStore protocols.Store[string, types.Connection]
-	keyIssuer       *keys.Issuer
-	specBuilder     *spec.Builder
-	token           string
-	progress        *progress.Tracker
+	rt                protocols.Runtime
+	connectionStore   protocols.Store[string, types.Connection]
+	guardProfileStore protocols.Store[string, types.GuardProfile]
+	keyIssuer         *keys.Issuer
+	specBuilder       *spec.Builder
+	token             string
+	progress          *progress.Tracker
 }
 
 func NewEndpoints(
 	rt protocols.Runtime,
 	connectionStore protocols.Store[string, types.Connection],
+	guardProfileStore protocols.Store[string, types.GuardProfile],
 	keyIssuer *keys.Issuer,
 	specBuilder *spec.Builder,
 	token string,
 ) *Endpoints {
 	return &Endpoints{
-		rt:              rt,
-		connectionStore: connectionStore,
-		keyIssuer:       keyIssuer,
-		specBuilder:     specBuilder,
-		token:           token,
-		progress:        progress.NewTracker(),
+		rt:                rt,
+		connectionStore:   connectionStore,
+		guardProfileStore: guardProfileStore,
+		keyIssuer:         keyIssuer,
+		specBuilder:       specBuilder,
+		token:             token,
+		progress:          progress.NewTracker(),
 	}
 }
 
@@ -65,6 +69,7 @@ func (e *Endpoints) Mount(r chi.Router) {
 		r.Post("/sandboxes/{name}/start", e.startSandbox)
 		r.Post("/sandboxes/{name}/stop", e.stopSandbox)
 		r.Delete("/sandboxes/{name}", e.deleteSandbox)
+		r.Get("/egress/state", e.egressState)
 	})
 }
 
@@ -128,6 +133,10 @@ func (e *Endpoints) createSandbox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := validateSandboxName(input.Name); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := validateDockerfile(input.Dockerfile); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -278,8 +287,9 @@ func (e *Endpoints) runProvisioning(ctx context.Context, job *progress.Job, conn
 	}
 
 	job.SetPhase(progress.PhaseBuilding, "building image")
-	writeLine(fmt.Sprintf("[1/4] building image mantis-sb/%s\n", sandboxName))
-	stream, err := e.rt.Build(ctx, sandboxName, []byte(dockerfile))
+	writeLine(fmt.Sprintf("[1/4] building image sandbox/%s\n", sandboxName))
+	hardened := templates.Harden(dockerfile)
+	stream, err := e.rt.Build(ctx, sandboxName, []byte(hardened))
 	if err != nil {
 		job.SetPhase(progress.PhaseFailed, "build: "+err.Error())
 		writeLine(fmt.Sprintf("error: build failed: %s\n", err.Error()))
@@ -439,6 +449,17 @@ func validateSandboxName(name string) error {
 		}
 	}
 	return nil
+}
+
+func validateDockerfile(dockerfile string) error {
+	lower := strings.ToLower(dockerfile)
+	if strings.Contains(lower, "from sandbox/sandbox-base") {
+		return nil
+	}
+	if strings.Contains(lower, "openssh-server") || strings.Contains(lower, "openssh") {
+		return nil
+	}
+	return fmt.Errorf("dockerfile must either start with `FROM sandbox/sandbox-base:latest` (recommended — sshd, bash and the sandbox user are pre-installed) or explicitly install openssh-server (e.g. `RUN apk add --no-cache openssh-server bash <extra-packages>` on Alpine, `RUN apt-get update && apt-get install -y openssh-server bash <extra-packages>` on Debian/Ubuntu); without sshd the runtime cannot mount an SSH connection")
 }
 
 func (e *Endpoints) upsertSandboxConnection(ctx context.Context, input SandboxInput, key types.SandboxKey) (types.Connection, error) {

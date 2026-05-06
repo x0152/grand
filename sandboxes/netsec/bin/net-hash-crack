@@ -12,7 +12,7 @@ format:
   (default: raw-md5)
 
 wordlist:
-  small — /usr/share/wordlists/mantis/passwords-top.txt (default, <5s)
+  small — /usr/share/wordlists/sandbox/passwords-top.txt (default, <5s)
   john  — /usr/share/john/password.lst (~3500 entries, ~30s)
   <path>— custom file
 """
@@ -40,7 +40,7 @@ def main():
     wl = args[2] if len(args) > 2 else "small"
 
     if wl == "small":
-        wl = "/usr/share/wordlists/mantis/passwords-top.txt"
+        wl = "/usr/share/wordlists/sandbox/passwords-top.txt"
     elif wl == "john":
         wl = "/usr/share/john/password.lst"
     if not os.path.isfile(wl):

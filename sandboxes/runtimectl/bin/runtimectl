@@ -12,21 +12,21 @@ Top-level commands (docker-style aliases):
   runtimectl ps                            same as: sandbox ls
   runtimectl logs <name> [-f] [-n N]       same as: sandbox logs
   runtimectl status <name>                 same as: sandbox status
-  runtimectl up <name> ... [-w]            same as: sandbox create
+  runtimectl up <name> ...                 same as: sandbox create
   runtimectl down <name>                   same as: sandbox rm
   runtimectl start  <name>                 same as: sandbox start
   runtimectl stop   <name>                 same as: sandbox stop
-  runtimectl restart <name> [-w]           same as: sandbox rebuild
+  runtimectl restart <name>                same as: sandbox rebuild
   runtimectl inspect <name>                same as: sandbox inspect
 
 Full subcommand tree:
-  runtimectl sandbox create  <name> [-f Dockerfile|-] [--description T] [--profile ID ...] [-w|--wait]
+  runtimectl sandbox create  <name> [-f Dockerfile|-] [--description T] [--profile ID ...] [--no-wait]
       Upsert the connection (stores Dockerfile in DB), build the image, run the
-      container. By DEFAULT this is asynchronous: the call returns immediately
-      with `ACCEPTED <name>` and provisioning continues in the background.
-      Use `runtimectl status <name>` and `runtimectl logs <name>` to follow
-      progress. Pass -w / --wait to stream build logs synchronously and wait
-      until the container is ready (or fails).
+      container. By DEFAULT this is SYNCHRONOUS: the call streams build logs
+      and blocks until the container is `ready` or `failed`, exiting with
+      non-zero on failure. Use `--no-wait` to fire-and-forget (returns
+      `ACCEPTED <name>` immediately); follow progress with
+      `runtimectl status <name>` / `runtimectl logs <name>`.
 
   runtimectl sandbox ls                   list sandboxes with state
   runtimectl sandbox logs    <name> [-f] [-n N | --tail N]
@@ -37,7 +37,9 @@ Full subcommand tree:
                                           (queued/building/starting/waiting/
                                           ready/failed) + tail of build log.
   runtimectl sandbox inspect <name>       JSON with connection + container state
-  runtimectl sandbox rebuild <name> [-w]  rebuild from stored Dockerfile + restart
+  runtimectl sandbox rebuild <name> [--no-wait]
+                                          rebuild from stored Dockerfile + restart
+                                          (synchronous by default)
   runtimectl sandbox start   <name>       start stopped container
   runtimectl sandbox stop    <name>       stop container (connection kept)
   runtimectl sandbox rm      <name>       stop + remove container + delete connection
@@ -124,7 +126,7 @@ cmd_sandbox_create() {
   local file="-"
   local description=""
   local profiles_json="[]"
-  local wait=0
+  local wait=1
   while [ "$#" -gt 0 ]; do
     case "$1" in
       -f|--file) file="${2:-}"; shift 2 ;;
@@ -154,8 +156,18 @@ cmd_sandbox_create() {
   local url="${RUNTIMECTL_URL}/api/runtime/sandboxes"
   if [ "$wait" = "1" ]; then
     url+="?wait=1"
-    curl_auth --no-buffer -X POST -H "Content-Type: application/json" \
-      --data-binary "$payload" "$url"
+    local out
+    out=$(curl_auth --no-buffer -X POST -H "Content-Type: application/json" \
+      --data-binary "$payload" "$url")
+    printf '%s\n' "$out"
+    if printf '%s' "$out" | grep -qE '^READY '; then
+      return 0
+    fi
+    if printf '%s' "$out" | grep -qE '^(error:|FAILED )'; then
+      return 1
+    fi
+    echo "FAILED no READY/error marker in stream" >&2
+    return 1
   else
     local body
     body=$(curl_auth -X POST -H "Content-Type: application/json" \
@@ -170,7 +182,7 @@ cmd_sandbox_create() {
 
 cmd_sandbox_rebuild() {
   local name=""
-  local wait=0
+  local wait=1
   while [ "$#" -gt 0 ]; do
     case "$1" in
       -w|--wait) wait=1; shift ;;
@@ -184,16 +196,25 @@ cmd_sandbox_rebuild() {
   [ -z "$name" ] && { echo "sandbox rebuild: <name> required" >&2; exit 2; }
   local url="${RUNTIMECTL_URL}/api/runtime/sandboxes/${name}/rebuild"
   if [ "$wait" = "1" ]; then
-    curl_auth --no-buffer -X POST "${url}?wait=1"
-  else
-    local body
-    body=$(curl_auth -X POST "$url")
-    echo "$body" | jq -r '
-      if (.status // "") == "accepted"
-      then "ACCEPTED \(.name)\nphase: \(.phase)\n\(.message)"
-      else .
-      end'
+    local out
+    out=$(curl_auth --no-buffer -X POST "${url}?wait=1")
+    printf '%s\n' "$out"
+    if printf '%s' "$out" | grep -qE '^READY '; then
+      return 0
+    fi
+    if printf '%s' "$out" | grep -qE '^(error:|FAILED )'; then
+      return 1
+    fi
+    echo "FAILED no READY/error marker in stream" >&2
+    return 1
   fi
+  local body
+  body=$(curl_auth -X POST "$url")
+  echo "$body" | jq -r '
+    if (.status // "") == "accepted"
+    then "ACCEPTED \(.name)\nphase: \(.phase)\n\(.message)"
+    else .
+    end'
 }
 
 cmd_sandbox() {

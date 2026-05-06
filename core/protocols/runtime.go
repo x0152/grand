@@ -17,4 +17,5 @@ type Runtime interface {
 	Inspect(ctx context.Context, name string) (types.RuntimeContainer, error)
 	ImageLabels(ctx context.Context, name string) (map[string]string, error)
 	Logs(ctx context.Context, name string, tail int, follow bool) (io.ReadCloser, error)
+	EnsureGatewayAttached(ctx context.Context, sandboxNetwork string) error
 }

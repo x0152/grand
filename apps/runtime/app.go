@@ -19,11 +19,12 @@ type App struct {
 func NewApp(
 	rt protocols.Runtime,
 	connectionStore protocols.Store[string, types.Connection],
+	guardProfileStore protocols.Store[string, types.GuardProfile],
 	keyIssuer *keys.Issuer,
 	specBuilder *spec.Builder,
 	token string,
 ) *App {
-	return &App{endpoints: api.NewEndpoints(rt, connectionStore, keyIssuer, specBuilder, token)}
+	return &App{endpoints: api.NewEndpoints(rt, connectionStore, guardProfileStore, keyIssuer, specBuilder, token)}
 }
 
 func (a *App) Mount(r chi.Router) {

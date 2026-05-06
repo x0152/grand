@@ -17,10 +17,6 @@ func NewBuilder(profileStore protocols.Store[string, types.GuardProfile], shared
 	return &Builder{profileStore: profileStore, sharedNetwork: sharedNetwork}
 }
 
-// runtimectl is the only built-in sandbox that needs to call back into the
-// Mantis runtime API (for self-service provisioning of new sandboxes), so we
-// attach it to the shared sandbox network where the app lives instead of an
-// isolated per-sandbox bridge.
 func (b *Builder) Build(ctx context.Context, sandboxName string, conn types.Connection, env map[string]string, labels map[string]string) types.RuntimeRunSpec {
 	spec := types.RuntimeRunSpec{
 		Name:   sandboxName,
@@ -30,9 +26,12 @@ func (b *Builder) Build(ctx context.Context, sandboxName string, conn types.Conn
 	if t, ok := templates.Lookup(sandboxName); ok {
 		spec.CapAdd = t.CapAdd
 	}
-	if sandboxName == "runtimectl" && b.sharedNetwork != "" {
-		spec.Network = b.sharedNetwork
-		return spec
+	if sandboxName == "runtimectl" {
+		spec.NoHomeVolume = true
+		if b.sharedNetwork != "" {
+			spec.Network = b.sharedNetwork
+			return spec
+		}
 	}
 	spec.Internal = !b.profileAllowsNetwork(ctx, conn.ProfileIDs)
 	return spec

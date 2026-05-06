@@ -10,7 +10,7 @@ RUN apk add --no-cache \
         postgresql-client mariadb-client redis sqlite \
         libgomp libstdc++ \
         build-base libffi-dev openssl-dev \
-    && adduser -D -s /bin/bash mantis
+    && adduser -D -s /bin/bash sandbox
 
 RUN pip install --no-cache-dir --root-user-action=ignore \
         ipython \
@@ -34,8 +34,6 @@ RUN pip install --no-cache-dir --root-user-action=ignore \
         rich \
     && apk del build-base libffi-dev openssl-dev
 
-COPY README.md /etc/mantis/README.md
-COPY README.md /home/mantis/README.md
-RUN chown mantis:mantis /home/mantis/README.md
+COPY README.md /etc/sandbox/README.md
 
 EXPOSE 22

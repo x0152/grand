@@ -10,7 +10,7 @@ URL="$1"
 
 RAW=$(timeout --foreground --kill-after 5 30 curl -sS -k -L --max-redirs 5 \
     --max-time 25 --connect-timeout 10 \
-    -A "Mozilla/5.0 (mantis-netsec)" \
+    -A "Mozilla/5.0 (sandbox-netsec)" \
     -D - -o /dev/null "$URL" 2>&1 || true)
 
 if [ -z "$RAW" ]; then

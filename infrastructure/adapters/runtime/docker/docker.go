@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -20,11 +21,11 @@ import (
 )
 
 const (
-	containerNamePrefix = "mantis-sb-"
-	imageTagPrefix      = "mantis-sb/"
-	labelMarker         = "mantis.sandbox"
-	labelName           = "mantis.sandbox.name"
-	defaultNetwork      = "mantis-sandbox-net"
+	containerNamePrefix = "sandbox-"
+	imageTagPrefix      = "sandbox/"
+	labelMarker         = "sandbox"
+	labelName           = "sandbox.name"
+	defaultNetwork      = "sandbox-net"
 	apiVersion          = "v1.43"
 
 	defaultMemoryBytes = int64(512 * 1024 * 1024)
@@ -32,18 +33,6 @@ const (
 	defaultPidsLimit   = int64(256)
 )
 
-// infrastructureCaps are the capabilities the sandbox init script + sshd
-// require to function. They are always granted (unless the runtime is in
-// privileged mode, which implies all caps anyway), regardless of what the
-// user configures through RUNTIME_SANDBOX_CAPS or per-template CapAdd.
-//
-//   - CHOWN, DAC_OVERRIDE, FOWNER     — init creates /home/mantis/.ssh
-//     inside a volume owned by the mantis user.
-//   - SETUID, SETGID                  — sshd drops privileges to the user.
-//   - SYS_CHROOT                      — sshd privilege-separation sandbox.
-//   - KILL                            — sshd manages child processes.
-//   - AUDIT_WRITE                     — sshd writes login audit records.
-//   - NET_BIND_SERVICE                — sshd binds port 22.
 var infrastructureCaps = []string{
 	"CHOWN", "DAC_OVERRIDE", "FOWNER",
 	"SETUID", "SETGID",
@@ -52,22 +41,20 @@ var infrastructureCaps = []string{
 }
 
 type Options struct {
-	SocketPath string
-	Network    string
-	// DefaultCaps is added to every sandbox on top of per-template CapAdd.
-	// Capability names accept either "NET_ADMIN" or "CAP_NET_ADMIN" form.
-	DefaultCaps []string
-	// Privileged grants every capability and disables seccomp/AppArmor —
-	// equivalent to `docker run --privileged`. Implies all caps.
-	Privileged bool
+	SocketPath       string
+	Network          string
+	DefaultCaps      []string
+	Privileged       bool
+	GatewayContainer string
 }
 
 type Runtime struct {
-	socketPath  string
-	network     string
-	defaultCaps []string
-	privileged  bool
-	client      *http.Client
+	socketPath       string
+	network          string
+	defaultCaps      []string
+	privileged       bool
+	gatewayContainer string
+	client           *http.Client
 }
 
 func New(opts Options) *Runtime {
@@ -80,10 +67,11 @@ func New(opts Options) *Runtime {
 		network = defaultNetwork
 	}
 	return &Runtime{
-		socketPath:  socketPath,
-		network:     network,
-		defaultCaps: normalizeCaps(opts.DefaultCaps),
-		privileged:  opts.Privileged,
+		socketPath:       socketPath,
+		network:          network,
+		defaultCaps:      normalizeCaps(opts.DefaultCaps),
+		privileged:       opts.Privileged,
+		gatewayContainer: strings.TrimSpace(opts.GatewayContainer),
 		client: &http.Client{
 			Transport: &http.Transport{
 				DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
@@ -285,7 +273,10 @@ func (r *Runtime) Run(ctx context.Context, spec types.RuntimeRunSpec) (types.Run
 	if network == "" {
 		network = sandboxNetwork(spec.Name)
 	}
-	volume := homeVolume(spec.Name)
+	volume := ""
+	if !spec.NoHomeVolume {
+		volume = homeVolume(spec.Name)
+	}
 
 	labels := map[string]string{labelMarker: "1", labelName: spec.Name}
 	for k, v := range spec.Labels {
@@ -298,7 +289,7 @@ func (r *Runtime) Run(ctx context.Context, spec types.RuntimeRunSpec) (types.Run
 
 	hostConfig := map[string]any{
 		"NetworkMode":    network,
-		"RestartPolicy":  map[string]any{"Name": "unless-stopped"},
+		"RestartPolicy":  map[string]any{"Name": "no"},
 		"ReadonlyRootfs": true,
 		"CapDrop":        []string{"ALL"},
 		"SecurityOpt":    []string{"no-new-privileges"},
@@ -315,9 +306,13 @@ func (r *Runtime) Run(ctx context.Context, spec types.RuntimeRunSpec) (types.Run
 			"/var/log": "rw,size=64m,nosuid,nodev",
 			"/var/tmp": "rw,size=64m,nosuid,nodev",
 		},
-		"Mounts": []map[string]any{
-			{"Type": "volume", "Source": volume, "Target": "/home/mantis"},
-		},
+	}
+	if volume != "" {
+		hostConfig["Mounts"] = []map[string]any{
+			{"Type": "volume", "Source": volume, "Target": "/home/sandbox"},
+		}
+	} else {
+		hostConfig["Tmpfs"].(map[string]string)["/home/sandbox"] = "rw,size=64m,nosuid,nodev,uid=1000,gid=1000,mode=0755"
 	}
 	if r.privileged {
 		hostConfig["Privileged"] = true
@@ -325,6 +320,25 @@ func (r *Runtime) Run(ctx context.Context, spec types.RuntimeRunSpec) (types.Run
 		delete(hostConfig, "SecurityOpt")
 	} else {
 		hostConfig["CapAdd"] = mergeCaps(infrastructureCaps, r.defaultCaps, spec.CapAdd)
+	}
+
+	_ = r.removeIfExists(ctx, spec.Name)
+	if err := r.ensureNetwork(ctx, network, spec.Internal); err != nil {
+		return types.RuntimeContainer{}, err
+	}
+	if volume != "" {
+		if err := r.ensureVolume(ctx, volume, spec.Name); err != nil {
+			return types.RuntimeContainer{}, err
+		}
+	}
+
+	if r.gatewayContainer != "" {
+		if ip, err := r.attachGateway(ctx, network); err != nil {
+			log.Printf("docker runtime: attach gateway %s to %s: %v", r.gatewayContainer, network, err)
+		} else if ip != "" {
+			hostConfig["Dns"] = []string{ip}
+			hostConfig["DnsSearch"] = []string{"."}
+		}
 	}
 
 	body := map[string]any{
@@ -343,14 +357,6 @@ func (r *Runtime) Run(ctx context.Context, spec types.RuntimeRunSpec) (types.Run
 
 	raw, err := json.Marshal(body)
 	if err != nil {
-		return types.RuntimeContainer{}, err
-	}
-
-	_ = r.removeIfExists(ctx, spec.Name)
-	if err := r.ensureNetwork(ctx, network, spec.Internal); err != nil {
-		return types.RuntimeContainer{}, err
-	}
-	if err := r.ensureVolume(ctx, volume, spec.Name); err != nil {
 		return types.RuntimeContainer{}, err
 	}
 
@@ -393,6 +399,69 @@ func (r *Runtime) removeIfExists(ctx context.Context, name string) error {
 	}
 	resp.Body.Close()
 	return nil
+}
+
+// EnsureGatewayAttached makes sure the egress gateway container is connected
+// to the given sandbox's per-container network. Safe to call repeatedly; the
+// underlying docker connect call treats "already exists" as a no-op.
+func (r *Runtime) EnsureGatewayAttached(ctx context.Context, sandboxName string) error {
+	if r.gatewayContainer == "" || sandboxName == "" {
+		return nil
+	}
+	_, err := r.attachGateway(ctx, sandboxNetwork(sandboxName))
+	return err
+}
+
+func (r *Runtime) attachGateway(ctx context.Context, network string) (string, error) {
+	if r.gatewayContainer == "" {
+		return "", nil
+	}
+	if ip, _ := r.inspectContainerNetwork(ctx, r.gatewayContainer, network); ip != "" {
+		return ip, nil
+	}
+	body, _ := json.Marshal(map[string]any{"Container": r.gatewayContainer})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.url("/networks/"+network+"/connect", nil), bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 && resp.StatusCode != http.StatusForbidden {
+		raw, _ := io.ReadAll(resp.Body)
+		msg := strings.TrimSpace(string(raw))
+		if !strings.Contains(strings.ToLower(msg), "already exists") {
+			return "", fmt.Errorf("connect %s -> %s: %d %s", r.gatewayContainer, network, resp.StatusCode, msg)
+		}
+	}
+	return r.inspectContainerNetwork(ctx, r.gatewayContainer, network)
+}
+
+func (r *Runtime) inspectContainerNetwork(ctx context.Context, name, network string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, r.url("/containers/"+name+"/json", nil), nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := r.do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	var raw struct {
+		NetworkSettings struct {
+			Networks map[string]networkEndpoint `json:"Networks"`
+		} `json:"NetworkSettings"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		return "", err
+	}
+	if n, ok := raw.NetworkSettings.Networks[network]; ok {
+		return n.IPAddress, nil
+	}
+	return "", nil
 }
 
 func (r *Runtime) ensureNetwork(ctx context.Context, name string, internal bool) error {

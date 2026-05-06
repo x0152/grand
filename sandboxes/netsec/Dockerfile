@@ -22,14 +22,14 @@ RUN apt-get update && \
         git unzip \
     && rm -rf /var/lib/apt/lists/* && \
     mkdir -p /run/sshd && \
-    useradd -m -s /bin/bash mantis && \
-    echo "mantis:mantis" | chpasswd && \
-    adduser mantis sudo
+    useradd -m -s /bin/bash sandbox && \
+    echo "sandbox:sandbox" | chpasswd && \
+    adduser sandbox sudo
 
 RUN git clone --depth=1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh && \
     ln -s /opt/testssl.sh/testssl.sh /usr/local/bin/testssl
 
-RUN mkdir -p /usr/share/wordlists/mantis && \
+RUN mkdir -p /usr/share/wordlists/sandbox && \
     printf '%s\n' \
         password 123456 12345678 qwerty abc123 password1 \
         admin administrator root letmein welcome monkey \
@@ -38,7 +38,7 @@ RUN mkdir -p /usr/share/wordlists/mantis && \
         123123 1234 12345 123456789 1234567 1234567890 \
         changeme secret default toor oracle mysql \
         p@ssw0rd P@ssw0rd Password1 Welcome1 Qwerty123 \
-    > /usr/share/wordlists/mantis/passwords-top.txt && \
+    > /usr/share/wordlists/sandbox/passwords-top.txt && \
     printf '%s\n' \
         admin login wp-admin administrator wp-login phpmyadmin \
         backup test dev api robots.txt sitemap.xml .env .git \
@@ -48,7 +48,7 @@ RUN mkdir -p /usr/share/wordlists/mantis && \
         cpanel webmail mail phpinfo.php info.php api/v1 api/v2 \
         swagger swagger-ui health status metrics debug \
         login.php index.php index.html db database sql backup.sql \
-    > /usr/share/wordlists/mantis/paths-top.txt && \
+    > /usr/share/wordlists/sandbox/paths-top.txt && \
     printf '%s\n' \
         www mail ftp admin api dev test staging beta stage \
         m mobile app apps web blog shop store portal vpn \
@@ -56,14 +56,12 @@ RUN mkdir -p /usr/share/wordlists/mantis && \
         imap pop pop3 exchange cdn static assets img images \
         media video videos stream chat forum wiki docs \
         support help status health monitor internal intranet \
-    > /usr/share/wordlists/mantis/subdomains-top.txt
+    > /usr/share/wordlists/sandbox/subdomains-top.txt
 
 COPY bin/ /usr/local/bin/
 RUN chmod +x /usr/local/bin/net-*
 
-COPY README.md /etc/mantis/README.md
-COPY README.md /home/mantis/README.md
-RUN chown mantis:mantis /home/mantis/README.md
+COPY README.md /etc/sandbox/README.md
 
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]

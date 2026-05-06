@@ -284,6 +284,17 @@ export interface CommandRule {
   command: string
   allowedArgs?: string[]
   allowedSql?: string[]
+  blockedArgs?: string[]
+  blockedSql?: string[]
+}
+
+export type EgressMode = 'open' | 'closed' | 'whitelist' | 'blacklist'
+export type CommandsMode = 'open' | 'closed' | 'whitelist' | 'blacklist'
+
+export interface EgressPolicy {
+  mode: EgressMode
+  hosts: string[]
+  cidrs: string[]
 }
 
 export interface GuardProfile {
@@ -292,7 +303,30 @@ export interface GuardProfile {
   description: string
   builtin: boolean
   capabilities: GuardCapabilities
+  commandsMode: CommandsMode
   commands: CommandRule[]
+  egress: EgressPolicy
+}
+
+export interface GuardTestResult {
+  allowed: boolean
+  rule?: string
+  message?: string
+  reason?: string
+}
+
+export type GuardEventKind = 'command' | 'host'
+
+export interface GuardEvent {
+  id: string
+  kind: GuardEventKind
+  target: string
+  allowed: boolean
+  rule: string
+  message: string
+  profileIds: string[]
+  connectionId: string
+  createdAt: string
 }
 
 export interface Channel {

@@ -174,22 +174,6 @@ func toPlanRunsOutput(items []types.PlanRun) *PlanRunsOutput {
 	return &PlanRunsOutput{Body: items}
 }
 
-func toGuardProfileOutput(p types.GuardProfile) *GuardProfileOutput {
-	return &GuardProfileOutput{Body: p}
-}
-
-func toGuardProfilesOutput(items []types.GuardProfile) *GuardProfilesOutput {
-	return &GuardProfilesOutput{Body: items}
-}
-
-func guardProfileFromCreateInput(input *CreateGuardProfileInput) (string, string, types.GuardCapabilities, []types.CommandRule) {
-	return input.Body.Name, input.Body.Description, input.Body.Capabilities, input.Body.Commands
-}
-
-func guardProfileFromUpdateInput(input *UpdateGuardProfileInput) (string, string, string, types.GuardCapabilities, []types.CommandRule) {
-	return input.ID, input.Body.Name, input.Body.Description, input.Body.Capabilities, input.Body.Commands
-}
-
 func toChannelOutput(c types.Channel) *ChannelOutput {
 	return &ChannelOutput{Body: c}
 }

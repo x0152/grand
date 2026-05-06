@@ -12,6 +12,8 @@ type GuardProfileRow struct {
 	Name          string          `bun:"name"`
 	Description   string          `bun:"description"`
 	Builtin       bool            `bun:"builtin"`
+	CommandsMode  string          `bun:"commands_mode"`
 	Capabilities  json.RawMessage `bun:"capabilities,type:jsonb"`
 	Commands      json.RawMessage `bun:"commands,type:jsonb"`
+	Egress        json.RawMessage `bun:"egress,type:jsonb"`
 }

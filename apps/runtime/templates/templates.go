@@ -33,6 +33,10 @@ var builtinMeta = []BuiltinMeta{
 	{Name: "runtimectl", ProfileID: "runtimectl", Description: "Runtime controller. Ask it in plain language to provision a new sandbox (e.g. \"need rust + cargo + curl\"); it builds, runs and registers the container."},
 }
 
+var baseImageMeta = []BuiltinMeta{
+	{Name: "sandbox-base", Description: "Alpine + sshd + bash + sandbox user. Used by runtimectl as the FROM base for agent-built sandboxes."},
+}
+
 func Builtin() ([]Template, error) {
 	out := make([]Template, 0, len(builtinMeta))
 	for _, m := range builtinMeta {
@@ -51,6 +55,22 @@ func Builtin() ([]Template, error) {
 	return out, nil
 }
 
+func Bases() ([]Template, error) {
+	out := make([]Template, 0, len(baseImageMeta))
+	for _, m := range baseImageMeta {
+		df, err := RenderRaw(m.Name)
+		if err != nil {
+			return nil, fmt.Errorf("render base %s: %w", m.Name, err)
+		}
+		out = append(out, Template{
+			Name:        m.Name,
+			Description: m.Description,
+			Dockerfile:  df,
+		})
+	}
+	return out, nil
+}
+
 func Lookup(name string) (BuiltinMeta, bool) {
 	for _, m := range builtinMeta {
 		if m.Name == name {
@@ -61,33 +81,41 @@ func Lookup(name string) (BuiltinMeta, bool) {
 }
 
 func Render(name string) (string, error) {
+	expanded, err := RenderRaw(name)
+	if err != nil {
+		return "", err
+	}
+	return Harden(expanded), nil
+}
+
+func RenderRaw(name string) (string, error) {
 	dockerfile, err := fs.ReadFile(sandboxes.FS, path.Join(name, "Dockerfile"))
 	if err != nil {
 		return "", err
 	}
-	expanded, err := inlineCopies(sandboxes.FS, name, string(dockerfile))
-	if err != nil {
-		return "", err
-	}
-	return harden(expanded), nil
+	return inlineCopies(sandboxes.FS, name, string(dockerfile))
 }
 
 const initScript = `#!/bin/sh
 set -eu
 mkdir -p /run/sshd
-chown mantis:mantis /home/mantis
-chmod 755 /home/mantis
-mkdir -p /home/mantis/.ssh
-if [ -n "${MANTIS_SSH_PUBLIC_KEY:-}" ]; then
-    printf '%s\n' "$MANTIS_SSH_PUBLIC_KEY" > /home/mantis/.ssh/authorized_keys
-    chmod 600 /home/mantis/.ssh/authorized_keys
+chown sandbox:sandbox /home/sandbox
+chmod 755 /home/sandbox
+mkdir -p /home/sandbox/.ssh
+if [ -f /etc/sandbox/README.md ]; then
+    cp /etc/sandbox/README.md /home/sandbox/README.md
+    chown sandbox:sandbox /home/sandbox/README.md
 fi
-: > /home/mantis/.ssh/environment
-env | sed -n 's/^\(MANTIS_[A-Z_]*\)=\(.*\)$/\1=\2/p' | grep -v '^MANTIS_SSH_PUBLIC_KEY=' >> /home/mantis/.ssh/environment || true
-env | sed -n 's/^\(RUNTIMECTL_[A-Z_]*\)=\(.*\)$/\1=\2/p' >> /home/mantis/.ssh/environment || true
-chmod 600 /home/mantis/.ssh/environment
-chmod 700 /home/mantis/.ssh
-chown -R mantis:mantis /home/mantis/.ssh
+if [ -n "${SANDBOX_SSH_PUBLIC_KEY:-}" ]; then
+    printf '%s\n' "$SANDBOX_SSH_PUBLIC_KEY" > /home/sandbox/.ssh/authorized_keys
+    chmod 600 /home/sandbox/.ssh/authorized_keys
+fi
+: > /home/sandbox/.ssh/environment
+env | sed -n 's/^\(SANDBOX_[A-Z_]*\)=\(.*\)$/\1=\2/p' | grep -v '^SANDBOX_SSH_PUBLIC_KEY=' >> /home/sandbox/.ssh/environment || true
+env | sed -n 's/^\(RUNTIMECTL_[A-Z_]*\)=\(.*\)$/\1=\2/p' >> /home/sandbox/.ssh/environment || true
+chmod 600 /home/sandbox/.ssh/environment
+chmod 700 /home/sandbox/.ssh
+chown -R sandbox:sandbox /home/sandbox/.ssh
 exec /usr/sbin/sshd -D -e \
     -o PasswordAuthentication=no \
     -o PermitRootLogin=no \
@@ -96,7 +124,7 @@ exec /usr/sbin/sshd -D -e \
     -o PermitUserEnvironment=yes
 `
 
-func harden(dockerfile string) string {
+func Harden(dockerfile string) string {
 	var out strings.Builder
 	for _, line := range strings.Split(dockerfile, "\n") {
 		trimmed := strings.TrimSpace(line)
@@ -106,15 +134,11 @@ func harden(dockerfile string) string {
 		out.WriteString(line)
 		out.WriteByte('\n')
 	}
-	// `adduser -D` (Alpine) and `useradd -m` (Debian/Ubuntu) both create the
-	// account with a `!` in /etc/shadow, which makes sshd reject the user as
-	// "account locked". Replace it with `*` so password login stays
-	// impossible but the account is otherwise valid for pubkey auth.
-	out.WriteString("RUN echo 'mantis:*' | chpasswd -e\n")
+	out.WriteString("RUN echo 'sandbox:*' | chpasswd -e\n")
 	out.WriteString("RUN mkdir -p /usr/local/sbin && ssh-keygen -A\n")
 	encoded := base64.StdEncoding.EncodeToString([]byte(initScript))
-	fmt.Fprintf(&out, "RUN printf %%s %q | base64 -d > /usr/local/sbin/mantis-init && chmod 755 /usr/local/sbin/mantis-init\n", encoded)
-	out.WriteString(`CMD ["/usr/local/sbin/mantis-init"]` + "\n")
+	fmt.Fprintf(&out, "RUN printf %%s %q | base64 -d > /usr/local/sbin/sandbox-init && chmod 755 /usr/local/sbin/sandbox-init\n", encoded)
+	out.WriteString(`CMD ["/usr/local/sbin/sandbox-init"]` + "\n")
 	return out.String()
 }
 

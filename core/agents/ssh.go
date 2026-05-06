@@ -12,7 +12,6 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	agent "mantis/core/plugins/agent"
-	"mantis/core/plugins/guard"
 	"mantis/core/protocols"
 	"mantis/core/types"
 	"mantis/shared"
@@ -48,12 +47,12 @@ type SSHInput struct {
 type SSHAgent struct {
 	llmConnStore  protocols.Store[string, types.LlmConnection]
 	agent         *agent.Agent
-	guard         *guard.Guard
+	guard         protocols.GuardEvaluator
 	sessionLogger *shared.SessionLogger
 	limits        shared.Limits
 }
 
-func NewSSHAgent(llmConnStore protocols.Store[string, types.LlmConnection], llm protocols.LLM, g *guard.Guard, sessionLogger *shared.SessionLogger, limits shared.Limits) *SSHAgent {
+func NewSSHAgent(llmConnStore protocols.Store[string, types.LlmConnection], llm protocols.LLM, g protocols.GuardEvaluator, sessionLogger *shared.SessionLogger, limits shared.Limits) *SSHAgent {
 	return &SSHAgent{
 		llmConnStore:  llmConnStore,
 		agent:         agent.New(llm),
@@ -77,7 +76,7 @@ func (a *SSHAgent) Execute(ctx context.Context, in SSHInput) (<-chan types.Strea
 	}
 
 	prompt := a.buildPrompt(ctx, in.Connection, hostReadme)
-	tools := sshTools(in.SSHConfig, a.guard, in.Connection.ProfileIDs)
+	tools := sshTools(in.SSHConfig, a.guard, in.Connection.ID, in.Connection.ProfileIDs)
 
 	messages := []protocols.LLMMessage{
 		{Role: "system", Content: prompt},
@@ -124,7 +123,7 @@ func (a *SSHAgent) probeHost(cfg SSHConfig) (string, error) {
 
 	var stdout bytes.Buffer
 	session.Stdout = &stdout
-	_ = session.Run("cat ~/README.md 2>/dev/null || cat /etc/mantis/README.md 2>/dev/null")
+	_ = session.Run("cat ~/README.md 2>/dev/null || cat /etc/sandbox/README.md 2>/dev/null")
 
 	return strings.TrimSpace(stdout.String()), nil
 }
@@ -159,7 +158,7 @@ func (a *SSHAgent) buildPrompt(ctx context.Context, c types.Connection, hostRead
 	return sb.String()
 }
 
-func sshTools(cfg SSHConfig, g *guard.Guard, profileIDs []string) []types.Tool {
+func sshTools(cfg SSHConfig, g protocols.GuardEvaluator, connectionID string, profileIDs []string) []types.Tool {
 	return []types.Tool{
 		{
 			Name:        "execute_command",
@@ -192,8 +191,10 @@ func sshTools(cfg SSHConfig, g *guard.Guard, profileIDs []string) []types.Tool {
 				if err := json.Unmarshal([]byte(args), &input); err != nil {
 					return "", err
 				}
-				if v := g.Execute(ctx, profileIDs, input.Command); v != nil {
-					return fmt.Sprintf("[BLOCKED] %s", v.Message), nil
+				if g != nil {
+					if allowed, _, message := g.EvaluateCommand(ctx, profileIDs, connectionID, input.Command); !allowed {
+						return fmt.Sprintf("[BLOCKED] %s", message), nil
+					}
 				}
 				return execSSH(cfg, input.Command)
 			},

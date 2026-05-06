@@ -7,7 +7,7 @@ if [ $# -lt 1 ]; then
 fi
 
 DOMAIN="$1"
-WL=/usr/share/wordlists/mantis/subdomains-top.txt
+WL=/usr/share/wordlists/sandbox/subdomains-top.txt
 
 if [ ! -f "$WL" ]; then
     echo "wordlist not found: $WL" >&2

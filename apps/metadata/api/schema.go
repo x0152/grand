@@ -279,37 +279,6 @@ type TriggerPlanRunInput struct {
 	}
 }
 
-type GuardProfileOutput struct {
-	Body types.GuardProfile
-}
-
-type GuardProfilesOutput struct {
-	Body []types.GuardProfile
-}
-
-type GuardProfileIDInput struct {
-	ID string `path:"id"`
-}
-
-type CreateGuardProfileInput struct {
-	Body struct {
-		Name         string                  `json:"name" required:"true" minLength:"1"`
-		Description  string                  `json:"description"`
-		Capabilities types.GuardCapabilities `json:"capabilities"`
-		Commands     []types.CommandRule     `json:"commands"`
-	}
-}
-
-type UpdateGuardProfileInput struct {
-	ID   string `path:"id"`
-	Body struct {
-		Name         string                  `json:"name" required:"true" minLength:"1"`
-		Description  string                  `json:"description"`
-		Capabilities types.GuardCapabilities `json:"capabilities"`
-		Commands     []types.CommandRule     `json:"commands"`
-	}
-}
-
 type ChannelOutput struct {
 	Body types.Channel
 }

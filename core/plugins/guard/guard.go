@@ -43,6 +43,17 @@ func (g *Guard) Execute(ctx context.Context, profileIDs []string, command string
 	return checkCommand(merged, command, 0)
 }
 
+func Evaluate(profiles []types.GuardProfile, command string) *Violation {
+	if len(profiles) == 0 {
+		return nil
+	}
+	merged := mergeProfiles(profileIDsToMap(profiles))
+	if merged.Capabilities.Unrestricted {
+		return nil
+	}
+	return checkCommand(merged, command, 0)
+}
+
 func (g *Guard) Profiles(ctx context.Context, profileIDs []string) []types.GuardProfile {
 	if len(profileIDs) == 0 {
 		return nil
@@ -59,7 +70,10 @@ func (g *Guard) Profiles(ctx context.Context, profileIDs []string) []types.Guard
 }
 
 func (g *Guard) Describe(ctx context.Context, profileIDs []string) string {
-	profiles := g.Profiles(ctx, profileIDs)
+	return DescribeProfiles(g.Profiles(ctx, profileIDs))
+}
+
+func DescribeProfiles(profiles []types.GuardProfile) string {
 	if len(profiles) == 0 {
 		return ""
 	}
@@ -109,15 +123,35 @@ func (g *Guard) Describe(ctx context.Context, profileIDs []string) string {
 	}
 	sb.WriteString(strings.Join(caps, ", "))
 
-	if len(merged.commands) > 0 {
-		sb.WriteString("\nAllowed commands: ")
-		names := make([]string, 0, len(merged.commands))
-		for name := range merged.commands {
-			names = append(names, name)
+	switch merged.commandsMode {
+	case types.CommandsOpen:
+		sb.WriteString("\nCommands: any (mode=open)")
+	case types.CommandsClosed:
+		sb.WriteString("\nCommands: NONE (mode=closed)")
+	case types.CommandsBlacklist:
+		sb.WriteString("\nBlocked commands (mode=blacklist): ")
+		names := mergedCommandNames(merged)
+		if names == "" {
+			names = "(none)"
 		}
-		sb.WriteString(strings.Join(names, ", "))
+		sb.WriteString(names)
+	default:
+		if len(merged.commands) > 0 {
+			sb.WriteString("\nAllowed commands (mode=whitelist): ")
+			sb.WriteString(mergedCommandNames(merged))
+		} else {
+			sb.WriteString("\nAllowed commands (mode=whitelist): (none)")
+		}
 	}
 	return sb.String()
+}
+
+func mergedCommandNames(merged mergedProfile) string {
+	names := make([]string, 0, len(merged.commands))
+	for name := range merged.commands {
+		names = append(names, name)
+	}
+	return strings.Join(names, ", ")
 }
 
 func profileIDsToMap(profiles []types.GuardProfile) map[string]types.GuardProfile {
@@ -130,18 +164,42 @@ func profileIDsToMap(profiles []types.GuardProfile) map[string]types.GuardProfil
 
 type mergedProfile struct {
 	Capabilities types.GuardCapabilities
+	commandsMode types.CommandsMode
 	commands     map[string]mergedCommand
 }
 
 type mergedCommand struct {
-	allowAll   bool
+	allowAll    bool
 	allowedArgs map[string]bool
 	allowedSQL  map[string]bool
+	blockedArgs map[string]bool
+	blockedSQL  [][]string // each entry is a normalized uppercase token list (e.g. ["DROP","TABLE"])
+}
+
+var commandsModeRank = map[types.CommandsMode]int{
+	types.CommandsClosed:    0,
+	types.CommandsBlacklist: 1,
+	types.CommandsWhitelist: 2,
+	types.CommandsOpen:      3,
+}
+
+func mergeCommandsMode(a, b types.CommandsMode) types.CommandsMode {
+	if a == "" {
+		return b.Normalize()
+	}
+	if b == "" {
+		return a.Normalize()
+	}
+	if commandsModeRank[a.Normalize()] >= commandsModeRank[b.Normalize()] {
+		return a.Normalize()
+	}
+	return b.Normalize()
 }
 
 func mergeProfiles(profiles map[string]types.GuardProfile) mergedProfile {
 	m := mergedProfile{commands: make(map[string]mergedCommand)}
 	for _, p := range profiles {
+		m.commandsMode = mergeCommandsMode(m.commandsMode, p.CommandsMode)
 		m.Capabilities.Pipes = m.Capabilities.Pipes || p.Capabilities.Pipes
 		m.Capabilities.Redirects = m.Capabilities.Redirects || p.Capabilities.Redirects
 		m.Capabilities.CmdSubst = m.Capabilities.CmdSubst || p.Capabilities.CmdSubst
@@ -158,7 +216,11 @@ func mergeProfiles(profiles map[string]types.GuardProfile) mergedProfile {
 		for _, cmd := range p.Commands {
 			existing, ok := m.commands[cmd.Command]
 			if !ok {
-				existing = mergedCommand{allowedArgs: make(map[string]bool), allowedSQL: make(map[string]bool)}
+				existing = mergedCommand{
+					allowedArgs: make(map[string]bool),
+					allowedSQL:  make(map[string]bool),
+					blockedArgs: make(map[string]bool),
+				}
 			}
 			if len(cmd.AllowedArgs) == 0 && len(cmd.AllowedSQL) == 0 {
 				existing.allowAll = true
@@ -169,8 +231,19 @@ func mergeProfiles(profiles map[string]types.GuardProfile) mergedProfile {
 			for _, s := range cmd.AllowedSQL {
 				existing.allowedSQL[strings.ToUpper(s)] = true
 			}
+			for _, a := range cmd.BlockedArgs {
+				existing.blockedArgs[a] = true
+			}
+			for _, s := range cmd.BlockedSQL {
+				if tokens := splitSQLTokens(s); len(tokens) > 0 {
+					existing.blockedSQL = append(existing.blockedSQL, tokens)
+				}
+			}
 			m.commands[cmd.Command] = existing
 		}
+	}
+	if m.commandsMode == "" {
+		m.commandsMode = types.CommandsWhitelist
 	}
 	return m
 }
@@ -332,6 +405,15 @@ func checkCallExpr(mp mergedProfile, call *syntax.CallExpr, originalCmd string, 
 		}
 	}
 
+	if mc, ok := mp.commands[cmdName]; ok && len(args) > 1 {
+		if mc.blockedArgs[args[1]] {
+			return &Violation{
+				Rule:    "arg-blocked",
+				Message: fmt.Sprintf("\"%s %s\" is blocked by this profile", cmdName, args[1]),
+			}
+		}
+	}
+
 	if downloadCommands[cmdName] && !mp.Capabilities.Download {
 		return &Violation{Rule: "download-disabled", Message: fmt.Sprintf("\"%s\" blocked — downloads not allowed", cmdName)}
 	}
@@ -343,6 +425,18 @@ func checkCallExpr(mp mergedProfile, call *syntax.CallExpr, originalCmd string, 
 	}
 	if cronCommands[cmdName] && !mp.Capabilities.Cron {
 		return &Violation{Rule: "cron-disabled", Message: fmt.Sprintf("\"%s\" blocked — scheduling not allowed", cmdName)}
+	}
+
+	switch mp.commandsMode {
+	case types.CommandsOpen:
+		return nil
+	case types.CommandsClosed:
+		return &Violation{Rule: "commands-closed", Message: fmt.Sprintf("\"%s\" blocked — commands are closed in this profile", cmdName)}
+	case types.CommandsBlacklist:
+		if _, blocked := mp.commands[cmdName]; blocked {
+			return &Violation{Rule: "command-blacklisted", Message: fmt.Sprintf("\"%s\" is blocklisted in this profile", cmdName)}
+		}
+		return nil
 	}
 
 	mc, ok := mp.commands[cmdName]
@@ -376,6 +470,25 @@ func allowedSQLList(mc mergedCommand) string {
 }
 
 func checkSQL(mp mergedProfile, cmdName, query string) *Violation {
+	if mc, ok := mp.commands[cmdName]; ok && len(mc.blockedSQL) > 0 {
+		if matched := matchSQLBlock(query, mc.blockedSQL); matched != "" {
+			return &Violation{
+				Rule:    "sql-blocked",
+				Message: fmt.Sprintf("SQL \"%s\" is blocked by this profile via %s", matched, cmdName),
+			}
+		}
+	}
+	switch mp.commandsMode {
+	case types.CommandsOpen:
+		return nil
+	case types.CommandsClosed:
+		return &Violation{Rule: "commands-closed", Message: fmt.Sprintf("\"%s\" blocked — commands are closed in this profile", cmdName)}
+	case types.CommandsBlacklist:
+		if _, blocked := mp.commands[cmdName]; blocked {
+			return &Violation{Rule: "command-blacklisted", Message: fmt.Sprintf("\"%s\" is blocklisted in this profile", cmdName)}
+		}
+		return nil
+	}
 	mc, ok := mp.commands[cmdName]
 	if !ok {
 		return &Violation{Rule: "command-not-allowed", Message: fmt.Sprintf("\"%s\" is not allowed. Allowed: %s", cmdName, allowedCommandNames(mp))}
@@ -433,6 +546,42 @@ func resolveArgs(call *syntax.CallExpr) []string {
 		}
 	}
 	return args
+}
+
+// splitSQLTokens normalizes a SQL fragment into a sequence of uppercased,
+// whitespace-separated tokens (e.g. "drop  table" -> ["DROP", "TABLE"]).
+func splitSQLTokens(s string) []string {
+	tokens := strings.Fields(strings.TrimSpace(s))
+	for i, t := range tokens {
+		tokens[i] = strings.ToUpper(t)
+	}
+	return tokens
+}
+
+// matchSQLBlock returns the human-readable matched prefix if the query
+// starts with any of the blocked token sequences, or "" if no match.
+func matchSQLBlock(query string, blocks [][]string) string {
+	tokens := splitSQLTokens(query)
+	if len(tokens) == 0 {
+		return ""
+	}
+	for _, block := range blocks {
+		if len(block) == 0 || len(block) > len(tokens) {
+			continue
+		}
+		hit := true
+		for i, want := range block {
+			got := strings.TrimRight(tokens[i], ";")
+			if got != want {
+				hit = false
+				break
+			}
+		}
+		if hit {
+			return strings.Join(block, " ")
+		}
+	}
+	return ""
 }
 
 func extractFlag(args []string, flag string) string {

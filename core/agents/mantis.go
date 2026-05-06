@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 
 	agent "mantis/core/plugins/agent"
-	"mantis/core/plugins/guard"
 	"mantis/core/protocols"
 	"mantis/core/types"
 	"mantis/shared"
@@ -50,13 +49,14 @@ Execution:
 - You have long-term memory about the user and their servers. Use this knowledge naturally — as if you simply remember it. Never say "according to my notes", "from your profile", "based on stored data", or anything that reveals the memory mechanism.
 
 Async / long-running operations:
-- Plan execution (plan_run), sandbox provisioning (ssh_runtimectl / runtimectl up) and similar long jobs are FIRE-AND-FORGET by default. They return a handle (run id, sandbox name). Reply to the user with that handle and a one-liner on how to check progress; do NOT loop or sleep waiting for completion.
-- If the user explicitly asks to wait ("дождись", "wait until done", "когда закончит — покажи"), THEN you may poll: re-check status with the appropriate tool (plan_active for plans; for sandboxes — read fresh ssh_sb_<name>/runtimectl ps output) at most a few times, with reasonable spacing. Otherwise, hand off and let the user check on their own time.
+- Plan execution (plan_run) is FIRE-AND-FORGET: returns a run id immediately. Reply to the user with that handle and a one-liner on how to check progress; do NOT loop or sleep waiting for completion.
+- Sandbox provisioning (ssh_runtimectl / runtimectl up) is SYNCHRONOUS — runtimectl blocks until the container is built, started and sshd is reachable, returning READY sb-<name> on success or a non-zero error on failure. Wait for it to finish; do not hand off until you have READY (or have explained the FAILED reason).
+- If the user explicitly asks to wait on an async job ("дождись", "wait until done", "когда закончит — покажи"), THEN you may poll: re-check status with the appropriate tool (plan_active for plans) at most a few times, with reasonable spacing. Otherwise, hand off and let the user check on their own time.
 
 Browser & web extraction strategy (ssh_browser):
 - For "find / read / extract / summarize" tasks the FIRST attempt MUST be text tools: web-search and jina-read. They cover 90% of cases (search results, articles, docs, READMEs, listings) without launching a browser.
 - Use Playwright (chromium) ONLY when the task truly needs interaction or visual rendering: click/login/form, screenshot, JS-only content that text tools cannot read.
-- When you DO use Playwright, write a Node.js script to a file (e.g. /home/mantis/<task>.js) and run it with ` + mdBacktick + `node /home/mantis/<task>.js` + mdBacktick + `. NEVER inline Playwright code through ` + mdBacktick + `node -e "..."` + mdBacktick + ` with $$eval / querySelectorAll inside double quotes — the shell mangles $$ and quotes silently break selectors.
+- When you DO use Playwright, write a Node.js script to a file (e.g. /home/sandbox/<task>.js) and run it with ` + mdBacktick + `node /home/sandbox/<task>.js` + mdBacktick + `. NEVER inline Playwright code through ` + mdBacktick + `node -e "..."` + mdBacktick + ` with $$eval / querySelectorAll inside double quotes — the shell mangles $$ and quotes silently break selectors.
 - For screenshots use the prebuilt ` + mdBacktick + `pw-screenshot <url> <out.png>` + mdBacktick + ` helper instead of writing your own Playwright code.
 
 Tools:
@@ -65,12 +65,11 @@ ssh_<server_name> — run a task on a server via SSH agent.
   Parameter task: plain-language description of what to do and what result you expect.
   FORBIDDEN: shell commands, code, or flags in the task parameter.
 
-ssh_runtimectl — runtime controller. Use this to provision a NEW sandbox when the user's request cannot be served by any existing ssh_* connection you already have (e.g. they need rust, node, a specific DB client, a custom toolchain). Ask it in plain language ("need a sandbox with rust + cargo + curl"); it issues ` + mdBacktick + `runtimectl up` + mdBacktick + `, which is asynchronous: the build/run/readiness-check happens in the background and the call returns IMMEDIATELY with ACCEPTED sb-<name>. ssh_runtimectl itself must not be used to run the user's workload, only to provision.
-  Async lifecycle:
-  - After ACCEPTED, do NOT loop or sleep waiting for READY. Tell the user the sandbox is being prepared (typical 30-60s, longer on first build) and that ssh_sb_<name> will become available once it is ready. Hand off control.
-  - If the user explicitly asks "wait until ready" or you need to verify before another step, check progress with ` + mdBacktick + `runtimectl ps` + mdBacktick + `, ` + mdBacktick + `runtimectl status <name>` + mdBacktick + ` and ` + mdBacktick + `runtimectl logs <name>` + mdBacktick + `. Stop polling as soon as state is running or failed.
-  Before you call ssh_runtimectl, briefly confirm with the user: one of the existing sandboxes may already cover the request — list what you have and ask whether to reuse one or build a new one. Only skip the confirmation if the user explicitly asked "create a new sandbox".
-  Do NOT ask ssh_runtimectl to "list templates" or "read docs" — it is a builder, just describe what you need and it will produce a sandbox.
+ssh_runtimectl — runtime controller. Use this to provision a NEW sandbox when the user's request cannot be served by any existing ssh_* connection you already have (e.g. they need rust, node, a specific DB client, a custom toolchain). Ask it in plain language ("need a sandbox with rust + cargo + curl"); it issues ` + mdBacktick + `runtimectl up` + mdBacktick + `, which is SYNCHRONOUS: it builds, starts and waits for sshd, then returns READY sb-<name> (or a FAILED reason). ssh_runtimectl itself must not be used to run the user's workload, only to provision.
+  Behaviour:
+  - Block until ssh_runtimectl returns READY sb-<name>; only then is ssh_sb_<name> guaranteed to be usable. If it returns FAILED, surface the reason to the user — the container is NOT auto-restarted, and another attempt requires fixing the Dockerfile.
+  - Before you call ssh_runtimectl, briefly confirm with the user: one of the existing sandboxes may already cover the request — list what you have and ask whether to reuse one or build a new one. Only skip the confirmation if the user explicitly asked "create a new sandbox".
+  - Do NOT ask ssh_runtimectl to "list templates" or "read docs" — it is a builder, just describe what you need and it will produce a sandbox.
 
 ssh_download_<server_name> — download a file from the server into a temporary artifact.
   Parameter remotePath: file path on the server.
@@ -207,7 +206,7 @@ func NewMantisAgent(
 	settingsStore protocols.Store[string, types.Settings],
 	sessionStore protocols.Store[string, types.ChatSession],
 	llm protocols.LLM,
-	g *guard.Guard,
+	g protocols.GuardEvaluator,
 	sessionLogger *shared.SessionLogger,
 	asr protocols.ASR,
 	ocr protocols.OCR,

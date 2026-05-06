@@ -16,7 +16,7 @@ import (
 	dockerruntime "mantis/infrastructure/adapters/runtime/docker"
 )
 
-const dockerfileHashLabel = "mantis.sandbox.dockerfile_hash"
+const dockerfileHashLabel = "sandbox.dockerfile_hash"
 
 func main() {
 	log.SetFlags(0)
@@ -35,6 +35,10 @@ func main() {
 		Network:    envOr("RUNTIME_NETWORK", ""),
 	})
 
+	bases, err := runtimetemplates.Bases()
+	if err != nil {
+		log.Fatalf("sandbox-prebuild: render bases: %v", err)
+	}
 	tpls, err := runtimetemplates.Builtin()
 	if err != nil {
 		log.Fatalf("sandbox-prebuild: render templates: %v", err)
@@ -43,8 +47,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
 
+	all := append(append([]runtimetemplates.Template{}, bases...), tpls...)
 	failures := 0
-	for _, t := range tpls {
+	for _, t := range all {
 		hash := dockerfileHash(t.Dockerfile)
 		if labels, err := rt.ImageLabels(ctx, t.Name); err == nil && labels != nil && labels[dockerfileHashLabel] == hash {
 			log.Printf("sandbox-prebuild: %-12s up-to-date (sha=%s)", t.Name, hash)
@@ -61,9 +66,9 @@ func main() {
 	}
 
 	if failures > 0 {
-		log.Fatalf("sandbox-prebuild: %d/%d sandbox images failed to build", failures, len(tpls))
+		log.Fatalf("sandbox-prebuild: %d/%d sandbox images failed to build", failures, len(all))
 	}
-	log.Printf("sandbox-prebuild: all %d sandbox images ready", len(tpls))
+	log.Printf("sandbox-prebuild: all %d sandbox images ready", len(all))
 }
 
 func build(ctx context.Context, rt *dockerruntime.Runtime, name, dockerfile, hash string, verbose bool) error {

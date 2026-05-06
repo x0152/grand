@@ -32,7 +32,7 @@ services:
     entrypoint: ["/usr/local/bin/sandbox-prebuild"]
     environment:
       DOCKER_SOCKET: /var/run/docker.sock
-      RUNTIME_NETWORK: "${RUNTIME_NETWORK:-mantis-sandbox-net}"
+      RUNTIME_NETWORK: "${RUNTIME_NETWORK:-sandbox-net}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -65,9 +65,11 @@ services:
       MANTIS_SERVER_TIMEOUT: "${MANTIS_SERVER_TIMEOUT:-}"
       MANTIS_PLAN_STEP_TIMEOUT: "${MANTIS_PLAN_STEP_TIMEOUT:-}"
       RUNTIME_MODE: "${RUNTIME_MODE:-docker}"
-      RUNTIME_NETWORK: "${RUNTIME_NETWORK:-mantis-sandbox-net}"
+      RUNTIME_NETWORK: "${RUNTIME_NETWORK:-sandbox-net}"
       RUNTIME_API_TOKEN: "${RUNTIME_API_TOKEN:-}"
       DOCKER_SOCKET: /var/run/docker.sock
+      EGRESS_GATEWAY_URL: "${EGRESS_GATEWAY_URL:-http://egress-gateway:9999}"
+      EGRESS_GATEWAY_CONTAINER: "${EGRESS_GATEWAY_CONTAINER:-mantis-egress-gateway}"
     volumes:
       - attachments:/data/attachments
       - /var/run/docker.sock:/var/run/docker.sock
@@ -79,6 +81,30 @@ services:
         condition: service_completed_successfully
       sandbox-prebuild:
         condition: service_completed_successfully
+      egress-gateway:
+        condition: service_started
+
+  egress-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: mantis-egress-gateway
+    restart: unless-stopped
+    entrypoint: ["/usr/local/bin/egress-gateway"]
+    user: "0:0"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      RUNTIME_STATE_URL: "http://app:8080/api/runtime/egress/state"
+      RUNTIME_API_TOKEN: "${RUNTIME_API_TOKEN:-}"
+      DNS_LISTEN: "${EGRESS_DNS_LISTEN:-:53}"
+      HTTP_LISTEN: ":9999"
+      POLL_INTERVAL: "${EGRESS_POLL_INTERVAL:-30s}"
+      EGRESS_DRY_RUN: "${EGRESS_DRY_RUN:-false}"
+    networks:
+      - default
+      - sandbox
 
   frontend:
     build:
@@ -97,4 +123,4 @@ volumes:
 networks:
   default:
   sandbox:
-    name: mantis-sandbox-net
+    name: sandbox-net

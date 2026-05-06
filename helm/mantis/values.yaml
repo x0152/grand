@@ -237,7 +237,7 @@ attachments:
 
 runtime:
   dockerSocket: /var/run/docker.sock
-  network: mantis-sandbox-net
+  network: sandbox-net
   sandboxCaps: "NET_RAW,NET_ADMIN"
   apiToken: ""
   dind:

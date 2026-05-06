@@ -182,6 +182,7 @@ export default function App() {
   )
 
   const planId = route.page === 'plans' && 'planId' in route ? route.planId : undefined
+  const guardProfileId = route.page === 'guard-profiles' && 'profileId' in route ? route.profileId : undefined
 
   return (
     <LogoStateProvider>
@@ -257,7 +258,7 @@ export default function App() {
         {route.page === 'skills' && <SkillsPage />}
         {route.page === 'plans' && <PlansPage deepPlanId={planId} key={planId ?? '_'} />}
         {route.page === 'logs' && <LogsPage />}
-        {route.page === 'guard-profiles' && <GuardProfilesPage />}
+        {route.page === 'guard-profiles' && <GuardProfilesPage profileId={guardProfileId} />}
         {route.page === 'setup' && <SetupPage />}
       </main>
       <Toaster />

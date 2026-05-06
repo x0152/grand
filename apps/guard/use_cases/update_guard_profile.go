@@ -9,14 +9,18 @@ import (
 )
 
 type UpdateGuardProfile struct {
-	store protocols.Store[string, types.GuardProfile]
+	store    protocols.Store[string, types.GuardProfile]
+	reloader protocols.EgressReloader
 }
 
-func NewUpdateGuardProfile(store protocols.Store[string, types.GuardProfile]) *UpdateGuardProfile {
-	return &UpdateGuardProfile{store: store}
+func NewUpdateGuardProfile(store protocols.Store[string, types.GuardProfile], reloader protocols.EgressReloader) *UpdateGuardProfile {
+	if reloader == nil {
+		reloader = protocols.NoopEgressReloader{}
+	}
+	return &UpdateGuardProfile{store: store, reloader: reloader}
 }
 
-func (uc *UpdateGuardProfile) Execute(ctx context.Context, id, name, description string, capabilities types.GuardCapabilities, commands []types.CommandRule) (types.GuardProfile, error) {
+func (uc *UpdateGuardProfile) Execute(ctx context.Context, id, name, description string, capabilities types.GuardCapabilities, commandsMode types.CommandsMode, commands []types.CommandRule, egress types.EgressPolicy) (types.GuardProfile, error) {
 	existing, err := uc.store.Get(ctx, []string{id})
 	if err != nil {
 		return types.GuardProfile{}, err
@@ -34,11 +38,14 @@ func (uc *UpdateGuardProfile) Execute(ctx context.Context, id, name, description
 		Description:  description,
 		Builtin:      old.Builtin,
 		Capabilities: capabilities,
+		CommandsMode: commandsMode.Normalize(),
 		Commands:     commands,
+		Egress:       egress.Normalize(),
 	}
 	result, err := uc.store.Update(ctx, []types.GuardProfile{p})
 	if err != nil {
 		return types.GuardProfile{}, err
 	}
+	uc.reloader.Reload(ctx)
 	return result[0], nil
 }

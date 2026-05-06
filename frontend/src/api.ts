@@ -1,4 +1,4 @@
-import type { Settings, Model, Preset, Connection, Skill, Plan, PlanRun, GuardProfile, ChatSession, ChatMessage, SessionLog, LlmConnection, ProviderModel, InferenceLimit, Channel, User, ContextStatus, SandboxStatus, GonkaConfig, GonkaWallet, GonkaBalance, GonkaAccountStatus, TelegramWizardBot, TelegramWizardUser, GlobalConfig, GlobalConfigDraft } from './types'
+import type { Settings, Model, Preset, Connection, Skill, Plan, PlanRun, GuardProfile, GuardEvent, GuardEventKind, GuardTestResult, ChatSession, ChatMessage, SessionLog, LlmConnection, ProviderModel, InferenceLimit, Channel, User, ContextStatus, SandboxStatus, GonkaConfig, GonkaWallet, GonkaBalance, GonkaAccountStatus, TelegramWizardBot, TelegramWizardUser, GlobalConfig, GlobalConfigDraft } from './types'
 
 export class UnauthorizedError extends Error {
   constructor(message = 'Unauthorized') {
@@ -170,6 +170,28 @@ export const api = {
     update: (id: string, data: Omit<GuardProfile, 'id' | 'builtin'>) =>
       request<GuardProfile>(`/guard-profiles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => request<void>(`/guard-profiles/${id}`, { method: 'DELETE' }),
+    test: (profile: Omit<GuardProfile, 'id' | 'builtin'>, kind: GuardEventKind, target: string) =>
+      request<GuardTestResult>('/guard-profiles/test', {
+        method: 'POST',
+        body: JSON.stringify({ profile: { id: '', builtin: false, ...profile }, kind, target }),
+      }),
+    syncAttachments: (id: string, connectionIds: string[]) =>
+      request<Connection[]>(`/guard-profiles/${id}/attachments`, {
+        method: 'PUT',
+        body: JSON.stringify({ connectionIds }),
+      }),
+  },
+  guardEvents: {
+    list: (opts?: { kind?: GuardEventKind; allowed?: boolean; profileId?: string; connectionId?: string; limit?: number }) => {
+      const qs = new URLSearchParams()
+      if (opts?.kind) qs.set('kind', opts.kind)
+      if (opts?.allowed !== undefined) qs.set('allowed', String(opts.allowed))
+      if (opts?.profileId) qs.set('profileId', opts.profileId)
+      if (opts?.connectionId) qs.set('connectionId', opts.connectionId)
+      if (opts?.limit) qs.set('limit', String(opts.limit))
+      const q = qs.toString()
+      return request<GuardEvent[]>(`/guard/events${q ? `?${q}` : ''}`)
+    },
   },
   channels: {
     list: () => request<Channel[]>('/channels'),

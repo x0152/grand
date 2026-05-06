@@ -9,11 +9,11 @@ without hopping between sandboxes.
 ## System info
 
 - OS: Alpine Linux (`python:3.12-alpine`)
-- User: `mantis` (no sudo, unprivileged)
-- Home directory: `/home/mantis` (persistent across restarts)
+- User: `sandbox` (no sudo, unprivileged)
+- Home directory: `/home/sandbox` (persistent across restarts)
 - Shell: `/bin/bash`
 - Python: 3.12
-- SSH: port 22, user `mantis`, key-only authentication
+- SSH: port 22, user `sandbox`, key-only authentication
 
 ## Filesystem and process utilities
 
@@ -65,7 +65,7 @@ redis-cli -h redis-server PING
 redis-cli -h redis-server --scan --pattern "user:*" | head -20
 
 # SQLite
-sqlite3 /home/mantis/mydb.sqlite "SELECT * FROM users LIMIT 10;"
+sqlite3 /home/sandbox/mydb.sqlite "SELECT * FROM users LIMIT 10;"
 ```
 
 ## Python
@@ -94,12 +94,12 @@ ipython -c "import pandas as pd; print(pd.DataFrame({'a':[1,2]}))"
 ```
 
 ```bash
-cat > /home/mantis/script.py << 'SCRIPT'
+cat > /home/sandbox/script.py << 'SCRIPT'
 import pandas as pd
-df = pd.read_csv('/home/mantis/data.csv')
+df = pd.read_csv('/home/sandbox/data.csv')
 print(df.describe())
 SCRIPT
-python3 /home/mantis/script.py
+python3 /home/sandbox/script.py
 ```
 
 ### Save a plot
@@ -111,13 +111,13 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt, numpy as np
 x = np.linspace(0, 10, 100)
 plt.plot(x, np.sin(x))
-plt.savefig('/home/mantis/plot.png', dpi=150)
+plt.savefig('/home/sandbox/plot.png', dpi=150)
 SCRIPT
 ```
 
 ### Install extra Python packages
 
-The root filesystem is read-only, but `/home/mantis` is writable and
+The root filesystem is read-only, but `/home/sandbox` is writable and
 persistent. Use `pip --user`:
 
 ```bash
@@ -156,7 +156,7 @@ for u in data[:5]: print(u['id'], u['name'])
 ## Limitations
 
 - No GPU — CPU only. Account for runtime on heavy ML tasks.
-- The root filesystem is read-only; only `/home/mantis` survives restarts.
+- The root filesystem is read-only; only `/home/sandbox` survives restarts.
   `/tmp`, `/run` and `/var/log` are tmpfs and reset on every boot.
 - For browser automation use the `browser` sandbox, for media the `ffmpeg`
   sandbox, for pentest tooling the `netsec` sandbox.

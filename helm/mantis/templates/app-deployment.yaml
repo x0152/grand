@@ -129,7 +129,7 @@ spec:
             - name: DOCKER_SOCKET
               value: {{ $.Values.runtime.dockerSocket | quote }}
             - name: RUNTIME_NETWORK
-              value: {{ $.Values.runtime.network | default "mantis-sandbox-net" | quote }}
+              value: {{ $.Values.runtime.network | default "sandbox-net" | quote }}
             - name: RUNTIME_SANDBOX_CAPS
               value: {{ $.Values.runtime.sandboxCaps | default "NET_RAW,NET_ADMIN" | quote }}
             {{- with $.Values.runtime.apiToken }}
