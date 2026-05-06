@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Play, Clock, CheckCircle2, XCircle, Loader2, PauseCircle, Circle, SkipForward, ChevronDown, ChevronRight, Ban } from '@/lib/icons'
 import { toast } from 'sonner'
 import { api } from '../../api'
+import { navigate } from '../../router'
 import type { PlanNode, PlanRun, PlanRunStatus, PlanStepRun, PlanStepStatus, ChatMessage, Step } from '../../types'
 import { StepBadge, StepPanel } from '../ChatMessages'
 import { Markdown } from '../Markdown'
@@ -156,7 +157,8 @@ export default function PlanRuns({ planId, planNodes, planParameters, onActiveSt
       toast.success('Plan execution started')
       setExpandedId(newRun.id)
       onActiveSteps(newRun.steps)
-      loadRuns()
+      await loadRuns()
+      navigate({ page: 'chat', sessionId: `plan:${planId}:${newRun.id}` })
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to trigger run')
     }
@@ -213,11 +215,22 @@ export default function PlanRuns({ planId, planNodes, planParameters, onActiveSt
                       ? 'border-teal-500/40 dark:border-teal-500/30'
                       : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
                   }`}
-                  onClick={() => toggle(run)}
+                  onClick={() => navigate({ page: 'chat', sessionId: `plan:${planId}:${run.id}` })}
+                  title="Open plan run chat"
                 >
                   <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      {expanded ? <ChevronDown size={14} className="text-zinc-400 shrink-0" /> : <ChevronRight size={14} className="text-zinc-400 shrink-0" />}
+                      <button
+                        type="button"
+                        className="shrink-0 rounded p-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        title={expanded ? 'Hide details' : 'Show details'}
+                        onClick={e => {
+                          e.stopPropagation()
+                          toggle(run)
+                        }}
+                      >
+                        {expanded ? <ChevronDown size={14} className="text-zinc-400" /> : <ChevronRight size={14} className="text-zinc-400" />}
+                      </button>
                       <StatusIcon size={14} className={cfg.color} />
                       <span className="font-mono text-xs text-zinc-500">{run.id.slice(0, 8)}</span>
                       <Badge variant={cfg.variant}>{run.status}</Badge>
@@ -262,7 +275,10 @@ export default function PlanRuns({ planId, planNodes, planParameters, onActiveSt
                 </div>
 
                 {expanded && (
-                  <div className="mt-1 ml-4 pl-4 border-l-2 border-zinc-200 dark:border-zinc-800 space-y-1 py-2">
+                  <div
+                    className="mt-1 ml-4 pl-4 border-l-2 border-zinc-200 dark:border-zinc-800 space-y-1 py-2"
+                    onClick={e => e.stopPropagation()}
+                  >
                     {run.steps.map(step => (
                       <StepRunRow
                         key={step.nodeId}
@@ -270,6 +286,7 @@ export default function PlanRuns({ planId, planNodes, planParameters, onActiveSt
                         node={nodeMap.get(step.nodeId)}
                         message={step.messageId ? msgById.get(step.messageId) : undefined}
                         onStepClick={setOpenStep}
+                        planChatSessionId={`plan:${planId}:${run.id}`}
                       />
                     ))}
                   </div>
@@ -312,11 +329,12 @@ export default function PlanRuns({ planId, planNodes, planParameters, onActiveSt
   )
 }
 
-function StepRunRow({ step, node, message, onStepClick }: {
+function StepRunRow({ step, node, message, onStepClick, planChatSessionId }: {
   step: PlanStepRun
   node?: PlanNode
   message?: ChatMessage
   onStepClick: (s: Step) => void
+  planChatSessionId: string
 }) {
   const sc = stepStatusCfg[step.status] ?? stepStatusCfg.pending
   const StepIcon = sc.icon
@@ -339,7 +357,12 @@ function StepRunRow({ step, node, message, onStepClick }: {
           {toolSteps.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {toolSteps.map(ts => (
-                <StepBadge key={ts.id} step={ts} onClick={() => onStepClick(ts)} />
+                <StepBadge
+                  key={ts.id}
+                  step={ts}
+                  planChatSessionId={planChatSessionId}
+                  onClick={() => onStepClick(ts)}
+                />
               ))}
             </div>
           )}

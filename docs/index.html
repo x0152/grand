@@ -6,17 +6,17 @@
   <meta name="color-scheme" content="dark light" />
 
   <title>GRAND — A security boundary for AI agents</title>
-  <meta name="description" content="GRAND is a secure control plane for infrastructure agents. Agents run in isolated sandboxes inside your cluster; every command — from chat, a reusable plan, or a scheduled run — passes a deterministic guard before it ever reaches a server." />
+  <meta name="description" content="GRAND is a secure control plane for AI agents. Agents run in isolated sandboxes inside your cluster — chat, scheduled plans, or one-shot tasks — and every command passes a deterministic guard before it ever reaches a server. Agents can also build new sandboxes on demand from a Dockerfile." />
 
   <link rel="icon" type="image/svg+xml" href="./logo.svg" />
 
   <meta property="og:type" content="website" />
   <meta property="og:title" content="GRAND — A security boundary for AI agents" />
-  <meta property="og:description" content="From chat-triggered runs to scheduled automation — under one guard boundary. Agents run in isolated sandboxes; every command passes a deterministic guard before it reaches a server." />
+  <meta property="og:description" content="Agents run in isolated sandboxes inside your cluster — chat, plans, ad-hoc tasks. Every command passes a deterministic guard. Agents can also build new sandboxes on demand." />
   <meta property="og:image" content="./landing/assets/og.svg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="GRAND — A security boundary for AI agents" />
-  <meta name="twitter:description" content="From chat-triggered runs to scheduled automation — under one guard boundary. Agents run in isolated sandboxes; every command passes a deterministic guard before it reaches a server." />
+  <meta name="twitter:description" content="Agents run in isolated sandboxes inside your cluster — chat, plans, ad-hoc tasks. Every command passes a deterministic guard. Agents can also build new sandboxes on demand." />
   <meta name="twitter:image" content="./landing/assets/og.svg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -104,7 +104,7 @@
       </a>
       <nav class="nav" aria-label="Primary">
         <a href="#architecture" class="label-only">Architecture</a>
-        <a href="https://github.com/x0152/mantis" class="gh" rel="noopener noreferrer">
+        <a href="https://github.com/x0152/grand" class="gh" rel="noopener noreferrer">
           <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
           <span>GitHub</span>
         </a>
@@ -128,11 +128,11 @@
           </h1>
 
           <p class="lede">
-            Agents run in isolated sandboxes inside your cluster. Every command passes a deterministic guard before execution.
+            Agents run in isolated sandboxes inside your cluster, can build new ones on demand from a Dockerfile, and every command passes a deterministic guard before execution.
           </p>
 
           <div class="ctas">
-            <a class="btn btn-primary" href="https://github.com/x0152/mantis" rel="noopener noreferrer">
+            <a class="btn btn-primary" href="https://github.com/x0152/grand" rel="noopener noreferrer">
               <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
               View on GitHub
               <svg class="arrow" width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg>
@@ -236,11 +236,11 @@
       <div class="section-head reveal">
         <span class="kicker"><span>architecture</span></span>
         <h2>One trust boundary, enforced before execution.</h2>
-        <p>The Agent Loop reasons through an LLM and proposes tool calls. The Guard authorizes each call against capability profiles — denied calls stop before execution. Allowed calls fan out to per-task agents that SSH into in-cluster sandboxes; the same scoped SSH reaches your external servers. Every step lands in PostgreSQL.</p>
+        <p>The Agent Loop reasons through an LLM and proposes tool calls. The Guard authorizes each call against capability profiles — denied calls stop before execution. Allowed calls fan out to per-task agents that SSH into in-cluster sandboxes; the <code>runtimectl</code> sandbox can also build brand-new sandboxes on demand from a Dockerfile. The same scoped SSH reaches your external servers. Every step lands in PostgreSQL.</p>
       </div>
 
       <div class="diagram-wrap reveal">
-        <svg class="diagram" viewBox="0 0 1100 660" role="img" aria-label="GRAND architecture. Telegram and web chat feed the GRAND container, which runs Web Panel, Agent Loop and LLM client (talking to an external LLM provider over API), backed by PostgreSQL. Every tool call from the Agent Loop passes through the Guard; denied calls go to a blocked outcome, allowed calls fan out into per-task agents. Each agent opens scoped SSH — to in-cluster sandbox containers (base, browser, ffmpeg, python, db) for specialized tools, and to your external servers and APIs for the actual operation.">
+        <svg class="diagram" viewBox="0 0 1100 660" role="img" aria-label="GRAND architecture. Telegram and web chat feed the GRAND container, which runs Web Panel, Agent Loop and LLM client (talking to an external LLM provider over API), backed by PostgreSQL. Every tool call from the Agent Loop passes through the Guard; denied calls go to a blocked outcome, allowed calls fan out into per-task agents. Each agent opens scoped SSH on port 22 — to in-cluster sandbox containers (base, browser, ffmpeg, netsec, runtimectl) for specialized tools, and to your external servers and APIs for the actual operation. The runtimectl sandbox is the controller: it can build and register new sandboxes on demand from a Dockerfile.">
           <defs>
             <marker id="m-allow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
               <path d="M0,0 L10,5 L0,10 z" fill="#14b8a6"/>
@@ -319,25 +319,25 @@
 
           <rect class="node sb-item" x="90" y="510" width="110" height="56"/>
           <text x="145" y="532" text-anchor="middle" class="node-label">base</text>
-          <text x="145" y="549" text-anchor="middle" class="node-sub">ssh :2222</text>
+          <text x="145" y="549" text-anchor="middle" class="node-sub">python · cli · ssh :22</text>
 
           <rect class="node sb-item" x="220" y="510" width="110" height="56"/>
           <text x="275" y="532" text-anchor="middle" class="node-label">browser</text>
-          <text x="275" y="549" text-anchor="middle" class="node-sub">ssh :2223</text>
+          <text x="275" y="549" text-anchor="middle" class="node-sub">playwright · ssh :22</text>
 
           <rect class="node sb-item" x="350" y="510" width="110" height="56"/>
           <text x="405" y="532" text-anchor="middle" class="node-label">ffmpeg</text>
-          <text x="405" y="549" text-anchor="middle" class="node-sub">ssh :2224</text>
+          <text x="405" y="549" text-anchor="middle" class="node-sub">media · ssh :22</text>
 
           <rect class="node sb-item" x="480" y="510" width="110" height="56"/>
-          <text x="535" y="532" text-anchor="middle" class="node-label">python</text>
-          <text x="535" y="549" text-anchor="middle" class="node-sub">ssh :2225</text>
+          <text x="535" y="532" text-anchor="middle" class="node-label">netsec</text>
+          <text x="535" y="549" text-anchor="middle" class="node-sub">nmap · dig · ssh :22</text>
 
-          <rect class="node sb-item" x="610" y="510" width="110" height="56"/>
-          <text x="665" y="532" text-anchor="middle" class="node-label">db</text>
-          <text x="665" y="549" text-anchor="middle" class="node-sub">ssh :2226</text>
+          <rect class="node sb-item sb-controller" x="610" y="510" width="110" height="56"/>
+          <text x="665" y="532" text-anchor="middle" class="node-label">runtimectl</text>
+          <text x="665" y="549" text-anchor="middle" class="node-sub">controller · builds new</text>
 
-          <text x="400" y="590" text-anchor="middle" class="container-title">sandboxes · in-cluster · sibling containers</text>
+          <text x="400" y="590" text-anchor="middle" class="container-title">sandboxes · in-cluster · sibling containers · runtimectl spawns more on demand</text>
 
           <rect class="node external" x="780" y="494" width="290" height="110"/>
           <text x="925" y="528" text-anchor="middle" class="node-label">your infra</text>
@@ -345,7 +345,7 @@
           <text x="925" y="562" text-anchor="middle" class="node-sub">scoped ssh · per-host credentials</text>
           <text x="925" y="590" text-anchor="middle" class="container-title">your servers · external</text>
 
-          <text x="555" y="638" text-anchor="middle" class="caption">sandboxes are sibling containers shipped with GRAND · the same scoped ssh from any agent reaches your external servers</text>
+          <text x="555" y="638" text-anchor="middle" class="caption">sandboxes are sibling containers shipped with GRAND · runtimectl can build new ones on demand · the same scoped ssh from any agent reaches your external servers</text>
 
           <path class="flow" d="M120 60 V92" marker-end="url(#m-flow)"/>
           <path class="flow" d="M260 60 V92" marker-end="url(#m-flow)"/>
@@ -403,22 +403,16 @@
 
       <div class="grid-3" data-stagger="70">
         <div class="card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
-          <h3>Fleet diagnostics</h3>
-          <p class="lead">One clear summary across many hosts — not raw terminal noise.</p>
-          <p class="sub">Runs checks from isolated sandboxes, aggregates output, surfaces the few lines that matter.</p>
-        </div>
-        <div class="card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-bolt"/></svg></span>
-          <h3>Scripted remediation</h3>
-          <p class="lead">Restart services or apply playbooks — only the actions on the whitelist.</p>
-          <p class="sub">Skills are declared in the guard profile; anything outside it is rejected before execution.</p>
-        </div>
-        <div class="card reveal">
           <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-cluster"/></svg></span>
           <h3>Specialized sandboxes</h3>
-          <p class="lead">The right environment per job — CLI, browser, Python, media, SQL.</p>
-          <p class="sub"><code>base</code> · <code>browser</code> · <code>python</code> · <code>ffmpeg</code> · <code>db</code> — sibling containers, swap in your own.</p>
+          <p class="lead">The right environment per job — CLI, browser, media, network, controller.</p>
+          <p class="sub"><code>base</code> · <code>browser</code> · <code>ffmpeg</code> · <code>netsec</code> · <code>runtimectl</code> — sibling containers, swap in your own.</p>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-flask"/></svg></span>
+          <h3>Sandboxes on demand</h3>
+          <p class="lead">Need Rust, Node 20, a niche DB client? The agent builds it for you.</p>
+          <p class="sub">The <code>runtimectl</code> sandbox writes a Dockerfile and runs <code>runtimectl up</code>; provisioning is async — you get a sandbox name immediately, ssh works the moment it's ready.</p>
         </div>
         <div class="card reveal">
           <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-shield"/></svg></span>
@@ -431,6 +425,12 @@
           <h3>Constrained SSH</h3>
           <p class="lead">Agents reach your servers under scoped users — not your shell credentials.</p>
           <p class="sub">Per-connection users and keys. Blast radius is defined by the server, not by the agent's creativity.</p>
+        </div>
+        <div class="card reveal">
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-bolt"/></svg></span>
+          <h3>Plans &amp; schedules</h3>
+          <p class="lead">Save a multi-step task once, run it on a cron, or trigger it from chat.</p>
+          <p class="sub">Plans are stored in PostgreSQL with their steps and parameters. Each run is async — chat returns the run id, you watch progress in the UI.</p>
         </div>
         <div class="card reveal">
           <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-doc"/></svg></span>
@@ -458,7 +458,7 @@
             <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>png image</span>
             <span class="outcome muted">sandbox · browser</span>
           </div>
-          <p class="prompt">Take a screenshot of the Hacker News homepage and send me the picture.</p>
+          <p class="prompt">Screenshot the Hacker News homepage.</p>
         </div>
         <div class="card prompt-card reveal">
           <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-cluster"/></svg></span>
@@ -467,16 +467,16 @@
             <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>table · 5 rows</span>
             <span class="outcome muted">sandbox · browser</span>
           </div>
-          <p class="prompt">Find the 5 most popular GitHub projects from the last 7 days. Show name, description, stars, and a link.</p>
+          <p class="prompt">Top 5 trending GitHub repos this week as a table: name, description, stars, link.</p>
         </div>
         <div class="card prompt-card reveal">
           <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
           <h3>Plot Bitcoin price</h3>
           <div class="outcomes">
             <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>line chart · png</span>
-            <span class="outcome muted">sandbox · python</span>
+            <span class="outcome muted">sandbox · base · matplotlib</span>
           </div>
-          <p class="prompt">Get the Bitcoin price for the last 30 days, draw a simple line chart, and send me the picture.</p>
+          <p class="prompt">Bitcoin price for the last 30 days. Plot it with matplotlib (pyplot) and send me the PNG.</p>
         </div>
         <div class="card prompt-card reveal">
           <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-bolt"/></svg></span>
@@ -485,25 +485,25 @@
             <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>digest · mon–fri 09:00</span>
             <span class="outcome muted">recurring plan</span>
           </div>
-          <p class="prompt">Every weekday at 9:00, grab the top 5 Hacker News stories, summarize each in one sentence, and send me the digest.</p>
+          <p class="prompt">Daily plan, weekdays 9:00: top 5 Hacker News stories with one-sentence summaries, sent to me.</p>
         </div>
         <div class="card prompt-card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-terminal"/></svg></span>
+          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-flask"/></svg></span>
           <h3>Spin up a Rust workspace</h3>
           <div class="outcomes">
-            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>running hello-world</span>
-            <span class="outcome muted">sandbox · base</span>
+            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>sandbox · async build</span>
+            <span class="outcome muted">runtimectl · on-demand</span>
           </div>
-          <p class="prompt">Set up a fresh environment with Rust and Cargo, then write and run a tiny hello-world so I see it works.</p>
+          <p class="prompt">Provision a sandbox with Rust + Cargo in the background. Tell me the sandbox name and how to check when it is ready.</p>
         </div>
         <div class="card prompt-card reveal">
           <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-shield"/></svg></span>
           <h3>Quick security scan</h3>
           <div class="outcomes">
             <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>open ports · short table</span>
-            <span class="outcome muted">sandbox · base</span>
+            <span class="outcome muted">sandbox · netsec</span>
           </div>
-          <p class="prompt">Run a quick scan of scanme.nmap.org. Show open ports and what is listening, in a short table.</p>
+          <p class="prompt">Quick port scan of scanme.nmap.org (public test target). Show open ports and services as a small table.</p>
         </div>
       </div>
     </div>
@@ -558,12 +558,12 @@ helm upgrade --install mantis ./helm/mantis \
       <span class="kicker"><span>open source · mit · early</span></span>
       <h2>A sharper boundary between agents and infrastructure.</h2>
       <div class="ctas">
-        <a class="btn btn-primary" href="https://github.com/x0152/mantis" rel="noopener noreferrer">
+        <a class="btn btn-primary" href="https://github.com/x0152/grand" rel="noopener noreferrer">
           <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
           View on GitHub
           <svg class="arrow" width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg>
         </a>
-        <a class="cta-inline" href="https://github.com/x0152/mantis#readme" rel="noopener noreferrer">Read docs</a>
+        <a class="cta-inline" href="https://github.com/x0152/grand#readme" rel="noopener noreferrer">Read docs</a>
       </div>
     </div>
   </section>
@@ -577,10 +577,10 @@ helm upgrade --install mantis ./helm/mantis \
         <span style="margin-left:12px">© <span data-year>2025</span> GRAND contributors</span>
       </div>
       <div class="links">
-        <a href="https://github.com/x0152/mantis">github</a>
-        <a href="https://github.com/x0152/mantis#readme">readme</a>
-        <a href="https://github.com/x0152/mantis/blob/main/helm/mantis/README.md">helm</a>
-        <a href="https://github.com/x0152/mantis/issues">issues</a>
+        <a href="https://github.com/x0152/grand">github</a>
+        <a href="https://github.com/x0152/grand#readme">readme</a>
+        <a href="https://github.com/x0152/grand/blob/main/helm/mantis/README.md">helm</a>
+        <a href="https://github.com/x0152/grand/issues">issues</a>
       </div>
     </div>
   </footer>

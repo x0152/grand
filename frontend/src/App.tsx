@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ScrollText, Sparkles, ShieldAlert, Wrench, GitBranch, LogOut, Container, Wand2 } from '@/lib/icons'
+import { ScrollText, Sparkles, ShieldAlert, Wrench, GitBranch, LogOut, Container, Wand2, Github, ExternalLink } from '@/lib/icons'
 import { Toaster } from '@/components/ui/sonner'
 import { Button } from '@/components/ui/button'
 import LlmPage from './pages/LlmPage'
@@ -24,6 +24,7 @@ import type { ChatSession, User } from './types'
 
 type NavItem = { id: PageId; label: string; icon: typeof Sparkles }
 type NavSection = { title: string; items: NavItem[] }
+const REPO_URL = 'https://github.com/x0152/grand'
 
 const nav: NavSection[] = [
   {
@@ -57,6 +58,8 @@ export default function App() {
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null)
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0)
+  /** Bumped after New chat so the sidebar list scrolls up to the selected session. */
+  const [chatListScrollNonce, setChatListScrollNonce] = useState(0)
 
   useEffect(() => {
     const sync = () => setRoute(parseRoute())
@@ -117,10 +120,25 @@ export default function App() {
 
   const handleNewChat = useCallback(async () => {
     try {
+      const list = await api.chat.listSessions({ limit: 100, offset: 0 })
+      const regular = list.filter(s => s.source !== 'plan')
+      // Sessions are newest-first; reuse the latest if it is still empty (no messages).
+      if (regular.length > 0) {
+        const newest = regular[0]
+        const msgs = await api.chat.listMessages({ sessionId: newest.id, limit: 1, offset: 0 })
+        if (msgs.length === 0) {
+          setActiveSessionId(newest.id)
+          navigate({ page: 'chat', sessionId: newest.id })
+          setSidebarRefreshKey(k => k + 1)
+          setChatListScrollNonce(n => n + 1)
+          return
+        }
+      }
       const session = await api.chat.createSession()
       setActiveSessionId(session.id)
       navigate({ page: 'chat', sessionId: session.id })
       setSidebarRefreshKey(k => k + 1)
+      setChatListScrollNonce(n => n + 1)
     } catch {}
   }, [])
 
@@ -177,7 +195,7 @@ export default function App() {
               <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-[var(--grand-muted)] mt-0.5 truncate">{BRAND_TAGLINE}</p>
             </div>
           </div>
-          <div className="flex items-center gap-0 shrink-0">
+          <div className="flex items-center gap-0.5 shrink-0">
             <ModeToggle />
             <Button
               variant="ghost"
@@ -192,19 +210,19 @@ export default function App() {
         </div>
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="pt-1">
-            {renderSectionLabel('chat')}
-          </div>
-          <div className="flex-1 overflow-auto min-h-0">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <ChatSidebar
               activeSessionId={activeSessionId}
               onSelect={handleSelectSession}
               onNew={handleNewChat}
               refreshKey={sidebarRefreshKey}
+              scrollChatsListTopKey={chatListScrollNonce}
             />
           </div>
 
-          <div className="py-1 overflow-auto">
+          <div className="mx-2 shrink-0 border-t border-[var(--grand-border)]" aria-hidden />
+
+          <div className="shrink-0 py-1 overflow-auto">
             {nav.map(s => (
               <div key={s.title}>
                 {renderSectionLabel(s.title)}
@@ -213,6 +231,21 @@ export default function App() {
                 </div>
               </div>
             ))}
+            <div className="px-3 pb-3 pt-2">
+              <a
+                href={REPO_URL}
+                target="_blank"
+                rel="noreferrer"
+                title="View source on GitHub"
+                className="group flex items-center justify-between gap-2 px-3 py-2 rounded-md border border-[var(--grand-border)] bg-[var(--grand-surface)] text-[12px] text-[var(--grand-muted)] hover:border-emerald-400/60 hover:bg-emerald-500/5 hover:text-[var(--grand-fg)] transition-colors"
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <Github size={14} weight="fill" className="shrink-0 opacity-90 group-hover:text-emerald-400" />
+                  <span className="font-mono uppercase tracking-[0.14em] text-[10.5px] truncate">View on GitHub</span>
+                </span>
+                <ExternalLink size={11} className="shrink-0 opacity-60 group-hover:opacity-100" />
+              </a>
+            </div>
           </div>
         </div>
       </aside>

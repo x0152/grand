@@ -234,7 +234,7 @@ func (a *MantisAgent) sshConnectionDeleteTool() types.Tool {
 				return "", fmt.Errorf("connection %q not found", name)
 			}
 			if conn.Dockerfile != "" {
-				return "", fmt.Errorf("connection %q is a managed sandbox — delete it from the Runtimes page or with mantisctl instead", name)
+				return "", fmt.Errorf("connection %q is a managed sandbox — delete it from the Runtimes page or with runtimectl instead", name)
 			}
 			if err := a.connectionStore.Delete(ctx, []string{conn.ID}); err != nil {
 				return "", err

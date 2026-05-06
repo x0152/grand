@@ -6,10 +6,10 @@ RUN apk add --no-cache \
         coreutils grep sed gawk less \
     && adduser -D -s /bin/bash mantis
 
-COPY bin/mantisctl /usr/local/bin/mantisctl
-RUN chmod +x /usr/local/bin/mantisctl
+COPY bin/runtimectl /usr/local/bin/runtimectl
+RUN chmod +x /usr/local/bin/runtimectl
 
-COPY README.md /etc/mantis/README.md
+COPY README.md /etc/runtimectl/README.md
 COPY README.md /home/mantis/README.md
 RUN chown mantis:mantis /home/mantis/README.md
 

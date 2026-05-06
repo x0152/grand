@@ -89,7 +89,7 @@ export function AssistantBubble({ msg, onStepClick, canRegenerate, onRegenerate,
           if (part.type === 'step') {
             return (
               <div key={part.step!.id}>
-                <StepBadge step={part.step!} onClick={() => onStepClick(part.step!)} />
+                <StepBadge step={part.step!} sessionId={msg.sessionId} onClick={() => onStepClick(part.step!)} />
               </div>
             )
           }

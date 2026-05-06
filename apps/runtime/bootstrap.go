@@ -4,17 +4,19 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
+	"mantis/apps/runtime/health"
 	"mantis/apps/runtime/keys"
 	"mantis/apps/runtime/spec"
+	"mantis/apps/runtime/sshcfg"
 	"mantis/apps/runtime/templates"
 	"mantis/core/protocols"
 	"mantis/core/types"
@@ -24,22 +26,6 @@ const (
 	dockerfileHashLabel = "mantis.sandbox.dockerfile_hash"
 	pubkeyEnvVar        = "MANTIS_SSH_PUBLIC_KEY"
 )
-
-func sandboxHost(name, ip string) string {
-	if ip != "" {
-		return ip
-	}
-	return "mantis-sb-" + name
-}
-
-func sandboxSSHConfig(name, ip, privateKey string) ([]byte, error) {
-	return json.Marshal(map[string]any{
-		"host":       sandboxHost(name, ip),
-		"port":       22,
-		"username":   "mantis",
-		"privateKey": privateKey,
-	})
-}
 
 type Bootstrapper struct {
 	rt              protocols.Runtime
@@ -102,7 +88,7 @@ func (b *Bootstrapper) seedBuiltins(ctx context.Context, key types.SandboxKey) e
 		byName[c.Name] = c
 	}
 	for _, t := range tpls {
-		config, _ := sandboxSSHConfig(t.Name, "", key.PrivateKey)
+		config, _ := sshcfg.Build(t.Name, "", key.PrivateKey)
 		existing, ok := byName[t.Name]
 		if !ok {
 			conn := types.Connection{
@@ -176,6 +162,12 @@ func (b *Bootstrapper) ensureSandbox(ctx context.Context, conn types.Connection,
 	if err != nil {
 		return fmt.Errorf("run: %w", err)
 	}
+	ready, waitErr := health.WaitForReady(ctx, b.rt, sandboxName, 60*time.Second)
+	if waitErr != nil {
+		log.Printf("runtime bootstrap: %s did not become ready: %v", sandboxName, waitErr)
+	} else {
+		started = ready
+	}
 	if err := b.syncConnectionHost(ctx, conn, sandboxName, started.IP, key.PrivateKey); err != nil {
 		log.Printf("runtime bootstrap: sync host %s: %v", sandboxName, err)
 	}
@@ -183,7 +175,7 @@ func (b *Bootstrapper) ensureSandbox(ctx context.Context, conn types.Connection,
 }
 
 func (b *Bootstrapper) syncConnectionHost(ctx context.Context, conn types.Connection, sandboxName, ip, privateKey string) error {
-	cfg, err := sandboxSSHConfig(sandboxName, ip, privateKey)
+	cfg, err := sshcfg.Build(sandboxName, ip, privateKey)
 	if err != nil {
 		return err
 	}
@@ -203,8 +195,8 @@ func dockerfileHash(s string) string {
 func envForSandbox(name, publicKey string) map[string]string {
 	env := map[string]string{pubkeyEnvVar: publicKey}
 	if name == "runtimectl" {
-		env["MANTIS_URL"] = "http://app:8080"
-		env["MANTIS_RUNTIME_TOKEN"] = os.Getenv("RUNTIME_API_TOKEN")
+		env["RUNTIMECTL_URL"] = "http://app:8080"
+		env["RUNTIMECTL_TOKEN"] = os.Getenv("RUNTIME_API_TOKEN")
 	}
 	return env
 }

@@ -20,9 +20,6 @@ import {
   type IconComponent,
 } from '@/lib/icons'
 
-// Kind drives the visual tone of the output chip.
-// `action` is used for recurring / automation / plan suggestions that don't
-// literally return a single artifact — they schedule or plan something.
 export type SuggestionKind = 'answer' | 'image' | 'table' | 'chart' | 'gif' | 'action'
 
 export type SuggestionGroupId = 'start' | 'web' | 'labs' | 'auto'
@@ -56,15 +53,11 @@ export interface Suggestion {
   group: SuggestionGroupId
   icon: IconComponent
   title: string
-  /** Short lead line — what the user gets in one phrase. Shown prominently. */
   gets: string
-  /** Category of outcome — drives chip tone. */
   kind: SuggestionKind
-  /** The actual prompt inserted/sent when the card is clicked. */
   prompt: string
 }
 
-// 18 tiles → full rows at 1 / 2 / 3 columns (divisible by 6).
 export const SUGGESTIONS: Suggestion[] = [
   {
     id: 'what-can-you-do',
@@ -73,18 +66,17 @@ export const SUGGESTIONS: Suggestion[] = [
     title: 'What can you do?',
     gets: 'short list · 3 examples',
     kind: 'answer',
-    prompt:
-      'In a few short bullet points, tell me what kinds of things you can help me with. Give me 3 simple examples I could try right now.',
+    prompt: 'What can you help me with? Add 3 example tasks I could try.',
   },
   {
     id: 'plan-tour',
     group: 'start',
     icon: GitBranch,
     title: 'Plan a quick tour',
-    gets: 'plan · 3 steps',
+    gets: 'plan · saved (not run)',
     kind: 'action',
     prompt:
-      'Make a small plan with three steps: 1) list the most useful things you can do, 2) list what tools are ready right now, 3) suggest one easy task I could try next. Then run the plan and show me what came out.',
+      'Create a 3-step plan: 1) what you can do, 2) tools available now, 3) one easy task to try. Save it to my plans — do not run it. Send the final summary to me in Telegram.',
   },
   {
     id: 'validate-json',
@@ -94,7 +86,7 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'valid or fix list',
     kind: 'answer',
     prompt:
-      'Validate this JSON and list any issues: {"name":"demo","items":[{"id":1,"ok":true},{"id":2}]}. Say if it is valid; if not, what is wrong.',
+      'Validate this JSON and list issues: {"name":"demo","items":[{"id":1,"ok":true},{"id":2}]}',
   },
   {
     id: 'screenshot-site',
@@ -103,7 +95,7 @@ export const SUGGESTIONS: Suggestion[] = [
     title: 'Screenshot a website',
     gets: 'png image',
     kind: 'image',
-    prompt: 'Take a screenshot of the Hacker News homepage and send me the picture.',
+    prompt: 'Screenshot the Hacker News homepage.',
   },
   {
     id: 'trending-repos',
@@ -113,7 +105,7 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'table · 5 rows',
     kind: 'table',
     prompt:
-      'Find the 5 most popular GitHub projects from the last 7 days and show them in a small table — name, what it does, star count, and a link.',
+      'Top 5 trending GitHub repos this week as a table: name, description, stars, link.',
   },
   {
     id: 'readme-bullets',
@@ -123,7 +115,7 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'bullets · one repo',
     kind: 'answer',
     prompt:
-      'Open the README for https://github.com/golang/go on GitHub and give me five bullet takeaways — what it is, who it is for, and how to get started.',
+      'Open https://github.com/golang/go and give me 5 bullet takeaways from the README.',
   },
   {
     id: 'compare-landings',
@@ -133,7 +125,7 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'two columns · bullets',
     kind: 'answer',
     prompt:
-      'Compare the public landing pages of https://stripe.com and https://vercel.com: for each site, one line on what they sell and one line on the main call to action. Keep it tight.',
+      'Compare https://stripe.com and https://vercel.com landing pages: one line on what they sell, one line on the main CTA, for each.',
   },
   {
     id: 'weather-now',
@@ -142,8 +134,7 @@ export const SUGGESTIONS: Suggestion[] = [
     title: 'Weather right now',
     gets: 'one paragraph',
     kind: 'answer',
-    prompt:
-      'What is the weather in Berlin right now? Use a public source if needed. Answer in one short paragraph — temp, conditions, and whether it looks rough for walking.',
+    prompt: 'Weather in Berlin right now — temp and conditions.',
   },
   {
     id: 'site-health',
@@ -152,8 +143,7 @@ export const SUGGESTIONS: Suggestion[] = [
     title: 'Is this site healthy?',
     gets: 'health check · status + latency',
     kind: 'answer',
-    prompt:
-      'Check if github.com is up. Tell me how fast it responds, the status, and whether its security certificate looks fine. Keep it short.',
+    prompt: 'Is github.com up? Show status, latency and TLS cert validity.',
   },
   {
     id: 'bitcoin-chart',
@@ -162,7 +152,8 @@ export const SUGGESTIONS: Suggestion[] = [
     title: 'Plot Bitcoin price',
     gets: 'line chart · png',
     kind: 'chart',
-    prompt: 'Get the Bitcoin price for the last 30 days, draw a simple line chart, and send me the picture.',
+    prompt:
+      'Bitcoin price for the last 30 days. Plot it with matplotlib (pyplot) and send me the PNG.',
   },
   {
     id: 'video-gif',
@@ -172,17 +163,17 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'gif · first 5 seconds',
     kind: 'gif',
     prompt:
-      'When I attach a short video, turn the first 5 seconds into a small GIF and send it back. Just say "ok" when you are ready.',
+      'When I send a short video, turn the first 5 seconds into a small GIF and send it back. Reply "ok" when ready.',
   },
   {
     id: 'rust-workspace',
     group: 'labs',
     icon: Wrench,
     title: 'Set up a Rust workspace',
-    gets: 'running hello-world',
+    gets: 'sandbox · async build',
     kind: 'action',
     prompt:
-      'I want to play with Rust. Set up a fresh environment with Rust and Cargo, then write and run a tiny hello-world program in it so I see it works.',
+      'Provision a sandbox with Rust + Cargo in the background. Tell me the sandbox name and how to check when it is ready.',
   },
   {
     id: 'text-from-image',
@@ -191,8 +182,7 @@ export const SUGGESTIONS: Suggestion[] = [
     title: 'Text from a screenshot',
     gets: 'plain text · vision',
     kind: 'answer',
-    prompt:
-      'When I attach a screenshot that contains text (UI, terminal, or document), extract all readable text as plain UTF-8 and send it back. If nothing is attached yet, say you are ready.',
+    prompt: 'I will send a screenshot with text. Extract all visible text.',
   },
   {
     id: 'dns-lookup',
@@ -202,7 +192,7 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'records · tiny table',
     kind: 'table',
     prompt:
-      'Resolve api.github.com: show the IPv4 A records (and CNAME if any) in a tiny table with hostname and value. Keep it read-only and safe.',
+      'DNS lookup for api.github.com — show A records (and CNAME if any) as a tiny table.',
   },
   {
     id: 'daily-brief',
@@ -212,7 +202,7 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'recurring · mon–fri 09:00',
     kind: 'action',
     prompt:
-      'Set up a daily reminder that runs every weekday morning around 9:00. It should grab the top 5 Hacker News stories, write a one-sentence summary for each, and send the digest to me. Save it and tell me when it will run next.',
+      'Daily plan, weekdays 9:00: top 5 Hacker News stories with one-sentence summaries, sent to me. Save it and tell me the next run time.',
   },
   {
     id: 'weekly-digest',
@@ -222,7 +212,7 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'recurring · monday 09:00',
     kind: 'action',
     prompt:
-      'Create a weekly reminder every Monday at 9:00 that pulls the top 5 stories from Hacker News, one-sentence summary each, and sends me the digest. Save it and tell me the next run time.',
+      'Weekly plan, Mondays 9:00: top 5 Hacker News stories with one-sentence summaries. Save it and tell me the next run time.',
   },
   {
     id: 'security-scan',
@@ -232,7 +222,7 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'open ports · short table',
     kind: 'table',
     prompt:
-      'Do a quick, friendly security scan of scanme.nmap.org (it is a public test target made for this). Show me which ports are open and what is listening, in a short table.',
+      'Quick port scan of scanme.nmap.org (public test target). Show open ports and services as a small table.',
   },
   {
     id: 'explain-error',
@@ -242,6 +232,6 @@ export const SUGGESTIONS: Suggestion[] = [
     gets: 'cause · one fix',
     kind: 'answer',
     prompt:
-      'Here is a log line: `Error: connect ECONNREFUSED 127.0.0.1:5432`. In plain English: what failed, and what should I check first?',
+      'Explain this error in plain English and the first thing to check: `Error: connect ECONNREFUSED 127.0.0.1:5432`',
   },
 ]

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDelete } from '@/components/ConfirmDelete'
 import { navigate } from '../router'
+import { takePlanEditorReturnChat } from '../lib/planEditorReturn'
 
 const emptyPlan: Plan = {
   id: '',
@@ -82,6 +83,12 @@ export default function PlansPage({ deepPlanId }: { deepPlanId?: string }) {
         plan={activePlan}
         onBack={() => {
           setActivePlan(null)
+          const returnSessionId = takePlanEditorReturnChat()
+          if (returnSessionId) {
+            navigate({ page: 'chat', sessionId: returnSessionId })
+            void load()
+            return
+          }
           if (deepPlanId) navigate({ page: 'plans' })
           load()
         }}

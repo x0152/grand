@@ -1,0 +1,236 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+RUNTIMECTL_URL="${RUNTIMECTL_URL:-http://app:8080}"
+RUNTIMECTL_TOKEN="${RUNTIMECTL_TOKEN:-}"
+
+usage() {
+  cat >&2 <<'EOF'
+runtimectl — controller CLI for runtime sandboxes
+
+Top-level commands (docker-style aliases):
+  runtimectl ps                            same as: sandbox ls
+  runtimectl logs <name> [-f] [-n N]       same as: sandbox logs
+  runtimectl status <name>                 same as: sandbox status
+  runtimectl up <name> ... [-w]            same as: sandbox create
+  runtimectl down <name>                   same as: sandbox rm
+  runtimectl start  <name>                 same as: sandbox start
+  runtimectl stop   <name>                 same as: sandbox stop
+  runtimectl restart <name> [-w]           same as: sandbox rebuild
+  runtimectl inspect <name>                same as: sandbox inspect
+
+Full subcommand tree:
+  runtimectl sandbox create  <name> [-f Dockerfile|-] [--description T] [--profile ID ...] [-w|--wait]
+      Upsert the connection (stores Dockerfile in DB), build the image, run the
+      container. By DEFAULT this is asynchronous: the call returns immediately
+      with `ACCEPTED <name>` and provisioning continues in the background.
+      Use `runtimectl status <name>` and `runtimectl logs <name>` to follow
+      progress. Pass -w / --wait to stream build logs synchronously and wait
+      until the container is ready (or fails).
+
+  runtimectl sandbox ls                   list sandboxes with state
+  runtimectl sandbox logs    <name> [-f] [-n N | --tail N]
+                                          fetch container logs (build + sshd).
+                                          -f / --follow: stream live.
+                                          -n / --tail N: last N lines (default 200).
+  runtimectl sandbox status  <name>       current provisioning phase
+                                          (queued/building/starting/waiting/
+                                          ready/failed) + tail of build log.
+  runtimectl sandbox inspect <name>       JSON with connection + container state
+  runtimectl sandbox rebuild <name> [-w]  rebuild from stored Dockerfile + restart
+  runtimectl sandbox start   <name>       start stopped container
+  runtimectl sandbox stop    <name>       stop container (connection kept)
+  runtimectl sandbox rm      <name>       stop + remove container + delete connection
+
+Environment:
+  RUNTIMECTL_URL         default http://app:8080
+  RUNTIMECTL_TOKEN       required if the server enforces a token
+EOF
+}
+
+curl_auth() {
+  local args=(--silent --show-error --fail-with-body --no-buffer)
+  if [ -n "$RUNTIMECTL_TOKEN" ]; then
+    args+=(-H "X-Runtime-Token: ${RUNTIMECTL_TOKEN}")
+  fi
+  curl "${args[@]}" "$@"
+}
+
+require_name() {
+  local action="$1"; shift
+  local name="${1:-}"
+  if [ -z "$name" ]; then
+    echo "${action}: <name> required" >&2
+    exit 2
+  fi
+  printf '%s' "$name"
+}
+
+cmd_sandbox_list() {
+  curl_auth "${RUNTIMECTL_URL}/api/runtime/sandboxes" \
+    | jq -r '.sandboxes[] | [.connection.name, .state, (.connection.profileIds[0] // "-"), .container.image] | @tsv' \
+    | awk 'BEGIN{printf "%-20s %-12s %-14s %s\n","NAME","STATE","PROFILE","IMAGE"} {printf "%-20s %-12s %-14s %s\n",$1,$2,$3,$4}'
+}
+
+cmd_sandbox_inspect() {
+  local name; name=$(require_name "sandbox inspect" "${1:-}")
+  curl_auth "${RUNTIMECTL_URL}/api/runtime/sandboxes" \
+    | jq --arg n "$name" '.sandboxes[] | select(.connection.name == $n or .connection.name == ("sb-" + $n))'
+}
+
+cmd_sandbox_status() {
+  local name; name=$(require_name "sandbox status" "${1:-}")
+  curl_auth "${RUNTIMECTL_URL}/api/runtime/sandboxes/${name}/status" \
+    | jq -r '"name:    " + (.name // "-"),
+             "phase:   " + (.phase // "-"),
+             "message: " + (.message // ""),
+             "host:    " + (.host // "-"),
+             (if (.log // "") != "" then "log:\n" + .log else "" end)'
+}
+
+cmd_sandbox_logs() {
+  local name=""
+  local follow=0
+  local tail=200
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -f|--follow) follow=1; shift ;;
+      -n|--tail)   tail="${2:-}"; shift 2 ;;
+      --tail=*)    tail="${1#*=}"; shift ;;
+      -n*)         tail="${1#-n}"; shift ;;
+      -h|--help)   usage; exit 0 ;;
+      -*)          echo "sandbox logs: unknown flag $1" >&2; exit 2 ;;
+      *)
+        if [ -z "$name" ]; then name="$1"; shift
+        else echo "sandbox logs: extra arg $1" >&2; exit 2; fi ;;
+    esac
+  done
+  [ -z "$name" ] && { echo "sandbox logs: <name> required" >&2; exit 2; }
+  case "$tail" in
+    ''|*[!0-9]*) echo "sandbox logs: --tail must be a non-negative integer" >&2; exit 2 ;;
+  esac
+  local q="tail=${tail}"
+  if [ "$follow" = "1" ]; then
+    q+="&follow=1"
+    curl_auth --no-buffer "${RUNTIMECTL_URL}/api/runtime/sandboxes/${name}/logs?${q}"
+  else
+    curl_auth "${RUNTIMECTL_URL}/api/runtime/sandboxes/${name}/logs?${q}"
+  fi
+}
+
+cmd_sandbox_create() {
+  local name="${1:-}"; shift || true
+  [ -z "$name" ] && { echo "sandbox create: <name> required" >&2; exit 2; }
+  local file="-"
+  local description=""
+  local profiles_json="[]"
+  local wait=0
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -f|--file) file="${2:-}"; shift 2 ;;
+      --description) description="${2:-}"; shift 2 ;;
+      --profile)
+        profiles_json=$(jq -c --arg p "${2:-}" '. + [$p]' <<<"$profiles_json")
+        shift 2 ;;
+      -w|--wait) wait=1; shift ;;
+      --no-wait) wait=0; shift ;;
+      *) echo "sandbox create: unknown arg $1" >&2; exit 2 ;;
+    esac
+  done
+  local dockerfile
+  if [ "$file" = "-" ]; then
+    dockerfile=$(cat)
+  else
+    dockerfile=$(cat "$file")
+  fi
+  [ -z "$dockerfile" ] && { echo "sandbox create: dockerfile is empty" >&2; exit 2; }
+  local payload
+  payload=$(jq -n \
+    --arg name "$name" \
+    --arg description "$description" \
+    --arg dockerfile "$dockerfile" \
+    --argjson profiles "$profiles_json" \
+    '{name:$name, description:$description, dockerfile:$dockerfile, profileIds:$profiles}')
+  local url="${RUNTIMECTL_URL}/api/runtime/sandboxes"
+  if [ "$wait" = "1" ]; then
+    url+="?wait=1"
+    curl_auth --no-buffer -X POST -H "Content-Type: application/json" \
+      --data-binary "$payload" "$url"
+  else
+    local body
+    body=$(curl_auth -X POST -H "Content-Type: application/json" \
+      --data-binary "$payload" "$url")
+    echo "$body" | jq -r '
+      if (.status // "") == "accepted"
+      then "ACCEPTED \(.name)\nphase: \(.phase)\n\(.message)"
+      else .
+      end'
+  fi
+}
+
+cmd_sandbox_rebuild() {
+  local name=""
+  local wait=0
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -w|--wait) wait=1; shift ;;
+      --no-wait) wait=0; shift ;;
+      -*) echo "sandbox rebuild: unknown flag $1" >&2; exit 2 ;;
+      *)
+        if [ -z "$name" ]; then name="$1"; shift
+        else echo "sandbox rebuild: extra arg $1" >&2; exit 2; fi ;;
+    esac
+  done
+  [ -z "$name" ] && { echo "sandbox rebuild: <name> required" >&2; exit 2; }
+  local url="${RUNTIMECTL_URL}/api/runtime/sandboxes/${name}/rebuild"
+  if [ "$wait" = "1" ]; then
+    curl_auth --no-buffer -X POST "${url}?wait=1"
+  else
+    local body
+    body=$(curl_auth -X POST "$url")
+    echo "$body" | jq -r '
+      if (.status // "") == "accepted"
+      then "ACCEPTED \(.name)\nphase: \(.phase)\n\(.message)"
+      else .
+      end'
+  fi
+}
+
+cmd_sandbox() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    create)         cmd_sandbox_create "$@" ;;
+    ls|list|ps)     cmd_sandbox_list ;;
+    logs)           cmd_sandbox_logs "$@" ;;
+    status)         cmd_sandbox_status "$@" ;;
+    inspect)        cmd_sandbox_inspect "$@" ;;
+    rebuild)        cmd_sandbox_rebuild "$@" ;;
+    start)          local n; n=$(require_name "sandbox start"   "${1:-}"); curl_auth -X POST "${RUNTIMECTL_URL}/api/runtime/sandboxes/${n}/start" ;;
+    stop)           local n; n=$(require_name "sandbox stop"    "${1:-}"); curl_auth -X POST "${RUNTIMECTL_URL}/api/runtime/sandboxes/${n}/stop" ;;
+    rm)             local n; n=$(require_name "sandbox rm"      "${1:-}"); curl_auth -X DELETE "${RUNTIMECTL_URL}/api/runtime/sandboxes/${n}" ;;
+    "")             echo "sandbox: subcommand required" >&2; usage; exit 2 ;;
+    *)              echo "sandbox: unknown subcommand $sub" >&2; exit 2 ;;
+  esac
+}
+
+main() {
+  [ "$#" -eq 0 ] && { usage; exit 2; }
+  local cmd="$1"; shift
+  case "$cmd" in
+    sandbox)         cmd_sandbox "$@" ;;
+    ps)              cmd_sandbox ls ;;
+    ls|list)         cmd_sandbox ls ;;
+    logs)            cmd_sandbox logs "$@" ;;
+    status)          cmd_sandbox status "$@" ;;
+    up)              cmd_sandbox create "$@" ;;
+    down|rm)         cmd_sandbox rm "$@" ;;
+    start)           cmd_sandbox start "$@" ;;
+    stop)            cmd_sandbox stop "$@" ;;
+    restart|rebuild) cmd_sandbox rebuild "$@" ;;
+    inspect)         cmd_sandbox inspect "$@" ;;
+    -h|--help|help)  usage ;;
+    *) echo "unknown command: $cmd" >&2; usage; exit 2 ;;
+  esac
+}
+
+main "$@"

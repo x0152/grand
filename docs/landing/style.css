@@ -1033,6 +1033,12 @@ code, kbd, pre, samp, .mono {
   stroke-width: 1;
 }
 
+.architecture .diagram rect.sb-controller {
+  fill: color-mix(in oklab, var(--accent-bright) 18%, var(--card-2));
+  stroke: var(--accent-bright);
+  stroke-width: 1.4;
+}
+
 .architecture .diagram path.flow {
   fill: none;
   stroke: var(--muted);

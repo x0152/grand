@@ -75,8 +75,8 @@ func TestCheckSandboxRunning_Stopped(t *testing.T) {
 	if !strings.Contains(err.Error(), "python") || !strings.Contains(err.Error(), "exited") {
 		t.Fatalf("error should mention name and state, got: %v", err)
 	}
-	if !strings.Contains(err.Error(), "mantisctl sandbox start python") {
-		t.Fatalf("error should suggest mantisctl start, got: %v", err)
+	if !strings.Contains(err.Error(), "runtimectl start python") {
+		t.Fatalf("error should suggest runtimectl start, got: %v", err)
 	}
 }
 
@@ -90,7 +90,7 @@ func TestCheckSandboxRunning_InspectError(t *testing.T) {
 	if !strings.Contains(err.Error(), "sb-custom") {
 		t.Fatalf("error should contain connection name, got: %v", err)
 	}
-	if !strings.Contains(err.Error(), "mantisctl sandbox start custom") {
-		t.Fatalf("error should strip sb- prefix in mantisctl hint, got: %v", err)
+	if !strings.Contains(err.Error(), "runtimectl start custom") {
+		t.Fatalf("error should strip sb- prefix in runtimectl hint, got: %v", err)
 	}
 }

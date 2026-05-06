@@ -458,10 +458,10 @@ func (a *MantisAgent) checkSandboxRunning(ctx context.Context, conn types.Connec
 	defer cancel()
 	container, err := a.runtime.Inspect(inspectCtx, sandboxName)
 	if err != nil {
-		return fmt.Errorf("sandbox %q is not available (container not found). Start it from the Runtimes page or run: mantisctl sandbox start %s", conn.Name, sandboxName)
+		return fmt.Errorf("sandbox %q is not available (container not found). Start it from the Runtimes page or run: runtimectl start %s", conn.Name, sandboxName)
 	}
 	if container.Status != "running" {
-		return fmt.Errorf("sandbox %q is %s, not running. Start it from the Runtimes page or run: mantisctl sandbox start %s", conn.Name, container.Status, sandboxName)
+		return fmt.Errorf("sandbox %q is %s, not running. Start it from the Runtimes page or run: runtimectl start %s", conn.Name, container.Status, sandboxName)
 	}
 	return nil
 }
@@ -1573,10 +1573,45 @@ func (a *MantisAgent) artifactReadImageTool(artifacts *shared.ArtifactStore) typ
 				}
 			}
 
+			ocrSuccess := a.ocr != nil && ocrErr == nil && ocrText != ""
+			visionConfigured := visionModelID != "" && a.vision != nil
+			visionSuccess := visionConfigured && visionErr == nil && visionText != ""
+			anySuccess := ocrSuccess || visionSuccess
+
 			var parts []string
+			var statusLines []string
+
+			if anySuccess {
+				mode := "ocr+vision"
+				switch {
+				case ocrSuccess && !visionSuccess:
+					mode = "ocr-only"
+				case !ocrSuccess && visionSuccess:
+					mode = "vision-only"
+				}
+				statusLines = append(statusLines, "read_image_status: success")
+				statusLines = append(statusLines, "read_image_mode: "+mode)
+				if mode == "ocr+vision" {
+					statusLines = append(statusLines, "read_image_completeness: full")
+				} else {
+					statusLines = append(statusLines, "read_image_completeness: partial")
+					if mode == "ocr-only" {
+						statusLines = append(statusLines, "read_image_missing: vision")
+						statusLines = append(statusLines, "read_image_action: configure Image Model or Fallback Model in active preset")
+					} else {
+						statusLines = append(statusLines, "read_image_missing: ocr")
+						statusLines = append(statusLines, "read_image_action: configure OCR_API_URL env variable")
+					}
+				}
+			} else {
+				statusLines = append(statusLines, "read_image_status: failed")
+				statusLines = append(statusLines, "read_image_mode: none")
+				statusLines = append(statusLines, "read_image_completeness: none")
+				statusLines = append(statusLines, "hint: this tool works when at least one source is available (OCR API or Vision model)")
+			}
 
 			if a.ocr == nil {
-				parts = append(parts, "OCR: not configured")
+				parts = append(parts, "OCR: not configured (set OCR_API_URL env variable)")
 			} else if ocrErr != nil {
 				parts = append(parts, "OCR: error — "+ocrErr.Error())
 			} else if ocrText == "" {
@@ -1599,7 +1634,8 @@ func (a *MantisAgent) artifactReadImageTool(artifacts *shared.ArtifactStore) typ
 				parts = append(parts, "--- Image Description ("+visionModelName+") ---\n"+visionText)
 			}
 
-			return "<file_content>\n" + strings.Join(parts, "\n\n") + "\n</file_content>", nil
+			full := append(statusLines, parts...)
+			return "<file_content>\n" + strings.Join(full, "\n\n") + "\n</file_content>", nil
 		},
 	}
 }

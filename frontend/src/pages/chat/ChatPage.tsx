@@ -125,6 +125,7 @@ export default function ChatPage({ sessionId, onFirstMessage }: Props) {
   }, [sessionId])
 
   useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'instant' })
     setMessages([])
     setHasMore(false)
     setActiveStep(null)
@@ -162,6 +163,10 @@ export default function ChatPage({ sessionId, onFirstMessage }: Props) {
   useEffect(() => {
     if (prependingRef.current) {
       prependingRef.current = false
+      return
+    }
+    if (messages.length === 0) {
+      scrollRef.current?.scrollTo({ top: 0, behavior: 'instant' })
       return
     }
     if (!userScrolledUp.current) bottomRef.current?.scrollIntoView({ behavior: 'instant' })
@@ -350,7 +355,7 @@ export default function ChatPage({ sessionId, onFirstMessage }: Props) {
         {dragOver && !isPlanSession && <DropOverlay />}
 
         {isPlanSession ? (
-          <PlanBanner planId={planId} />
+          <PlanBanner planId={planId} sessionId={sessionId} />
         ) : (
           <Composer
             ref={textareaRef}

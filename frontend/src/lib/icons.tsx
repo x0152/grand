@@ -62,6 +62,8 @@ import {
   Path as PPath,
   Wallet as PWallet,
   Infinity as PInfinity,
+  GithubLogo as PGithubLogo,
+  ArrowSquareOut as PArrowSquareOut,
   type IconProps as PhosphorIconProps,
   type IconWeight,
 } from '@phosphor-icons/react'
@@ -145,3 +147,5 @@ export const Link2 = adapt(PLinkSimple)
 export const Route = adapt(PPath)
 export const Wallet = adapt(PWallet)
 export const Infinity = adapt(PInfinity)
+export const Github = adapt(PGithubLogo)
+export const ExternalLink = adapt(PArrowSquareOut)

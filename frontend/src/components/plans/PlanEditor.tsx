@@ -236,7 +236,7 @@ export default function PlanEditor({ plan: initialPlan, onBack, onSaved }: Props
       <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shrink-0">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <Button variant="ghost" size="icon" onClick={onBack} title="Back to plans" className="mt-0.5">
+            <Button variant="ghost" size="icon" onClick={onBack} title="Back" className="mt-0.5">
               <ArrowLeft size={16} />
             </Button>
             <div className="min-w-0 flex-1">

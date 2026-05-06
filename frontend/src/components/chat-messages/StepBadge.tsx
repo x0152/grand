@@ -1,11 +1,23 @@
 import { AlertCircle, CheckCircle2, Loader2, Square, Wrench } from '@/lib/icons'
 import { navigate } from '../../router'
+import { stashPlanEditorReturnChat } from '../../lib/planEditorReturn'
 import type { Step } from '../../types'
 import { STEP_ICONS, planIdFromStepArgs, stepArgsSummary } from './stepHelpers'
 import { useTicker } from './useTicker'
 import { fmtElapsed } from './utils'
 
-export function StepBadge({ step, onClick }: { step: Step; onClick: () => void }) {
+export function StepBadge({
+  step,
+  onClick,
+  sessionId,
+  /** When set (e.g. plan execution chat `plan:id:run`), plan tool opens this chat instead of the plan editor. */
+  planChatSessionId,
+}: {
+  step: Step
+  onClick: () => void
+  sessionId?: string
+  planChatSessionId?: string
+}) {
   const Icon = STEP_ICONS[step.icon] ?? Wrench
   const isRunning = step.status === 'running'
   const isError = step.status === 'error'
@@ -20,7 +32,16 @@ export function StepBadge({ step, onClick }: { step: Step; onClick: () => void }
 
   const planId = !isRunning ? planIdFromStepArgs(step) : undefined
   const handleClick = () => {
-    if (planId) navigate({ page: 'plans', planId })
+    if (planId) {
+      if (planChatSessionId) {
+        navigate({ page: 'chat', sessionId: planChatSessionId })
+      } else if (sessionId) {
+        stashPlanEditorReturnChat(sessionId)
+        navigate({ page: 'plans', planId })
+      } else {
+        navigate({ page: 'plans', planId })
+      }
+    }
     onClick()
   }
 

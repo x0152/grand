@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Plus, MessageSquare, GitBranch, Pencil, Trash2, Check, X, ChevronDown, ChevronRight, Loader2 } from '@/lib/icons'
+import { Plus, MessageSquare, GitBranch, Pencil, Trash2, Check, X, ChevronDown, ChevronRight, Loader2, Link2 } from '@/lib/icons'
 import { api } from '../api'
 import { navigate } from '../router'
+import { stashPlanEditorReturnChat } from '../lib/planEditorReturn'
 import type { ChatSession } from '../types'
 import { ConfirmDelete } from '@/components/ConfirmDelete'
 
@@ -10,20 +11,41 @@ interface Props {
   onSelect: (session: ChatSession) => void
   onNew: () => void
   refreshKey: number
+  scrollChatsListTopKey?: number
 }
 
-export default function ChatSidebar({ activeSessionId, onSelect, onNew, refreshKey }: Props) {
+export default function ChatSidebar({
+  activeSessionId,
+  onSelect,
+  onNew,
+  refreshKey,
+  scrollChatsListTopKey = 0,
+}: Props) {
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const editRef = useRef<HTMLInputElement>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [chatCollapsed, setChatCollapsed] = useState(false)
   const [planCollapsed, setPlanCollapsed] = useState(false)
+  const regularChatsListRef = useRef<HTMLDivElement>(null)
+  const lastHandledScrollKey = useRef(0)
 
   const regularSessions = useMemo(() => sessions.filter(s => s.source !== 'plan'), [sessions])
   const planSessions = useMemo(() => sessions.filter(s => s.source === 'plan'), [sessions])
 
   useEffect(() => { loadSessions() }, [refreshKey])
+
+  useEffect(() => {
+    if (!scrollChatsListTopKey || scrollChatsListTopKey <= lastHandledScrollKey.current) return
+    if (activeSessionId && !regularSessions.some(s => s.id === activeSessionId)) return
+    lastHandledScrollKey.current = scrollChatsListTopKey
+    setChatCollapsed(false)
+    const t = window.setTimeout(() => {
+      regularChatsListRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    }, 90)
+    return () => clearTimeout(t)
+  }, [scrollChatsListTopKey, regularSessions, activeSessionId])
 
   useEffect(() => {
     const iv = setInterval(loadSessions, 5000)
@@ -100,7 +122,7 @@ export default function ChatSidebar({ activeSessionId, onSelect, onNew, refreshK
         key={session.id}
         onClick={() => { if (editingId !== session.id) onSelect(session) }}
         data-active={active}
-        className={`group relative flex items-center gap-2.5 px-4 py-2 cursor-pointer text-[14px] min-w-0 transition-colors ${
+        className={`chat-row group flex items-center gap-2.5 px-4 py-2 cursor-pointer text-[14px] min-w-0 transition-colors ${
           active
             ? 'bg-[var(--grand-surface-2)] text-[var(--grand-fg)]'
             : 'text-[var(--grand-muted)] hover:text-[var(--grand-fg)] hover:bg-[var(--grand-surface-2)]/50'
@@ -134,10 +156,16 @@ export default function ChatSidebar({ activeSessionId, onSelect, onNew, refreshK
                 <span className="font-mono text-[10.5px] tabular-nums text-[var(--grand-muted-2)]">{formatDate(session.createdAt).toLowerCase()}</span>
                 {isPlan && planIdFromSession(session) && (
                   <button
-                    onClick={e => { e.stopPropagation(); navigate({ page: 'plans', planId: planIdFromSession(session)! }) }}
-                    className="font-mono text-[10.5px] text-amber-500/70 hover:text-amber-400"
+                    onClick={e => {
+                      e.stopPropagation()
+                      stashPlanEditorReturnChat(session.id)
+                      navigate({ page: 'plans', planId: planIdFromSession(session)! })
+                    }}
+                    title="Open plan"
+                    className="inline-flex items-center gap-1 font-mono text-[10.5px] text-amber-500/70 hover:text-amber-400"
                   >
-                    plan
+                    <Link2 size={11} strokeWidth={1.5} />
+                    open plan
                   </button>
                 )}
               </div>
@@ -165,37 +193,60 @@ export default function ChatSidebar({ activeSessionId, onSelect, onNew, refreshK
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <button
         onClick={onNew}
-        className="mx-3 mt-2 mb-2 flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border border-[var(--grand-border)] bg-[var(--grand-surface)] text-[13px] font-medium text-[var(--grand-fg)] hover:border-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors"
+        className="mx-3 mt-2 mb-2 flex shrink-0 items-center justify-center gap-2 px-3 py-2.5 rounded-md border border-[var(--grand-border)] bg-[var(--grand-surface)] text-[13px] font-medium text-[var(--grand-fg)] hover:border-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors"
       >
         <Plus size={14} strokeWidth={2} />
         New chat
       </button>
 
-      <div className="flex-1 overflow-auto pb-2">
-        <div>
-          {regularSessions.map(s => renderSession(s))}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div
+          className={`flex min-h-0 flex-1 flex-col pb-1 ${
+            planSessions.length > 0 ? 'border-b border-[var(--grand-line-2)]' : ''
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setChatCollapsed(v => !v)}
+            className="kicker shrink-0 px-4 pb-1.5 pt-1 w-full text-left hover:text-[var(--grand-fg-2)] transition-colors"
+          >
+            {chatCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
+            <span>chats · {regularSessions.length}</span>
+          </button>
+          {!chatCollapsed && (
+            <div ref={regularChatsListRef} className="min-h-0 flex-1 overflow-y-auto pb-2">
+              {regularSessions.map(s => renderSession(s))}
+
+              {regularSessions.length === 0 && planSessions.length === 0 && (
+                <div className="text-center text-[13px] text-[var(--grand-muted-2)] py-8">
+                  No chats yet
+                </div>
+              )}
+
+              {regularSessions.length === 0 && planSessions.length > 0 && (
+                <div className="text-center text-[13px] text-[var(--grand-muted-2)] px-3 py-6">
+                  No direct chats yet
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {regularSessions.length === 0 && planSessions.length === 0 && (
-          <div className="text-center text-[13px] text-[var(--grand-muted-2)] py-8">
-            No chats yet
-          </div>
-        )}
-
         {planSessions.length > 0 && (
-          <div className="mt-3">
+          <div className="shrink-0 pt-1">
             <button
+              type="button"
               onClick={() => setPlanCollapsed(v => !v)}
-              className="kicker px-4 pt-3 pb-1.5 w-full text-left hover:text-[var(--grand-fg-2)] transition-colors"
+              className="kicker px-4 pb-1.5 pt-2 w-full text-left hover:text-[var(--grand-fg-2)] transition-colors"
             >
               {planCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
-              <span>plans · {planSessions.length}</span>
+              <span>plan chats · {planSessions.length}</span>
             </button>
             {!planCollapsed && (
-              <div>
+              <div className="max-h-[min(38vh,280px)] overflow-y-auto pb-2">
                 {planSessions.map(s => renderSession(s, true))}
               </div>
             )}

@@ -12,19 +12,12 @@ interface EmptyStateProps {
   onSend: (prompt: string) => void
 }
 
-/** Group panel: only a soft gray frame on the chat background — no fill. */
-const sectionPanel =
-  'w-full rounded-2xl border border-zinc-400/45 dark:border-zinc-600/35 p-4 sm:p-5'
+const sectionPanel = 'w-full'
 
-/** Tile: hairline gray frame, no black fill; content reads “on” the chat plane. */
 const suggestionTile =
-  'group flex h-full min-h-0 w-full min-w-0 rounded-xl border text-left select-none ' +
-  'border-zinc-400/40 bg-transparent dark:border-zinc-600/30 ' +
-  'text-[var(--grand-fg-2)] transition-colors duration-150 ' +
-  'hover:border-emerald-400/45 hover:bg-emerald-500/[0.04] dark:hover:bg-emerald-400/[0.06] ' +
-  'disabled:cursor-not-allowed disabled:opacity-50'
+  'grand-suggest-tile group flex h-full min-h-0 w-full min-w-0 rounded-xl text-left select-none ' +
+  'text-[var(--grand-fg-2)] disabled:cursor-not-allowed disabled:opacity-50'
 
-/** Title / body: light shadow so copy sits slightly above the “back plate”. */
 const titleOnPlate =
   'text-[15px] font-medium leading-snug text-[var(--grand-fg)] ' +
   '[text-shadow:0_1px_0_rgba(255,255,255,0.92),0_2px_6px_rgba(15,23,42,0.06)] ' +
@@ -40,8 +33,8 @@ const heroTitleShadow =
   'dark:[text-shadow:0_2px_16px_rgba(0,0,0,0.8),0_1px_0_rgba(255,255,255,0.07)]'
 
 const badgeSoft =
-  'inline-flex items-center gap-2 rounded-full border border-zinc-400/45 bg-transparent px-3 py-1.5 font-mono ' +
-  'text-[10px] uppercase tracking-[0.12em] text-[var(--grand-muted)] dark:border-zinc-600/35 ' +
+  'inline-flex items-center gap-2 rounded-full border border-dashed border-zinc-500/55 bg-transparent px-3 py-1.5 font-mono ' +
+  'text-[10px] uppercase tracking-[0.12em] text-[var(--grand-muted)] dark:border-zinc-400/40 ' +
   '[text-shadow:0_1px_1px_rgba(255,255,255,0.85)] dark:[text-shadow:0_1px_2px_rgba(0,0,0,0.75)]'
 
 export function EmptyState({ disabled, onInsert, onSend }: EmptyStateProps) {
@@ -126,14 +119,13 @@ interface SuggestionCardProps {
   onSend: () => void
 }
 
-/** Chips: gray outline, no dark fill — matches tile frame language. */
 const KIND_CLASS: Record<SuggestionKind, string> = {
-  answer: 'text-emerald-500 border border-emerald-500/35 bg-transparent dark:text-emerald-400',
-  image: 'text-emerald-500 border border-emerald-500/35 bg-transparent dark:text-emerald-400',
-  table: 'text-emerald-500 border border-emerald-500/35 bg-transparent dark:text-emerald-400',
-  chart: 'text-emerald-500 border border-emerald-500/35 bg-transparent dark:text-emerald-400',
-  gif: 'text-emerald-500 border border-emerald-500/35 bg-transparent dark:text-emerald-400',
-  action: 'text-[var(--grand-fg-2)] border border-zinc-400/50 bg-transparent dark:border-zinc-600/45',
+  answer: 'text-emerald-600 dark:text-emerald-400',
+  image:  'text-emerald-600 dark:text-emerald-400',
+  table:  'text-emerald-600 dark:text-emerald-400',
+  chart:  'text-emerald-600 dark:text-emerald-400',
+  gif:    'text-emerald-600 dark:text-emerald-400',
+  action: 'text-[var(--grand-muted)]',
 }
 
 function SuggestionCard({ icon: Icon, title, gets, kind, prompt, disabled, onInsert, onSend }: SuggestionCardProps) {
@@ -154,15 +146,12 @@ function SuggestionCard({ icon: Icon, title, gets, kind, prompt, disabled, onIns
           <Icon size={20} strokeWidth={1.5} />
         </div>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="flex min-w-0 items-start justify-between gap-3">
-            <div className={titleOnPlate}>{title}</div>
-            <span
-              className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11.5px] leading-none [text-shadow:0_1px_1px_rgba(255,255,255,0.75)] dark:[text-shadow:0_1px_2px_rgba(0,0,0,0.65)] ${KIND_CLASS[kind]}`}
-            >
-              <span className="opacity-60">→</span>
-              {gets}
-            </span>
-          </div>
+          <span
+            className={`block max-w-full break-words font-mono text-[10px] uppercase tracking-[0.10em] leading-snug [text-shadow:0_1px_1px_rgba(255,255,255,0.75)] dark:[text-shadow:0_1px_2px_rgba(0,0,0,0.65)] ${KIND_CLASS[kind]}`}
+          >
+            <span className="opacity-60">→</span> {gets}
+          </span>
+          <div className={`mt-1.5 ${titleOnPlate}`}>{title}</div>
           <div className={promptOnPlate}>{prompt}</div>
         </div>
       </div>

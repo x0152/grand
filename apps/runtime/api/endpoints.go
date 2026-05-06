@@ -6,13 +6,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"mantis/apps/runtime/health"
 	"mantis/apps/runtime/keys"
+	"mantis/apps/runtime/progress"
 	"mantis/apps/runtime/spec"
+	"mantis/apps/runtime/sshcfg"
 	"mantis/core/auth"
 	"mantis/core/protocols"
 	"mantis/core/types"
@@ -23,25 +28,13 @@ const (
 	pubkeyEnvVar               = "MANTIS_SSH_PUBLIC_KEY"
 )
 
-func sandboxSSHConfigBytes(name, ip, privateKey string) ([]byte, error) {
-	host := "mantis-sb-" + name
-	if ip != "" {
-		host = ip
-	}
-	return json.Marshal(map[string]any{
-		"host":       host,
-		"port":       22,
-		"username":   "mantis",
-		"privateKey": privateKey,
-	})
-}
-
 type Endpoints struct {
 	rt              protocols.Runtime
 	connectionStore protocols.Store[string, types.Connection]
 	keyIssuer       *keys.Issuer
 	specBuilder     *spec.Builder
 	token           string
+	progress        *progress.Tracker
 }
 
 func NewEndpoints(
@@ -57,6 +50,7 @@ func NewEndpoints(
 		keyIssuer:       keyIssuer,
 		specBuilder:     specBuilder,
 		token:           token,
+		progress:        progress.NewTracker(),
 	}
 }
 
@@ -65,6 +59,8 @@ func (e *Endpoints) Mount(r chi.Router) {
 		r.Use(e.authMiddleware)
 		r.Get("/sandboxes", e.listSandboxes)
 		r.Post("/sandboxes", e.createSandbox)
+		r.Get("/sandboxes/{name}/logs", e.sandboxLogs)
+		r.Get("/sandboxes/{name}/status", e.sandboxStatus)
 		r.Post("/sandboxes/{name}/rebuild", e.rebuildSandbox)
 		r.Post("/sandboxes/{name}/start", e.startSandbox)
 		r.Post("/sandboxes/{name}/stop", e.stopSandbox)
@@ -148,7 +144,11 @@ func (e *Endpoints) createSandbox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.provisionSandboxStream(w, r, conn, input.Dockerfile, key)
+	if isWaitRequested(r) {
+		e.provisionSandboxStream(w, r, conn, input.Dockerfile, key)
+		return
+	}
+	e.provisionSandboxAsync(w, conn, input.Dockerfile, key)
 }
 
 func (e *Endpoints) rebuildSandbox(w http.ResponseWriter, r *http.Request) {
@@ -163,7 +163,20 @@ func (e *Endpoints) rebuildSandbox(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	e.provisionSandboxStream(w, r, *conn, conn.Dockerfile, key)
+	if isWaitRequested(r) {
+		e.provisionSandboxStream(w, r, *conn, conn.Dockerfile, key)
+		return
+	}
+	e.provisionSandboxAsync(w, *conn, conn.Dockerfile, key)
+}
+
+func isWaitRequested(r *http.Request) bool {
+	v := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("wait")))
+	switch v {
+	case "1", "true", "yes":
+		return true
+	}
+	return false
 }
 
 func (e *Endpoints) startSandbox(w http.ResponseWriter, r *http.Request) {
@@ -226,17 +239,49 @@ func (e *Endpoints) provisionSandboxStream(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusOK)
 	flusher, _ := w.(http.Flusher)
 
-	writeLine := func(s string) {
-		_, _ = io.WriteString(w, s)
+	sandboxName := imageNameFromConn(conn)
+	job := e.progress.Begin(sandboxName)
+	sink := io.MultiWriter(w, job)
+	flushSink := func() {
 		if flusher != nil {
 			flusher.Flush()
 		}
 	}
+	e.runProvisioning(r.Context(), job, conn, sandboxName, dockerfile, key, sink, flushSink)
+}
 
+func (e *Endpoints) provisionSandboxAsync(w http.ResponseWriter, conn types.Connection, dockerfile string, key types.SandboxKey) {
 	sandboxName := imageNameFromConn(conn)
-	writeLine(fmt.Sprintf("[1/3] building image mantis-sb/%s\n", sandboxName))
-	stream, err := e.rt.Build(r.Context(), sandboxName, []byte(dockerfile))
+	job := e.progress.Begin(sandboxName)
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		defer cancel()
+		e.runProvisioning(ctx, job, conn, sandboxName, dockerfile, key, job, nil)
+	}()
+
+	writeJSON(w, http.StatusAccepted, map[string]any{
+		"status":  "accepted",
+		"name":    conn.Name,
+		"sandbox": sandboxName,
+		"phase":   progress.PhaseQueued,
+		"message": fmt.Sprintf("provisioning started; check progress with `runtimectl status %s` or `runtimectl logs %s`", sandboxName, sandboxName),
+	})
+}
+
+func (e *Endpoints) runProvisioning(ctx context.Context, job *progress.Job, conn types.Connection, sandboxName, dockerfile string, key types.SandboxKey, sink io.Writer, flush func()) {
+	writeLine := func(s string) {
+		_, _ = io.WriteString(sink, s)
+		if flush != nil {
+			flush()
+		}
+	}
+
+	job.SetPhase(progress.PhaseBuilding, "building image")
+	writeLine(fmt.Sprintf("[1/4] building image mantis-sb/%s\n", sandboxName))
+	stream, err := e.rt.Build(ctx, sandboxName, []byte(dockerfile))
 	if err != nil {
+		job.SetPhase(progress.PhaseFailed, "build: "+err.Error())
 		writeLine(fmt.Sprintf("error: build failed: %s\n", err.Error()))
 		return
 	}
@@ -244,9 +289,9 @@ func (e *Endpoints) provisionSandboxStream(w http.ResponseWriter, r *http.Reques
 	for {
 		n, rerr := stream.Read(buf)
 		if n > 0 {
-			_, _ = w.Write(buf[:n])
-			if flusher != nil {
-				flusher.Flush()
+			_, _ = sink.Write(buf[:n])
+			if flush != nil {
+				flush()
 			}
 		}
 		if rerr != nil {
@@ -255,30 +300,119 @@ func (e *Endpoints) provisionSandboxStream(w http.ResponseWriter, r *http.Reques
 	}
 	stream.Close()
 
-	writeLine(fmt.Sprintf("[2/3] starting container %s\n", sandboxName))
+	job.SetPhase(progress.PhaseStarting, "starting container")
+	writeLine(fmt.Sprintf("[2/4] starting container %s\n", sandboxName))
 	runSpec := e.specBuilder.Build(
-		r.Context(),
+		ctx,
 		sandboxName,
 		conn,
 		map[string]string{pubkeyEnvVar: key.PublicKey},
 		nil,
 	)
-	container, err := e.rt.Run(r.Context(), runSpec)
+	container, err := e.rt.Run(ctx, runSpec)
 	if err != nil {
+		job.SetPhase(progress.PhaseFailed, "start: "+err.Error())
 		writeLine(fmt.Sprintf("error: start failed: %s\n", err.Error()))
 		return
 	}
 
-	if err := e.syncConnectionHost(r.Context(), conn, sandboxName, container.IP, key.PrivateKey); err != nil {
+	if err := e.syncConnectionHost(ctx, conn, sandboxName, container.IP, key.PrivateKey); err != nil {
 		writeLine(fmt.Sprintf("warning: failed to refresh connection host: %s\n", err.Error()))
 	}
 
-	writeLine(fmt.Sprintf("[3/3] container %s is %s at %s\n", sandboxName, container.Status, container.Host))
+	job.SetPhase(progress.PhaseWaiting, "waiting for sshd")
+	writeLine(fmt.Sprintf("[3/4] waiting for %s to become ready\n", sandboxName))
+	ready, waitErr := health.WaitForReady(ctx, e.rt, sandboxName, 60*time.Second)
+	if waitErr != nil {
+		job.SetPhase(progress.PhaseFailed, "readiness: "+waitErr.Error())
+		writeLine(fmt.Sprintf("error: readiness check failed: %s\n", waitErr.Error()))
+		writeLine(fmt.Sprintf("hint: run `runtimectl logs %s` to inspect container output\n", sandboxName))
+		return
+	}
+	if ready.IP != "" && ready.IP != container.IP {
+		if err := e.syncConnectionHost(ctx, conn, sandboxName, ready.IP, key.PrivateKey); err != nil {
+			writeLine(fmt.Sprintf("warning: failed to refresh connection host: %s\n", err.Error()))
+		}
+	}
+	container = ready
+
+	job.SetPhase(progress.PhaseReady, fmt.Sprintf("running at %s", container.Host))
+	writeLine(fmt.Sprintf("[4/4] container %s is %s at %s (ssh:22 reachable)\n", sandboxName, container.Status, container.Host))
 	writeLine(fmt.Sprintf("READY %s\n", conn.Name))
 }
 
+func (e *Endpoints) sandboxStatus(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	snap, ok := e.progress.Get(name)
+	if !ok {
+		container, err := e.rt.Inspect(r.Context(), name)
+		if err != nil {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"name":  name,
+				"phase": "unknown",
+			})
+			return
+		}
+		phase := container.Status
+		if phase == "running" {
+			phase = progress.PhaseReady
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"name":  name,
+			"phase": phase,
+			"host":  container.Host,
+			"ip":    container.IP,
+		})
+		return
+	}
+	writeJSON(w, http.StatusOK, snap)
+}
+
+func (e *Endpoints) sandboxLogs(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	tail := 200
+	if v := strings.TrimSpace(r.URL.Query().Get("tail")); v != "" {
+		if v == "all" {
+			tail = 0
+		} else if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			tail = n
+		}
+	}
+	follow := false
+	switch strings.ToLower(strings.TrimSpace(r.URL.Query().Get("follow"))) {
+	case "1", "true", "yes":
+		follow = true
+	}
+	stream, err := e.rt.Logs(r.Context(), name, tail, follow)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stream.Close()
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.WriteHeader(http.StatusOK)
+	flusher, _ := w.(http.Flusher)
+	buf := make([]byte, 4096)
+	for {
+		n, rerr := stream.Read(buf)
+		if n > 0 {
+			if _, werr := w.Write(buf[:n]); werr != nil {
+				return
+			}
+			if flusher != nil {
+				flusher.Flush()
+			}
+		}
+		if rerr != nil {
+			return
+		}
+	}
+}
+
 func (e *Endpoints) syncConnectionHost(ctx context.Context, conn types.Connection, sandboxName, ip, privateKey string) error {
-	cfg, err := sandboxSSHConfigBytes(sandboxName, ip, privateKey)
+	cfg, err := sshcfg.Build(sandboxName, ip, privateKey)
 	if err != nil {
 		return err
 	}
@@ -318,7 +452,7 @@ func (e *Endpoints) upsertSandboxConnection(ctx context.Context, input SandboxIn
 		profileIDs = []string{}
 	}
 
-	config, err := sandboxSSHConfigBytes(input.Name, "", key.PrivateKey)
+	config, err := sshcfg.Build(input.Name, "", key.PrivateKey)
 	if err != nil {
 		return types.Connection{}, err
 	}

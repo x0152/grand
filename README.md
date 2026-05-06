@@ -3,7 +3,7 @@
   &nbsp;GRAND
 </h1>
 
-[![Website](https://img.shields.io/badge/website-x0152.github.io%2Fmantis-1d9c92?style=flat-square)](https://x0152.github.io/mantis/)
+[![Website](https://img.shields.io/badge/website-x0152.github.io%2Fgrand-1d9c92?style=flat-square)](https://x0152.github.io/grand/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-1d9c92?style=flat-square)](LICENSE)
 [![GitHub Pages](https://img.shields.io/badge/docs-%2Fdocs-1d9c92?style=flat-square)](docs/)
 

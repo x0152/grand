@@ -84,6 +84,7 @@ if [ -n "${MANTIS_SSH_PUBLIC_KEY:-}" ]; then
 fi
 : > /home/mantis/.ssh/environment
 env | sed -n 's/^\(MANTIS_[A-Z_]*\)=\(.*\)$/\1=\2/p' | grep -v '^MANTIS_SSH_PUBLIC_KEY=' >> /home/mantis/.ssh/environment || true
+env | sed -n 's/^\(RUNTIMECTL_[A-Z_]*\)=\(.*\)$/\1=\2/p' >> /home/mantis/.ssh/environment || true
 chmod 600 /home/mantis/.ssh/environment
 chmod 700 /home/mantis/.ssh
 chown -R mantis:mantis /home/mantis/.ssh
