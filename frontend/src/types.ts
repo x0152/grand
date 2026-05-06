@@ -326,6 +326,7 @@ export interface GuardEvent {
   message: string
   profileIds: string[]
   connectionId: string
+  userId?: string
   createdAt: string
 }
 

@@ -18,5 +18,6 @@ type GuardEvent struct {
 	Message      string         `json:"message"`
 	ProfileIDs   []string       `json:"profileIds"`
 	ConnectionID string         `json:"connectionId"`
+	UserID       string         `json:"userId,omitempty"`
 	CreatedAt    time.Time      `json:"createdAt"`
 }

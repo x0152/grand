@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
@@ -86,6 +87,10 @@ func (a *App) Describe(ctx context.Context, profileIDs []string) string {
 
 func (a *App) RecordHostEvent(ctx context.Context, ev types.GuardEvent) error {
 	return a.svc.RecordHostEvent(ctx, ev)
+}
+
+func (a *App) RecentBlockedHosts(ctx context.Context, connectionID string, since time.Time, limit int) []protocols.HostBlock {
+	return a.svc.RecentBlockedHosts(ctx, connectionID, since, limit)
 }
 
 func (a *App) ResolveConnectionBySandbox(ctx context.Context, sandbox string) (string, []string) {

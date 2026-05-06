@@ -12,6 +12,7 @@ type ListGuardEventsFilter struct {
 	Allowed      *bool
 	ProfileID    string
 	ConnectionID string
+	UserID       string
 	Limit        int
 }
 
@@ -69,6 +70,11 @@ func (uc *ListGuardEvents) Execute(ctx context.Context, filter ListGuardEventsFi
 			if !matched {
 				continue
 			}
+		}
+		// User scoping: only show events tied to the same user. Events with no
+		// user (system bootstraps, ungated host blocks) are visible to anyone.
+		if filter.UserID != "" && ev.UserID != "" && ev.UserID != filter.UserID {
+			continue
 		}
 		out = append(out, ev)
 		if len(out) >= limit {

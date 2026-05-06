@@ -175,7 +175,17 @@ func (a *MantisAgent) skillTool(c types.Connection, s types.Skill) types.Tool {
 			}
 			var sshCfg SSHConfig
 			_ = json.Unmarshal(rawConfig, &sshCfg)
-			return executeSkillScript(sshCfg, script)
+			start := time.Now().UTC().Add(-200 * time.Millisecond)
+			out, runErr := executeSkillScript(sshCfg, script)
+			if a.guard != nil && connCopy.ID != "" {
+				if footer := egressFooter(a.guard.RecentBlockedHosts(ctx, connCopy.ID, start, 25)); footer != "" {
+					if out != "" && !strings.HasSuffix(out, "\n") {
+						out += "\n"
+					}
+					out += footer
+				}
+			}
+			return out, runErr
 		},
 	}
 }

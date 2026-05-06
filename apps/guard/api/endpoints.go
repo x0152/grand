@@ -8,6 +8,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 
 	usecases "mantis/apps/guard/use_cases"
+	"mantis/core/auth"
 	"mantis/core/base"
 	"mantis/core/types"
 )
@@ -113,6 +114,9 @@ func (e *Endpoints) listEvents(ctx context.Context, in *ListGuardEventsInput) (*
 		ProfileID:    in.ProfileID,
 		ConnectionID: in.ConnectionID,
 		Limit:        in.Limit,
+	}
+	if id, ok := auth.FromContext(ctx); ok {
+		filter.UserID = id.UserID
 	}
 	switch in.Allowed {
 	case "true":

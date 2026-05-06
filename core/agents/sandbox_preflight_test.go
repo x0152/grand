@@ -41,6 +41,9 @@ func (f *fakeRuntime) ImageLabels(ctx context.Context, name string) (map[string]
 func (f *fakeRuntime) Logs(ctx context.Context, name string, tail int, follow bool) (io.ReadCloser, error) {
 	return nil, errors.New("not implemented")
 }
+func (f *fakeRuntime) EnsureGatewayAttached(ctx context.Context, sandboxName string) error {
+	return nil
+}
 
 func TestCheckSandboxRunning_SkipsRemote(t *testing.T) {
 	a := &MantisAgent{runtime: &fakeRuntime{status: "exited"}}

@@ -192,11 +192,21 @@ func sshTools(cfg SSHConfig, g protocols.GuardEvaluator, connectionID string, pr
 					return "", err
 				}
 				if g != nil {
-					if allowed, _, message := g.EvaluateCommand(ctx, profileIDs, connectionID, input.Command); !allowed {
-						return fmt.Sprintf("[BLOCKED] %s", message), nil
+					if allowed, rule, message := g.EvaluateCommand(ctx, profileIDs, connectionID, input.Command); !allowed {
+						return commandBlockTag(input.Command, rule, message, profileIDs), nil
 					}
 				}
-				return execSSH(cfg, input.Command)
+				start := time.Now().UTC().Add(-200 * time.Millisecond)
+				out, err := execSSH(cfg, input.Command)
+				if g != nil && connectionID != "" {
+					if footer := egressFooter(g.RecentBlockedHosts(ctx, connectionID, start, 25)); footer != "" {
+						if out != "" && !strings.HasSuffix(out, "\n") {
+							out += "\n"
+						}
+						out += footer
+					}
+				}
+				return out, err
 			},
 		},
 	}
@@ -239,6 +249,105 @@ func dialSSH(cfg SSHConfig, timeout time.Duration) (*ssh.Client, error) {
 }
 
 const maxOutputBytes = 32768
+
+// egressFooter renders a single-line, machine-parseable marker that the agent
+// loop appends to tool output for network blocks recorded by the egress
+// gateway. The frontend lifts it into a colored chip via the
+// `<guard-block kind="network">...</guard-block>` regex; the LLM reads the
+// inner sentence and learns this is a policy block (not a network/DNS error)
+// without any extra system-prompt overhead.
+//
+// Format: `<guard-block kind="network" profiles="id1,id2">policy block (not
+// network/DNS). edit /guard-profiles. hosts: host[:reason][ xN], ...</guard-block>`
+func egressFooter(blocks []protocols.HostBlock) string {
+	if len(blocks) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(blocks))
+	profiles := make([]string, 0)
+	seen := make(map[string]bool)
+	for _, h := range blocks {
+		entry := sanitizeTagPayload(h.Host)
+		if h.Reason != "" {
+			entry += ":" + sanitizeTagPayload(h.Reason)
+		}
+		if h.Count > 1 {
+			entry += fmt.Sprintf(" x%d", h.Count)
+		}
+		parts = append(parts, entry)
+		for _, pid := range h.ProfileIDs {
+			if pid == "" || seen[pid] {
+				continue
+			}
+			seen[pid] = true
+			profiles = append(profiles, pid)
+		}
+	}
+	return "\n<guard-block kind=\"network\"" + profilesAttr(profiles) +
+		">policy block (not network/DNS). edit /guard-profiles. hosts: " +
+		strings.Join(parts, ", ") + "</guard-block>"
+}
+
+// commandBlockTag is the command-side counterpart to egressFooter: it replaces
+// the (now-removed) `[BLOCKED] msg` string with the same XML envelope so the
+// frontend renders one consistent badge and the LLM sees the same directive.
+func commandBlockTag(command, rule, message string, profileIDs []string) string {
+	rule = strings.TrimSpace(rule)
+	message = strings.TrimSpace(message)
+	cmd := sanitizeTagPayload(strings.TrimSpace(command))
+	if cmd == "" {
+		cmd = "(empty)"
+	}
+	detail := sanitizeTagPayload(message)
+	if detail == "" {
+		detail = sanitizeTagPayload(rule)
+	}
+	body := "policy block (not a server error). edit /guard-profiles. cmd: " + cmd
+	if detail != "" {
+		body += " — " + detail
+	}
+	return "<guard-block kind=\"command\"" + profilesAttr(profileIDs) + ">" + body + "</guard-block>"
+}
+
+// profilesAttr renders the optional `profiles="id1,id2"` attribute. We sanitise
+// IDs the same way as payloads so a malformed profile id can't break the
+// envelope. Empty list yields no attribute (keeps the marker compact).
+func profilesAttr(ids []string) string {
+	if len(ids) == 0 {
+		return ""
+	}
+	clean := make([]string, 0, len(ids))
+	seen := make(map[string]bool)
+	for _, id := range ids {
+		id = strings.TrimSpace(id)
+		if id == "" || seen[id] {
+			continue
+		}
+		seen[id] = true
+		clean = append(clean, sanitizeAttrValue(id))
+	}
+	if len(clean) == 0 {
+		return ""
+	}
+	return ` profiles="` + strings.Join(clean, ",") + `"`
+}
+
+func sanitizeAttrValue(s string) string {
+	s = strings.ReplaceAll(s, `"`, "")
+	s = strings.ReplaceAll(s, `,`, "")
+	s = strings.ReplaceAll(s, `<`, "")
+	s = strings.ReplaceAll(s, `>`, "")
+	return s
+}
+
+// sanitizeTagPayload neutralises angle brackets so a target/host/message that
+// happens to contain `<` or `>` cannot break the XML envelope and confuse the
+// frontend regex.
+func sanitizeTagPayload(s string) string {
+	s = strings.ReplaceAll(s, "<", "‹")
+	s = strings.ReplaceAll(s, ">", "›")
+	return s
+}
 
 func execSSH(cfg SSHConfig, command string) (string, error) {
 	client, err := dialSSH(cfg, 10*time.Second)

@@ -24,7 +24,7 @@ func NewGuardIngestNotifier(baseURL, token string) *GuardIngestNotifier {
 	return &GuardIngestNotifier{
 		url:    url + "/api/guard/events/ingest",
 		token:  strings.TrimSpace(token),
-		client: &http.Client{Timeout: 3 * time.Second},
+		client: &http.Client{Timeout: 1500 * time.Millisecond},
 	}
 }
 
@@ -63,7 +63,7 @@ func (n *GuardIngestNotifier) Notify(verdict string, e LogEntry) {
 		log.Printf("egress notifier: marshal: %v", err)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, n.url, bytes.NewReader(body))
 	if err != nil {

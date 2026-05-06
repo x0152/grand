@@ -16,5 +16,6 @@ type GuardEventRow struct {
 	Message       string    `bun:"message"`
 	ProfileIDs    []string  `bun:"profile_ids,array"`
 	ConnectionID  string    `bun:"connection_id"`
+	UserID        string    `bun:"user_id"`
 	CreatedAt     time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 }

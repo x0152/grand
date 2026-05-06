@@ -188,6 +188,7 @@ type MantisAgent struct {
 	agent           *agent.Agent
 	sshAgent        *SSHAgent
 	runtime         protocols.Runtime
+	guard           protocols.GuardEvaluator
 	asr             protocols.ASR
 	ocr             protocols.OCR
 	vision          protocols.VisionLLM
@@ -226,6 +227,7 @@ func NewMantisAgent(
 		sessionStore:    sessionStore,
 		agent:           agent.New(llm),
 		sshAgent:        NewSSHAgent(llmConnStore, llm, g, sessionLogger, limits),
+		guard:           g,
 		asr:             asr,
 		ocr:             ocr,
 		vision:          vision,

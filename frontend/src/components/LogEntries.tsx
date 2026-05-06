@@ -1,5 +1,6 @@
 import { Sparkles, MessageSquareText } from '@/lib/icons'
 import { Markdown } from './Markdown'
+import { extractGuardBlocks, GuardBlockBadge } from './chat-messages/GuardBlockBadge'
 import type { LogEntry } from '../types'
 
 export function parseCommand(content: string): string {
@@ -46,21 +47,29 @@ export function EntryLine({ entry }: { entry: LogEntry }) {
   }
 
   if (entry.type === 'output') {
+    const { blocks, rest } = extractGuardBlocks(entry.content)
     return (
       <div className="font-mono text-xs leading-relaxed flex gap-3 text-zinc-500 dark:text-zinc-400">
         <span className="text-zinc-500 dark:text-zinc-600 shrink-0 select-none">{time}</span>
         <span className="shrink-0 w-3" />
-        <pre className="whitespace-pre-wrap break-all m-0">{entry.content}</pre>
+        <div className="min-w-0 flex-1">
+          {blocks.map((b, i) => <GuardBlockBadge key={i} block={b} />)}
+          {rest && <pre className="whitespace-pre-wrap break-all m-0">{rest}</pre>}
+        </div>
       </div>
     )
   }
 
   if (entry.type === 'error') {
+    const { blocks, rest } = extractGuardBlocks(entry.content)
     return (
       <div className="font-mono text-xs leading-relaxed flex gap-3 text-red-600 dark:text-red-400">
         <span className="text-zinc-500 dark:text-zinc-600 shrink-0 select-none">{time}</span>
         <span className="shrink-0 select-none text-red-600 dark:text-red-500">x</span>
-        <span className="whitespace-pre-wrap break-all">{entry.content}</span>
+        <div className="min-w-0 flex-1">
+          {blocks.map((b, i) => <GuardBlockBadge key={i} block={b} />)}
+          {rest && <span className="whitespace-pre-wrap break-all">{rest}</span>}
+        </div>
       </div>
     )
   }

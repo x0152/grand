@@ -61,6 +61,15 @@ func (l *Logger) write(verdict string, e LogEntry) {
 	_, _ = l.out.Write(append(raw, '\n'))
 	sinks := append([]EventSink(nil), l.sinks...)
 	l.mu.Unlock()
+	// Block events must land in the guard store before the agent fetches the
+	// command's egress footer. Allow events are noisy and never read on the hot
+	// path, so we keep them async.
+	if verdict == "block" {
+		for _, s := range sinks {
+			s.Notify(verdict, e)
+		}
+		return
+	}
 	for _, s := range sinks {
 		go s.Notify(verdict, e)
 	}

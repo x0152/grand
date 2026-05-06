@@ -19,6 +19,7 @@ func GuardEventToRow(e types.GuardEvent) models.GuardEventRow {
 		Message:      e.Message,
 		ProfileIDs:   ids,
 		ConnectionID: e.ConnectionID,
+		UserID:       e.UserID,
 		CreatedAt:    e.CreatedAt,
 	}
 }
@@ -37,6 +38,7 @@ func GuardEventFromRow(r models.GuardEventRow) types.GuardEvent {
 		Message:      r.Message,
 		ProfileIDs:   ids,
 		ConnectionID: r.ConnectionID,
+		UserID:       r.UserID,
 		CreatedAt:    r.CreatedAt,
 	}
 }
