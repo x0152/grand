@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -130,5 +131,27 @@ func TestAgentLoop_MaxIterationsReached(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("expected max iterations error")
+	}
+}
+
+func TestNormalizeToolExecutionResult_EmptyOutputGetsStatusFallback(t *testing.T) {
+	got := normalizeToolExecutionResult("execute_command", "", nil)
+	if !strings.Contains(got, "status: success") || !strings.Contains(got, "execute_command") {
+		t.Fatalf("unexpected fallback message: %q", got)
+	}
+}
+
+func TestNormalizeToolExecutionResult_NonEmptyOutputPreserved(t *testing.T) {
+	raw := "file1\nfile2\n"
+	got := normalizeToolExecutionResult("execute_command", raw, nil)
+	if got != raw {
+		t.Fatalf("expected raw output unchanged, got %q", got)
+	}
+}
+
+func TestNormalizeToolExecutionResult_ErrorTakesPriority(t *testing.T) {
+	got := normalizeToolExecutionResult("execute_command", "", errors.New("boom"))
+	if got != "error: boom" {
+		t.Fatalf("unexpected error normalization: %q", got)
 	}
 }

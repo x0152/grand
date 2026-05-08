@@ -262,3 +262,71 @@ data: [DONE]
 	}
 	t.Fatal("expected tool_calls event, got none")
 }
+
+func TestChatStream_ToolCallIDLeadingWhitespaceNormalized(t *testing.T) {
+	sseData := `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":" call_ws","type":"function","function":{"name":"execute_command","arguments":"{\"command\":\"echo hi\"}"}}]},"finish_reason":"tool_calls"}]}
+
+data: [DONE]
+`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, sseData)
+	}))
+	defer server.Close()
+
+	o := NewOpenAI()
+	ch, err := o.ChatStream(context.Background(), "openai", server.URL, "test-key", nil, "test-model", nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	events := collectStreamEvents(ch)
+	for _, e := range events {
+		if e.Type != "tool_calls" {
+			continue
+		}
+		if len(e.ToolCalls) != 1 {
+			t.Fatalf("expected 1 tool call, got %d: %+v", len(e.ToolCalls), e.ToolCalls)
+		}
+		if e.ToolCalls[0].ID != "call_ws" {
+			t.Fatalf("expected trimmed tool_call id, got %q", e.ToolCalls[0].ID)
+		}
+		return
+	}
+	t.Fatal("expected tool_calls event, got none")
+}
+
+func TestChatStream_ToolCallIDEmptyGetsFallback(t *testing.T) {
+	sseData := `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"type":"function","function":{"name":"execute_command","arguments":""}}]},"finish_reason":null}]}
+
+data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\"command\":\"echo hi\"}"}}]},"finish_reason":"tool_calls"}]}
+
+data: [DONE]
+`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, sseData)
+	}))
+	defer server.Close()
+
+	o := NewOpenAI()
+	ch, err := o.ChatStream(context.Background(), "openai", server.URL, "test-key", nil, "test-model", nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	events := collectStreamEvents(ch)
+	for _, e := range events {
+		if e.Type != "tool_calls" {
+			continue
+		}
+		if len(e.ToolCalls) != 1 {
+			t.Fatalf("expected 1 tool call, got %d: %+v", len(e.ToolCalls), e.ToolCalls)
+		}
+		if e.ToolCalls[0].ID != "call_0" {
+			t.Fatalf("expected fallback tool_call id call_0, got %q", e.ToolCalls[0].ID)
+		}
+		return
+	}
+	t.Fatal("expected tool_calls event, got none")
+}

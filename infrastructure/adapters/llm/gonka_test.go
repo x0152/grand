@@ -76,3 +76,62 @@ func TestGonkaGetInferenceLimit_ServerError(t *testing.T) {
 		t.Fatalf("expected chain API error, got %v", err)
 	}
 }
+
+func TestNormalizeGonkaEndpointURL(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"https://node4.gonka.ai", "https://node4.gonka.ai/v1"},
+		{"https://node4.gonka.ai/v1", "https://node4.gonka.ai/v1"},
+		{"HTTP://84.32.59.212:8000/", "http://84.32.59.212:8000/v1"},
+		{"84.32.59.212:8000/v1", "http://84.32.59.212:8000/v1"},
+	}
+	for _, tc := range cases {
+		got, err := normalizeGonkaEndpointURL(tc.in)
+		if err != nil {
+			t.Fatalf("normalize %q: %v", tc.in, err)
+		}
+		if got != tc.want {
+			t.Fatalf("normalize %q: got %q want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestResolvePinnedGonkaEndpoint(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/identity" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"data":{"address":"gonka1node4address"}}`)
+	}))
+	defer server.Close()
+
+	endpoints, err := resolvePinnedGonkaEndpoint(context.Background(), server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(endpoints) != 1 {
+		t.Fatalf("expected one pinned endpoint, got %d", len(endpoints))
+	}
+	if endpoints[0].URL != server.URL+"/v1" {
+		t.Fatalf("unexpected pinned endpoint url: %q", endpoints[0].URL)
+	}
+	if endpoints[0].Address != "gonka1node4address" {
+		t.Fatalf("unexpected pinned endpoint address: %q", endpoints[0].Address)
+	}
+}
+
+func TestResolvePinnedGonkaEndpoint_MissingAddress(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"data":{"address":""}}`)
+	}))
+	defer server.Close()
+
+	_, err := resolvePinnedGonkaEndpoint(context.Background(), server.URL)
+	if err == nil || !strings.Contains(err.Error(), "identity address is empty") {
+		t.Fatalf("expected empty identity address error, got %v", err)
+	}
+}

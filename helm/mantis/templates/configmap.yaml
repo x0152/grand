@@ -28,6 +28,10 @@ data:
   ASR_API_URL: {{ .Values.config.asr.apiUrl | quote }}
   OCR_API_URL: {{ .Values.config.ocr.apiUrl | quote }}
   TTS_API_URL: {{ .Values.config.tts.apiUrl | quote }}
+  MANTIS_SUPERVISOR_TIMEOUT: {{ .Values.config.limits.supervisorTimeout | quote }}
+  MANTIS_SERVER_TIMEOUT: {{ .Values.config.limits.serverTimeout | quote }}
+  MANTIS_PLAN_STEP_TIMEOUT: {{ .Values.config.limits.planStepTimeout | quote }}
   GONKA_DEFAULT_NODE_URL: {{ .Values.config.gonka.defaultNodeUrl | quote }}
   GONKA_NODE_URL: {{ .Values.config.gonka.nodeUrl | quote }}
+  GONKA_PIN_ENDPOINT_ENABLED: {{ .Values.config.gonka.pinEndpointEnabled | quote }}
 {{- end }}

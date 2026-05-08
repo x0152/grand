@@ -93,12 +93,12 @@ spec:
           args:
             - |
               for i in $(seq 1 120); do
-                if [ -S "{{ $.Values.runtime.dockerSocket }}" ]; then
+                if [ -S "{{ $.Values.runtime.dockerSocket }}" ] && nc -z 127.0.0.1 2375 >/dev/null 2>&1; then
                   exec /usr/local/bin/mantis
                 fi
                 sleep 1
               done
-              echo "docker socket did not appear in time" >&2
+              echo "docker API did not become ready in time" >&2
               exit 1
           {{- end }}
           ports:
@@ -163,6 +163,7 @@ spec:
               value: ""
           args:
             - --host=unix:///var/run/docker.sock
+            - --tls=false
             - --storage-driver=overlay2
           volumeMounts:
             - name: docker-socket

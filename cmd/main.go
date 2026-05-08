@@ -164,7 +164,9 @@ func main() {
 	)
 
 	openaiAdapter := llm.NewOpenAI()
-	gonkaAdapter := llm.NewGonka()
+	gonkaAdapter := llm.NewGonkaWithOptions(llm.GonkaOptions{
+		PinEndpointEnabled: envBool("GONKA_PIN_ENDPOINT_ENABLED", false),
+	})
 	llmAdapter := llm.NewRouter("openai", map[string]protocols.LLM{
 		"openai": openaiAdapter,
 		"gonka":  gonkaAdapter,
@@ -282,7 +284,7 @@ func main() {
 	if isEnabled(enabled, "gonka") {
 		gonkaApp := gonkaapp.NewApp(gonkaapp.Options{
 			BinaryPath:     env("GONKA_INFERENCED_BIN", ""),
-			DefaultNodeURL: env("GONKA_DEFAULT_NODE_URL", "http://node1.gonka.ai:8000"),
+			DefaultNodeURL: env("GONKA_DEFAULT_NODE_URL", "https://node4.gonka.ai"),
 		})
 		gonkaApp.Register(api)
 	}
@@ -497,6 +499,18 @@ func envInt(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+func envBool(key string, fallback bool) bool {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return fallback
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return fallback
+	}
+	return b
 }
 
 // parseSandboxCaps interprets RUNTIME_SANDBOX_CAPS. The special token "ALL"

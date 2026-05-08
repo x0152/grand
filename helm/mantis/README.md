@@ -162,7 +162,18 @@ Configurable via `config.gonka.*` (ConfigMap) and `secrets.gonkaPrivateKey`
 | `GONKA_DEFAULT_NODE_URL` | Default Source URL prefilled in the wallet step. |
 | `GONKA_PRIVATE_KEY` | Optional preset private key. If set, the wizard prefills "Use existing wallet". |
 | `GONKA_NODE_URL` | Optional preset Source URL for the same form. |
+| `GONKA_PIN_ENDPOINT_ENABLED` | Optional `true/false` switch. When `true`, the Gonka LLM adapter disables participant routing and uses `GONKA_NODE_URL`/`GONKA_DEFAULT_NODE_URL` directly for inference (`<node>/v1`). |
 | `GONKA_INFERENCED_BIN` | Override the binary path. Defaults to `/usr/local/bin/inferenced`. |
+
+## Generation time limits
+
+Configurable via `config.limits.*` (ConfigMap):
+
+| Env key | Helm value | Default | Purpose |
+|---|---|---|---|
+| `MANTIS_SUPERVISOR_TIMEOUT` | `config.limits.supervisorTimeout` | `15m` | Max wall time for one main-agent response |
+| `MANTIS_SERVER_TIMEOUT` | `config.limits.serverTimeout` | `15m` | Max wall time for one `ssh_*` sub-agent call |
+| `MANTIS_PLAN_STEP_TIMEOUT` | `config.limits.planStepTimeout` | `15m` | Max wall time for one plan step execution |
 
 ## Prerequisites
 

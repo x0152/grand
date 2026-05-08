@@ -201,17 +201,17 @@ The same wizard lives under **Setup** in the sidebar:
 
 ## Generation limits
 
-Caps on how long generation can run and how many tool calls it can make. When a limit kicks in, the assistant message is marked `cancelled` and its content gets a human-readable marker naming the env var to tweak (e.g. `[stopped: supervisor timeout 5m0s exceeded — raise MANTIS_SUPERVISOR_TIMEOUT in .env to increase]`). Partial text and completed tool steps are preserved; unfinished steps get marked `cancelled`. A user-triggered Stop gives `[stopped by user]`.
+Caps on how long generation can run and how many tool calls it can make. When a limit kicks in, the assistant message is marked `cancelled` and its content gets a human-readable marker naming the env var to tweak (e.g. `[stopped: supervisor timeout 15m0s exceeded — raise MANTIS_SUPERVISOR_TIMEOUT in .env to increase]`). Partial text and completed tool steps are preserved; unfinished steps get marked `cancelled`. A user-triggered Stop gives `[stopped by user]`.
 
 | Variable | Default | What it caps |
 |---|---|---|
-| `MANTIS_SUPERVISOR_TIMEOUT` | `5m` | Wall time for one user-message generation by the main agent |
+| `MANTIS_SUPERVISOR_TIMEOUT` | `15m` | Wall time for one user-message generation by the main agent |
 | `MANTIS_SUPERVISOR_MAX_ITERATIONS` | `30` | LLM tool-call rounds the main agent may do per message |
-| `MANTIS_SERVER_TIMEOUT` | `5m` | Wall time for one SSH sub-agent call (per `ssh_*` tool invocation) |
+| `MANTIS_SERVER_TIMEOUT` | `15m` | Wall time for one SSH sub-agent call (per `ssh_*` tool invocation) |
 | `MANTIS_SERVER_MAX_ITERATIONS` | `30` | LLM tool-call rounds inside one SSH sub-agent call |
-| `MANTIS_PLAN_STEP_TIMEOUT` | `10m` | Wall time for a single plan node execution |
+| `MANTIS_PLAN_STEP_TIMEOUT` | `15m` | Wall time for a single plan node execution |
 
-Values accept any Go duration (`30s`, `5m`, `1h`). On startup the app logs the active values, e.g. `limits: supervisor=5m0s/30, server=5m0s/30, plan_step=10m0s`. Server-level hits (timeout / iterations) surface as the tool result to the supervisor, so it can read the limit message and adapt instead of failing the whole reply.
+Values accept any Go duration (`30s`, `15m`, `1h`). On startup the app logs the active values, e.g. `limits: supervisor=15m0s/30, server=15m0s/30, plan_step=15m0s`. Server-level hits (timeout / iterations) surface as the tool result to the supervisor, so it can read the limit message and adapt instead of failing the whole reply.
 
 ## Dev
 

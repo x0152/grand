@@ -178,6 +178,24 @@ postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_POR
     configMapKeyRef:
       name: {{ include "mantis.configName" . }}
       key: TTS_API_URL
+- name: MANTIS_SUPERVISOR_TIMEOUT
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "mantis.configName" . }}
+      key: MANTIS_SUPERVISOR_TIMEOUT
+      optional: true
+- name: MANTIS_SERVER_TIMEOUT
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "mantis.configName" . }}
+      key: MANTIS_SERVER_TIMEOUT
+      optional: true
+- name: MANTIS_PLAN_STEP_TIMEOUT
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "mantis.configName" . }}
+      key: MANTIS_PLAN_STEP_TIMEOUT
+      optional: true
 - name: GONKA_DEFAULT_NODE_URL
   valueFrom:
     configMapKeyRef:
@@ -188,6 +206,11 @@ postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_POR
     configMapKeyRef:
       name: {{ include "mantis.configName" . }}
       key: GONKA_NODE_URL
+- name: GONKA_PIN_ENDPOINT_ENABLED
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "mantis.configName" . }}
+      key: GONKA_PIN_ENDPOINT_ENABLED
 - name: GONKA_PRIVATE_KEY
   valueFrom:
     secretKeyRef:

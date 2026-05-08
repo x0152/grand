@@ -29,9 +29,14 @@ config:
     apiUrl: ""
   tts:
     apiUrl: ""
+  limits:
+    supervisorTimeout: "15m"
+    serverTimeout: "15m"
+    planStepTimeout: "15m"
   gonka:
-    defaultNodeUrl: "http://node1.gonka.ai:8000"
+    defaultNodeUrl: "https://node4.gonka.ai"
     nodeUrl: ""
+    pinEndpointEnabled: true
 
 apps:
   global:

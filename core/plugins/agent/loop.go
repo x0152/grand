@@ -157,10 +157,7 @@ func (l *AgentLoop) Execute(ctx context.Context, in LoopInput) (<-chan types.Str
 				}()
 
 				res := <-resCh
-				result := res.result
-				if res.err != nil {
-					result = "error: " + res.err.Error()
-				}
+				result := normalizeToolExecutionResult(tc.Name, res.result, res.err)
 
 				ev := types.StreamEvent{Type: "tool_end", Delta: result, ToolID: stepID, Iteration: iter}
 				if meta := shared.ToolMetaFromContext(toolCtx); meta != nil {
@@ -183,4 +180,18 @@ func (l *AgentLoop) Execute(ctx context.Context, in LoopInput) (<-chan types.Str
 	}()
 
 	return ch, nil
+}
+
+func normalizeToolExecutionResult(toolName, raw string, execErr error) string {
+	if execErr != nil {
+		return "error: " + execErr.Error()
+	}
+	if strings.TrimSpace(raw) != "" {
+		return raw
+	}
+	name := strings.TrimSpace(toolName)
+	if name == "" {
+		name = "tool"
+	}
+	return fmt.Sprintf("status: success (%s completed with no output)", name)
 }

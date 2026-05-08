@@ -26,10 +26,10 @@ type Limits struct {
 func DefaultLimits() Limits {
 	return Limits{
 		SupervisorMaxIterations: 30,
-		SupervisorTimeout:       5 * time.Minute,
+		SupervisorTimeout:       15 * time.Minute,
 		ServerMaxIterations:     30,
-		ServerTimeout:           5 * time.Minute,
-		PlanStepTimeout:         10 * time.Minute,
+		ServerTimeout:           15 * time.Minute,
+		PlanStepTimeout:         15 * time.Minute,
 	}
 }
 

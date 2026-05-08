@@ -98,10 +98,10 @@ type streamChunk struct {
 }
 
 type streamUsage struct {
-	PromptTokens            int `json:"prompt_tokens"`
-	CompletionTokens        int `json:"completion_tokens"`
-	TotalTokens             int `json:"total_tokens"`
-	PromptTokensDetails     *struct {
+	PromptTokens        int `json:"prompt_tokens"`
+	CompletionTokens    int `json:"completion_tokens"`
+	TotalTokens         int `json:"total_tokens"`
+	PromptTokensDetails *struct {
 		CachedTokens int `json:"cached_tokens"`
 	} `json:"prompt_tokens_details"`
 }
@@ -353,10 +353,21 @@ func orderedToolCalls(toolCalls map[int]*types.ToolCall) []types.ToolCall {
 	sort.Ints(indexes)
 
 	calls := make([]types.ToolCall, 0, len(indexes))
-	for _, i := range indexes {
+	for pos, i := range indexes {
 		if tc, ok := toolCalls[i]; ok && tc != nil {
-			calls = append(calls, *tc)
+			normalized := *tc
+			normalized.ID = normalizeToolCallID(normalized.ID, pos)
+			normalized.Name = strings.TrimSpace(normalized.Name)
+			calls = append(calls, normalized)
 		}
 	}
 	return calls
+}
+
+func normalizeToolCallID(raw string, fallback int) string {
+	id := strings.TrimSpace(raw)
+	if id == "" {
+		return fmt.Sprintf("call_%d", fallback)
+	}
+	return id
 }

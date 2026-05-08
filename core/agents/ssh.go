@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -206,7 +207,7 @@ func sshTools(cfg SSHConfig, g protocols.GuardEvaluator, connectionID string, pr
 						out += footer
 					}
 				}
-				return out, err
+				return formatCommandToolResult(out, err), nil
 			},
 		},
 	}
@@ -377,8 +378,23 @@ func execSSH(cfg SSHConfig, command string) (string, error) {
 			"\n\n[TRUNCATED: %d/%d bytes shown. Redirect to file and use grep/head/tail.]",
 			maxOutputBytes, total)
 	}
-	if err != nil {
-		return output + "\nexit: " + err.Error(), nil
+	return output, err
+}
+
+func formatCommandToolResult(output string, runErr error) string {
+	status := "status: exit 0 (success)"
+	if runErr != nil {
+		var exitErr *ssh.ExitError
+		if errors.As(runErr, &exitErr) {
+			status = fmt.Sprintf("status: exit %d (error)", exitErr.ExitStatus())
+		} else {
+			status = "status: error (" + strings.TrimSpace(runErr.Error()) + ")"
+		}
 	}
-	return output, nil
+
+	body := output
+	if strings.TrimSpace(body) == "" {
+		body = "(no output)"
+	}
+	return status + "\noutput:\n" + body
 }

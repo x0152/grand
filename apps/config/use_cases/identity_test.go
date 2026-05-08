@@ -11,7 +11,7 @@ func TestSuggestEndpointID(t *testing.T) {
 		{"https://api.openai.com/v1", "openai", "openai-primary"},
 		{"http://localhost:1234/v1", "openai", "local-llm"},
 		{"http://127.0.0.1:8080/v1", "openai", "local-llm"},
-		{"http://node1.gonka.ai:8000", "gonka", "gonka-primary"},
+		{"https://node4.gonka.ai", "gonka", "gonka-primary"},
 		{"https://example.com/v1", "openai", "llm-example-com"},
 	}
 	for _, tt := range tests {
@@ -29,7 +29,7 @@ func TestNormalizeBaseURL(t *testing.T) {
 	}{
 		{"https://API.openai.com/v1/", "https://api.openai.com/v1"},
 		{"http://localhost:1234", "http://localhost:1234"},
-		{"  http://node1.gonka.ai:8000  ", "http://node1.gonka.ai:8000"},
+		{"  https://node4.gonka.ai  ", "https://node4.gonka.ai"},
 	}
 	for _, tt := range tests {
 		got := normalizeBaseURL(tt.in)

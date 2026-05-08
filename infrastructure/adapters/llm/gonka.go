@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -19,14 +21,26 @@ import (
 
 type Gonka struct {
 	*OpenAI
+	opts GonkaOptions
+}
+
+type GonkaOptions struct {
+	PinEndpointEnabled bool
 }
 
 func NewGonka() *Gonka {
-	return &Gonka{OpenAI: NewOpenAI()}
+	return NewGonkaWithOptions(GonkaOptions{})
+}
+
+func NewGonkaWithOptions(opts GonkaOptions) *Gonka {
+	return &Gonka{
+		OpenAI: NewOpenAI(),
+		opts:   opts,
+	}
 }
 
 func (g *Gonka) ListModels(ctx context.Context, baseURL, apiKey string) ([]types.ProviderModel, error) {
-	client, err := g.newClient(baseURL, apiKey)
+	client, err := g.newClient(ctx, baseURL, apiKey)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +90,7 @@ func (g *Gonka) GetInferenceLimit(ctx context.Context, baseURL, apiKey string) (
 }
 
 func (g *Gonka) ChatStream(ctx context.Context, _ string, baseURL, apiKey string, messages []protocols.LLMMessage, model string, tools []types.Tool, thinkingMode string) (<-chan types.StreamEvent, error) {
-	client, err := g.newClient(baseURL, apiKey)
+	client, err := g.newClient(ctx, baseURL, apiKey)
 	if err != nil {
 		return nil, err
 	}
@@ -177,26 +191,25 @@ func (g *Gonka) ChatStream(ctx context.Context, _ string, baseURL, apiKey string
 	return ch, nil
 }
 
-func (g *Gonka) newClient(baseURL, apiKey string) (*gonkaopenai.GonkaOpenAI, error) {
+func (g *Gonka) newClient(ctx context.Context, baseURL, apiKey string) (*gonkaopenai.GonkaOpenAI, error) {
 	sourceURL, err := normalizeGonkaSourceURL(baseURL)
 	if err != nil {
 		return nil, err
 	}
-	endpoints, err := gonkaopenai.GetParticipantsWithProof(context.Background(), sourceURL, "current")
-	if err != nil {
-		return nil, fmt.Errorf("resolve gonka endpoints: %w", err)
-	}
-	if allowed, allowedErr := gonkaopenai.FetchAllowedTransferAddresses(context.Background(), sourceURL); allowedErr == nil && len(allowed) > 0 {
-		filtered := make([]gonkaopenai.Endpoint, 0, len(endpoints))
-		for _, ep := range endpoints {
-			if allowed[ep.Address] {
-				filtered = append(filtered, ep)
-			}
+
+	var endpoints []gonkaopenai.Endpoint
+	if g.opts.PinEndpointEnabled {
+		endpoints, err = resolvePinnedGonkaEndpoint(ctx, sourceURL)
+		if err != nil {
+			return nil, err
 		}
-		if len(filtered) > 0 {
-			endpoints = filtered
+	} else {
+		endpoints, err = resolveDistributedGonkaEndpoints(ctx, sourceURL)
+		if err != nil {
+			return nil, err
 		}
 	}
+
 	if len(endpoints) == 0 {
 		return nil, fmt.Errorf("no gonka endpoints resolved from %q", sourceURL)
 	}
@@ -226,6 +239,95 @@ func normalizeGonkaSourceURL(raw string) (string, error) {
 		return "", fmt.Errorf("invalid gonka source URL %q", strings.TrimSpace(raw))
 	}
 	return strings.TrimRight(sourceURL, "/"), nil
+}
+
+func resolveDistributedGonkaEndpoints(ctx context.Context, sourceURL string) ([]gonkaopenai.Endpoint, error) {
+	endpoints, err := gonkaopenai.GetParticipantsWithProof(ctx, sourceURL, "current")
+	if err != nil {
+		return nil, fmt.Errorf("resolve gonka endpoints: %w", err)
+	}
+	if allowed, allowedErr := gonkaopenai.FetchAllowedTransferAddresses(ctx, sourceURL); allowedErr == nil && len(allowed) > 0 {
+		filtered := make([]gonkaopenai.Endpoint, 0, len(endpoints))
+		for _, ep := range endpoints {
+			if allowed[ep.Address] {
+				filtered = append(filtered, ep)
+			}
+		}
+		if len(filtered) > 0 {
+			endpoints = filtered
+		}
+	}
+	return endpoints, nil
+}
+
+func resolvePinnedGonkaEndpoint(ctx context.Context, sourceURL string) ([]gonkaopenai.Endpoint, error) {
+	inferenceURL, err := normalizeGonkaEndpointURL(sourceURL)
+	if err != nil {
+		return nil, err
+	}
+	address, err := fetchGonkaNodeAddress(ctx, sourceURL)
+	if err != nil {
+		return nil, err
+	}
+	return []gonkaopenai.Endpoint{{URL: inferenceURL, Address: address}}, nil
+}
+
+func normalizeGonkaEndpointURL(raw string) (string, error) {
+	endpointURL := strings.TrimSpace(raw)
+	if endpointURL == "" {
+		return "", fmt.Errorf("gonka endpoint URL is required")
+	}
+	if !strings.Contains(endpointURL, "://") {
+		endpointURL = "http://" + endpointURL
+	}
+	u, err := url.Parse(endpointURL)
+	if err != nil || strings.TrimSpace(u.Scheme) == "" || strings.TrimSpace(u.Host) == "" {
+		return "", fmt.Errorf("invalid gonka endpoint URL %q", strings.TrimSpace(raw))
+	}
+	scheme := strings.ToLower(strings.TrimSpace(u.Scheme))
+	host := strings.ToLower(strings.TrimSpace(u.Host))
+	path := strings.TrimRight(strings.TrimSpace(u.Path), "/")
+	if path == "" {
+		path = "/v1"
+	} else if !strings.HasSuffix(path, "/v1") {
+		path += "/v1"
+	}
+	return fmt.Sprintf("%s://%s%s", scheme, host, path), nil
+}
+
+func fetchGonkaNodeAddress(ctx context.Context, sourceURL string) (string, error) {
+	identityURL := strings.TrimRight(sourceURL, "/") + "/v1/identity"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, identityURL, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("fetch gonka node identity: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("gonka node identity API error %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	var payload struct {
+		Data struct {
+			Address string `json:"address"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return "", fmt.Errorf("decode gonka node identity: %w", err)
+	}
+
+	address := strings.TrimSpace(payload.Data.Address)
+	if address == "" {
+		return "", fmt.Errorf("gonka node identity address is empty")
+	}
+	return address, nil
 }
 
 func buildGonkaMessages(messages []protocols.LLMMessage) []openai.ChatCompletionMessageParamUnion {

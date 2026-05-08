@@ -72,7 +72,7 @@ export function WalletCreateStep({
             <Input
               value={nodeUrl}
               onChange={e => onChangeNodeUrl(e.target.value)}
-              placeholder="http://node1.gonka.ai:8000"
+              placeholder="https://node4.gonka.ai"
             />
           </FormField>
         )}
