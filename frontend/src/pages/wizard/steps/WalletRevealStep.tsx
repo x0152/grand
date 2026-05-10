@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Copy, Eye, ShieldAlert } from '@/lib/icons'
+import { Copy, Eye, QrCode, ShieldAlert } from '@/lib/icons'
 import { AddressDisplay } from '../components/AddressDisplay'
+import { QRDisplay } from '../components/QRDisplay'
 
 interface WalletRevealStepProps {
   address: string
@@ -14,6 +15,7 @@ interface WalletRevealStepProps {
 
 export function WalletRevealStep({ address, words, acknowledged, onAcknowledge }: WalletRevealStepProps) {
   const [revealed, setRevealed] = useState(false)
+  const [showQR, setShowQR] = useState(false)
   const phrase = words.join(' ')
   const copy = async () => {
     try {
@@ -34,7 +36,7 @@ export function WalletRevealStep({ address, words, acknowledged, onAcknowledge }
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="mb-0">Your 24 secret words</Label>
+          <Label className="mb-0">Your {words.length} secret words</Label>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => setRevealed(v => !v)}>
               <Eye size={12} /> {revealed ? 'hide' : 'show'}
@@ -69,6 +71,31 @@ export function WalletRevealStep({ address, words, acknowledged, onAcknowledge }
         </div>
       </div>
 
+      <div className="rounded-md border border-zinc-200/80 dark:border-zinc-800/70 bg-zinc-50 dark:bg-zinc-900 px-3 py-2.5">
+        <button
+          type="button"
+          onClick={() => setShowQR(v => !v)}
+          className="flex items-center justify-between w-full text-left"
+        >
+          <span className="flex items-center gap-2 text-[12.5px] text-zinc-700 dark:text-zinc-300">
+            <QrCode size={14} />
+            Import into a mobile wallet
+          </span>
+          <span className="text-[11.5px] text-zinc-500 dark:text-zinc-500">
+            {showQR ? 'hide QR' : 'show QR'}
+          </span>
+        </button>
+        {showQR && (
+          <div className="mt-3 space-y-2">
+            <QRDisplay
+              value={phrase}
+              tone="amber"
+              caption="Open Cosmostation, Leap, or Trust Wallet → Add wallet → Scan QR. Keplr Mobile needs you to type the phrase manually."
+            />
+          </div>
+        )}
+      </div>
+
       <label className="flex items-center gap-2 text-[12.5px] text-zinc-700 dark:text-zinc-300 cursor-pointer">
         <input
           type="checkbox"
@@ -76,7 +103,7 @@ export function WalletRevealStep({ address, words, acknowledged, onAcknowledge }
           onChange={e => onAcknowledge(e.target.checked)}
           className="size-4 accent-teal-600"
         />
-        <span>I saved my 24 words. I get that I can’t see them again.</span>
+        <span>I saved my {words.length} words. I get that I can’t see them again.</span>
       </label>
     </div>
   )

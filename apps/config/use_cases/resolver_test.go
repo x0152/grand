@@ -117,3 +117,50 @@ func TestResolveValuesKeepsDBOverEnv(t *testing.T) {
 		t.Fatalf("api key = %q", resolved.OpenAI.APIKey)
 	}
 }
+
+func TestResolveEmailPromotesEnvWhenSkippedAndDraftEmpty(t *testing.T) {
+	r := NewResolver(EnvSnapshot{
+		EmailAddress:  "bot@example.com",
+		EmailSMTPHost: "smtp.example.com",
+		EmailSMTPPass: "smtp-pass",
+		EmailIMAPHost: "imap.example.com",
+		EmailIMAPPass: "imap-pass",
+	})
+	cfg := r.Resolve(types.GlobalConfigDraft{
+		Provider: "openai",
+		Email:    types.EmailDraft{Skipped: true},
+	})
+	if cfg.Email.Skipped {
+		t.Fatalf("email should not stay skipped when env prefill is present: %+v", cfg.Email)
+	}
+	if cfg.Email.Address.Value != "bot@example.com" || cfg.Email.Address.Source != types.ConfigSourceEnv {
+		t.Fatalf("address = %+v", cfg.Email.Address)
+	}
+	if !cfg.Email.SMTPPassword.Set || cfg.Email.SMTPPassword.Source != types.ConfigSourceEnv {
+		t.Fatalf("smtp password = %+v", cfg.Email.SMTPPassword)
+	}
+	if !cfg.Email.IMAPPassword.Set || cfg.Email.IMAPPassword.Source != types.ConfigSourceEnv {
+		t.Fatalf("imap password = %+v", cfg.Email.IMAPPassword)
+	}
+}
+
+func TestResolveValuesPromotesEmailEnvWhenSkippedAndDraftEmpty(t *testing.T) {
+	r := NewResolver(EnvSnapshot{
+		EmailAddress:  "bot@example.com",
+		EmailSMTPHost: "smtp.example.com",
+		EmailSMTPPass: "smtp-pass",
+	})
+	resolved := r.ResolveValues(types.GlobalConfigDraft{
+		Provider: "openai",
+		Email:    types.EmailDraft{Skipped: true},
+	})
+	if resolved.Email.Skipped {
+		t.Fatalf("email draft should not stay skipped when env prefill is present: %+v", resolved.Email)
+	}
+	if resolved.Email.Address != "bot@example.com" {
+		t.Fatalf("address = %q", resolved.Email.Address)
+	}
+	if resolved.Email.SMTPHost != "smtp.example.com" || resolved.Email.SMTPPassword != "smtp-pass" {
+		t.Fatalf("smtp fields = %+v", resolved.Email)
+	}
+}

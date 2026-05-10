@@ -7,13 +7,22 @@ import (
 )
 
 type EnvSnapshot struct {
-	LLMBaseURL      string
-	LLMAPIKey       string
-	LLMModels       []string
-	GonkaNodeURL    string
-	GonkaPrivateKey string
-	TGBotToken      string
-	TGUserIDs       []int64
+	LLMBaseURL       string
+	LLMAPIKey        string
+	LLMModels        []string
+	GonkaNodeURL     string
+	GonkaPrivateKey  string
+	TGBotToken       string
+	TGUserIDs        []int64
+	EmailAddress     string
+	EmailSMTPHost    string
+	EmailSMTPPort    string
+	EmailSMTPUser    string
+	EmailSMTPPass    string
+	EmailIMAPHost    string
+	EmailIMAPPort    string
+	EmailIMAPUser    string
+	EmailIMAPPass    string
 }
 
 const DefaultProvider = "openai"
@@ -59,10 +68,75 @@ func (r *Resolver) ResolveValues(draft types.GlobalConfigDraft) types.GlobalConf
 	if out.Telegram.AllowedUserIDs == nil {
 		out.Telegram.AllowedUserIDs = []int64{}
 	}
+	if shouldPromoteEmailEnv(out.Email, r.env) {
+		out.Email.Skipped = false
+	}
+	if !out.Email.Skipped {
+		out.Email = mergeEmailFromEnv(out.Email, r.env)
+	}
 	if out.Models == nil {
 		out.Models = []types.ConfigModelRow{}
 	}
 	return out
+}
+
+func mergeEmailFromEnv(e types.EmailDraft, env EnvSnapshot) types.EmailDraft {
+	if strings.TrimSpace(e.Address) == "" {
+		e.Address = strings.TrimSpace(env.EmailAddress)
+	}
+	if strings.TrimSpace(e.SMTPHost) == "" {
+		e.SMTPHost = strings.TrimSpace(env.EmailSMTPHost)
+	}
+	if strings.TrimSpace(e.SMTPPort) == "" {
+		e.SMTPPort = strings.TrimSpace(env.EmailSMTPPort)
+	}
+	if strings.TrimSpace(e.SMTPUsername) == "" {
+		e.SMTPUsername = strings.TrimSpace(env.EmailSMTPUser)
+	}
+	if strings.TrimSpace(e.SMTPPassword) == "" {
+		e.SMTPPassword = strings.TrimSpace(env.EmailSMTPPass)
+	}
+	if strings.TrimSpace(e.IMAPHost) == "" {
+		e.IMAPHost = strings.TrimSpace(env.EmailIMAPHost)
+	}
+	if strings.TrimSpace(e.IMAPPort) == "" {
+		e.IMAPPort = strings.TrimSpace(env.EmailIMAPPort)
+	}
+	if strings.TrimSpace(e.IMAPUsername) == "" {
+		e.IMAPUsername = strings.TrimSpace(env.EmailIMAPUser)
+	}
+	if strings.TrimSpace(e.IMAPPassword) == "" {
+		e.IMAPPassword = strings.TrimSpace(env.EmailIMAPPass)
+	}
+	return e
+}
+
+func shouldPromoteEmailEnv(draft types.EmailDraft, env EnvSnapshot) bool {
+	return draft.Skipped && !emailDraftHasAnyValue(draft) && emailEnvHasAnyValue(env)
+}
+
+func emailDraftHasAnyValue(e types.EmailDraft) bool {
+	return strings.TrimSpace(e.Address) != "" ||
+		strings.TrimSpace(e.SMTPHost) != "" ||
+		strings.TrimSpace(e.SMTPPort) != "" ||
+		strings.TrimSpace(e.SMTPUsername) != "" ||
+		strings.TrimSpace(e.SMTPPassword) != "" ||
+		strings.TrimSpace(e.IMAPHost) != "" ||
+		strings.TrimSpace(e.IMAPPort) != "" ||
+		strings.TrimSpace(e.IMAPUsername) != "" ||
+		strings.TrimSpace(e.IMAPPassword) != ""
+}
+
+func emailEnvHasAnyValue(env EnvSnapshot) bool {
+	return strings.TrimSpace(env.EmailAddress) != "" ||
+		strings.TrimSpace(env.EmailSMTPHost) != "" ||
+		strings.TrimSpace(env.EmailSMTPPort) != "" ||
+		strings.TrimSpace(env.EmailSMTPUser) != "" ||
+		strings.TrimSpace(env.EmailSMTPPass) != "" ||
+		strings.TrimSpace(env.EmailIMAPHost) != "" ||
+		strings.TrimSpace(env.EmailIMAPPort) != "" ||
+		strings.TrimSpace(env.EmailIMAPUser) != "" ||
+		strings.TrimSpace(env.EmailIMAPPass) != ""
 }
 
 func (r *Resolver) Resolve(draft types.GlobalConfigDraft) types.GlobalConfig {
@@ -78,6 +152,7 @@ func (r *Resolver) Resolve(draft types.GlobalConfigDraft) types.GlobalConfig {
 		},
 		Models:   resolveModels(draft.Models, r.env.LLMModels),
 		Telegram: r.resolveTelegram(draft.Telegram),
+		Email:    r.resolveEmail(draft.Email),
 	}
 	return cfg
 }
@@ -170,4 +245,55 @@ func nilSafeIDs(in []int64) []int64 {
 	out := make([]int64, len(in))
 	copy(out, in)
 	return out
+}
+
+func (r *Resolver) resolveEmail(draft types.EmailDraft) types.EmailConfig {
+	if shouldPromoteEmailEnv(draft, r.env) {
+		draft.Skipped = false
+	}
+	if draft.Skipped {
+		return types.EmailConfig{
+			Skipped: true,
+			Source:  types.ConfigSourceDB,
+		}
+	}
+	cfg := types.EmailConfig{
+		Address:      r.fieldFromDB(draft.Address, r.env.EmailAddress),
+		SMTPHost:     r.fieldFromDB(draft.SMTPHost, r.env.EmailSMTPHost),
+		SMTPPort:     r.fieldFromDB(draft.SMTPPort, r.env.EmailSMTPPort),
+		SMTPUsername: r.fieldFromDB(draft.SMTPUsername, r.env.EmailSMTPUser),
+		SMTPPassword: r.secretFromDB(draft.SMTPPassword, r.env.EmailSMTPPass),
+		IMAPHost:     r.fieldFromDB(draft.IMAPHost, r.env.EmailIMAPHost),
+		IMAPPort:     r.fieldFromDB(draft.IMAPPort, r.env.EmailIMAPPort),
+		IMAPUsername: r.fieldFromDB(draft.IMAPUsername, r.env.EmailIMAPUser),
+		IMAPPassword: r.secretFromDB(draft.IMAPPassword, r.env.EmailIMAPPass),
+	}
+	cfg.Source = pickEmailSource(cfg)
+	return cfg
+}
+
+func pickEmailSource(cfg types.EmailConfig) types.ConfigSource {
+	sources := []types.ConfigSource{
+		cfg.Address.Source, cfg.SMTPHost.Source, cfg.SMTPPort.Source,
+		cfg.SMTPUsername.Source, cfg.SMTPPassword.Source,
+		cfg.IMAPHost.Source, cfg.IMAPPort.Source,
+		cfg.IMAPUsername.Source, cfg.IMAPPassword.Source,
+	}
+	hasDB, hasEnv := false, false
+	for _, s := range sources {
+		switch s {
+		case types.ConfigSourceDB:
+			hasDB = true
+		case types.ConfigSourceEnv:
+			hasEnv = true
+		}
+	}
+	switch {
+	case hasDB:
+		return types.ConfigSourceDB
+	case hasEnv:
+		return types.ConfigSourceEnv
+	default:
+		return types.ConfigSourceUnset
+	}
 }

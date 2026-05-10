@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""List every IMAP folder this account exposes.
+
+For each folder we show: the actual server name, any SPECIAL-USE flags
+(\\Inbox, \\Sent, \\Junk, \\Trash, \\Drafts, …) and live message counts.
+
+Use this FIRST whenever you don't already know what your provider calls a
+folder (e.g. "Spam" on a non-English mailbox), or whenever email-list /
+email-read returns "folder not found". Aliases like Sent/Spam/Trash work
+in the other commands so most of the time you don't need to call this —
+but when in doubt, run it.
+"""
+import argparse
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-folders", description="List IMAP folders")
+    p.add_argument("--no-counts", action="store_true",
+                   help="Skip per-folder STATUS lookup (faster on huge mailboxes).")
+    p.add_argument("--json", action="store_true",
+                   help="Emit JSON Lines (one folder object per line).")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+    if not eh.require_imap(cfg):
+        return 0
+
+    try:
+        with eh.open_imap(cfg) as box:
+            folders = eh.list_folders(box)
+            rows = []
+            for f in folders:
+                flags = sorted(f.flags or ())
+                row = {
+                    "name": f.name,
+                    "delim": getattr(f, "delim", None),
+                    "flags": list(flags),
+                    "messages": None,
+                    "unseen": None,
+                }
+                if not args.no_counts:
+                    try:
+                        status = box.folder.status(f.name)
+                        row["messages"] = int(status.get("MESSAGES", 0))
+                        row["unseen"] = int(status.get("UNSEEN", 0))
+                    except Exception:
+                        # Some folders (NoSelect parents) refuse STATUS; that
+                        # is fine, just leave counts as None.
+                        pass
+                rows.append(row)
+    except Exception as e:
+        return eh.die("email-folders", e)
+
+    if not rows:
+        if args.json:
+            return 0
+        print("(no folders — IMAP returned an empty list)")
+        return 0
+
+    if args.json:
+        import json
+        for row in rows:
+            print(json.dumps(row, ensure_ascii=False))
+        return 0
+
+    # Human-readable, aligned columns.
+    name_w = max(len(r["name"]) for r in rows)
+    name_w = min(max(name_w, len("name")), 48)
+    if args.no_counts:
+        print(f"{'name'.ljust(name_w)}  flags")
+        for r in rows:
+            flags = " ".join(r["flags"]) or "—"
+            print(f"{r['name'].ljust(name_w)}  {flags}")
+    else:
+        print(f"{'name'.ljust(name_w)}  msgs  unseen  flags")
+        for r in rows:
+            flags = " ".join(r["flags"]) or "—"
+            msgs = "?" if r["messages"] is None else str(r["messages"])
+            unseen = "?" if r["unseen"] is None else str(r["unseen"])
+            print(f"{r['name'].ljust(name_w)}  {msgs:>4}  {unseen:>6}  {flags}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

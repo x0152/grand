@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Toggle \\Seen / \\Flagged on one or more messages.
+
+Examples:
+  email-mark --uid 12345 --seen                 # mark a single message as read
+  email-mark --uid 12345 --uid 12346 --flagged  # flag two at once
+  email-mark --uid 12345 --unseen --unflagged   # clear both flags
+
+UIDs must be positive integers (use email-list / email-search to find them).
+"""
+import argparse
+import json
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-mark",
+                                description="Toggle \\Seen / \\Flagged on messages")
+    p.add_argument("--uid", action="append", default=[],
+                   help="Message UID (repeatable for batch).")
+    p.add_argument("--folder", default="INBOX",
+                   help="Folder containing the messages (aliases supported).")
+    seen = p.add_mutually_exclusive_group()
+    seen.add_argument("--seen", action="store_true", help="Add \\Seen flag (mark as read).")
+    seen.add_argument("--unseen", action="store_true", help="Remove \\Seen flag (mark as unread).")
+    flagged = p.add_mutually_exclusive_group()
+    flagged.add_argument("--flagged", action="store_true", help="Add \\Flagged.")
+    flagged.add_argument("--unflagged", action="store_true", help="Remove \\Flagged.")
+    p.add_argument("--json", action="store_true",
+                   help="Emit a single JSON object describing the result.")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+    if not eh.require_imap(cfg):
+        return 0
+
+    try:
+        uids = eh.validate_uid_list(args.uid)
+    except Exception as e:
+        return eh.die("email-mark", e, exit_code=2)
+
+    ops = []
+    if args.seen:
+        ops.append(("\\Seen", True))
+    if args.unseen:
+        ops.append(("\\Seen", False))
+    if args.flagged:
+        ops.append(("\\Flagged", True))
+    if args.unflagged:
+        ops.append(("\\Flagged", False))
+    if not ops:
+        return eh.die(
+            "email-mark",
+            "no flag toggles given; pass at least one of --seen/--unseen/--flagged/--unflagged",
+            exit_code=2,
+        )
+
+    try:
+        with eh.open_imap(cfg) as box:
+            chosen = eh.set_folder(box, args.folder)
+            applied = []
+            for flag, value in ops:
+                box.flag(uids, flag, value)
+                applied.append({"flag": flag, "value": value})
+    except eh.FolderNotFound as e:
+        return eh.die("email-mark", e, exit_code=2)
+    except Exception as e:
+        return eh.die("email-mark", e)
+
+    if args.json:
+        print(json.dumps({
+            "folder": chosen,
+            "uids": uids,
+            "applied": applied,
+        }, ensure_ascii=False))
+    else:
+        flag_desc = ", ".join(
+            f"{'+' if v else '-'}{f}" for f in (op[0] for op in ops) for v in [dict(ops)[f]]
+        )
+        print(f"updated {len(uids)} message(s) in {chosen!r}: {flag_desc}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

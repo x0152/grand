@@ -1,4 +1,4 @@
-import { Bell, Plug, Sparkles, Wallet, type IconComponent } from '@/lib/icons'
+import { Bell, Mail, Plug, Sparkles, Wallet, type IconComponent } from '@/lib/icons'
 import type { Provider } from '../types'
 
 interface FinishStepProps {
@@ -6,9 +6,10 @@ interface FinishStepProps {
   chatModel?: string
   endpoint: string
   telegramLabel: string
+  emailLabel: string
 }
 
-export function FinishStep({ provider, chatModel, endpoint, telegramLabel }: FinishStepProps) {
+export function FinishStep({ provider, chatModel, endpoint, telegramLabel, emailLabel }: FinishStepProps) {
   const rows: Array<{ icon: IconComponent; label: string; value: string }> = [
     {
       icon: provider === 'openai' ? Plug : Wallet,
@@ -18,6 +19,7 @@ export function FinishStep({ provider, chatModel, endpoint, telegramLabel }: Fin
     { icon: Plug, label: 'Server', value: endpoint || '—' },
     { icon: Sparkles, label: 'Chat model', value: chatModel || '—' },
     { icon: Bell, label: 'Telegram', value: telegramLabel },
+    { icon: Mail, label: 'Email', value: emailLabel },
   ]
   return (
     <div className="space-y-2">

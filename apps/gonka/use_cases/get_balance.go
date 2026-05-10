@@ -17,15 +17,28 @@ type Balance struct {
 	Label   string  `json:"label"`
 }
 
-type GetBalance struct{}
+const defaultPinnedGonkaBalanceNodeURL = "http://node1.gonka.ai:8000"
 
-func NewGetBalance() *GetBalance {
-	return &GetBalance{}
+type GetBalance struct {
+	pinEndpointEnabled bool
+	pinNodeURL         string
+}
+
+type GetBalanceOptions struct {
+	PinEndpointEnabled bool
+	PinNodeURL         string
+}
+
+func NewGetBalance(opts GetBalanceOptions) *GetBalance {
+	return &GetBalance{
+		pinEndpointEnabled: opts.PinEndpointEnabled,
+		pinNodeURL:         strings.TrimSpace(opts.PinNodeURL),
+	}
 }
 
 func (uc *GetBalance) Execute(ctx context.Context, address, nodeURL string) (Balance, error) {
 	addr := strings.TrimSpace(address)
-	src := strings.TrimSpace(nodeURL)
+	src := uc.resolveNodeURL(nodeURL)
 	if addr == "" {
 		return Balance{}, fmt.Errorf("%w: address is required", base.ErrValidation)
 	}
@@ -44,4 +57,14 @@ func (uc *GetBalance) Execute(ctx context.Context, address, nodeURL string) (Bal
 		GNK:     gnk,
 		Label:   fmt.Sprintf("%s GNK", gonkachain.FormatBalance(gnk)),
 	}, nil
+}
+
+func (uc *GetBalance) resolveNodeURL(nodeURL string) string {
+	if !uc.pinEndpointEnabled {
+		return strings.TrimSpace(nodeURL)
+	}
+	if uc.pinNodeURL != "" {
+		return uc.pinNodeURL
+	}
+	return defaultPinnedGonkaBalanceNodeURL
 }

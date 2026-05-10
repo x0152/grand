@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""Show mailbox configuration and probe SMTP/IMAP connectivity.
+
+Run this FIRST in any new email session to:
+  * verify the credentials still work,
+  * see which server folder names map to Inbox / Sent / Spam / Trash / Drafts,
+  * confirm SMTP and IMAP are both reachable.
+
+If a special folder shows "(NOT FOUND)" run `email-folders` to see the
+full server-side list and either pass the literal folder name to
+--folder, or set the matching SANDBOX_EMAIL_*_FOLDER override.
+"""
+import argparse
+import json
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def probe_smtp(cfg):
+    if not cfg.smtp_ready():
+        return "missing", "SMTP credentials are not set"
+    try:
+        with eh.open_smtp(cfg):
+            return "ok", f"reachable as {cfg.smtp_user}"
+    except Exception as e:
+        return "fail", str(e).strip()
+
+
+def probe_imap(cfg):
+    if not cfg.imap_ready():
+        return "missing", "IMAP credentials are not set"
+    try:
+        with eh.open_imap(cfg) as box:
+            count = len(list(box.fetch("ALL", limit=1, reverse=True,
+                                        mark_seen=False, headers_only=True)))
+            return "ok", f"reachable as {cfg.imap_user} (sample uid count={count})"
+    except Exception as e:
+        return "fail", str(e).strip()
+
+
+def folder_summary(cfg):
+    try:
+        with eh.open_imap(cfg) as box:
+            folders = eh.list_folders(box)
+            names = {f.name for f in folders}
+            out = []
+            for key in ("inbox", "sent", "spam", "trash", "drafts", "archive"):
+                resolved = eh.find_folder(box, key)
+                out.append({
+                    "alias": key,
+                    "resolved": resolved,
+                    "exists": resolved in names,
+                })
+            return out, sorted(names)
+    except Exception as e:
+        return [], [f"<probe failed: {e}>"]
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-status",
+                                description="Show mailbox configuration and probe connectivity")
+    p.add_argument("--json", action="store_true",
+                   help="Emit a single JSON object describing the status.")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+
+    if not (cfg.smtp_ready() or cfg.imap_ready()):
+        if args.json:
+            print(json.dumps({"configured": False, "hint": eh.NOT_CONFIGURED_HINT}))
+        else:
+            print(eh.NOT_CONFIGURED_HINT)
+        return 0
+
+    smtp_state, smtp_msg = probe_smtp(cfg)
+    imap_state, imap_msg = probe_imap(cfg)
+
+    folders_summary = []
+    folder_names = []
+    if imap_state == "ok":
+        folders_summary, folder_names = folder_summary(cfg)
+
+    exit_code = 0 if smtp_state in ("ok", "missing") and imap_state in ("ok", "missing") else 1
+
+    if args.json:
+        result = {
+            "configured": True,
+            "address": cfg.address,
+            "display_name": cfg.display_name,
+            "smtp": {
+                "host": cfg.smtp_host,
+                "port": cfg.smtp_port_int(),
+                "user": cfg.smtp_user,
+                "state": smtp_state,
+                "message": smtp_msg,
+            },
+            "imap": {
+                "host": cfg.imap_host,
+                "port": cfg.imap_port_int(),
+                "user": cfg.imap_user,
+                "state": imap_state,
+                "message": imap_msg,
+            },
+            "save_sent": cfg.save_sent,
+            "special_folders": folders_summary,
+            "all_folders": folder_names,
+        }
+        print(json.dumps(result, ensure_ascii=False))
+        return exit_code
+
+    print(f"address:    {cfg.address or '(unset)'}")
+    if cfg.display_name:
+        print(f"name:       {cfg.display_name}")
+    print(f"smtp:       {cfg.smtp_host}:{cfg.smtp_port_int()} as {cfg.smtp_user}")
+    print(f"imap:       {cfg.imap_host}:{cfg.imap_port_int()} as {cfg.imap_user}")
+    print(f"save_sent:  {cfg.save_sent}")
+    print()
+    print(f"smtp probe: {smtp_state} — {smtp_msg}")
+    print(f"imap probe: {imap_state} — {imap_msg}")
+    if imap_state == "ok":
+        print()
+        print("special folders (alias → resolved server name):")
+        for row in folders_summary:
+            mark = "" if row["exists"] else "  (NOT FOUND — run email-folders)"
+            print(f"  {row['alias']:<7} → {row['resolved']!r}{mark}")
+        print()
+        print(f"all folders ({len(folder_names)}): {', '.join(folder_names)}")
+    return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

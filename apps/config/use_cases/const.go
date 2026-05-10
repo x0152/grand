@@ -1,3 +1,7 @@
 package usecases
 
-const configID = "default"
+const (
+	configID = "default"
+
+	AppConfigID = configID
+)

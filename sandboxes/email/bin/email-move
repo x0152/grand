@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Move one or more messages from one folder into another.
+
+Examples:
+  email-move --uid 12345 --to-folder Archive             # single message, INBOX -> Archive
+  email-move --uid 1 --uid 2 --uid 3 --to-folder Receipts
+  email-move --folder Sent --uid 999 --to-folder Drafts  # move out of Sent
+
+If the destination folder doesn't exist the helper refuses up-front with the
+list of available folders — call `email-folder-create --name Receipts` first
+when you really want a new label.
+
+Implementation note: uses IMAP MOVE when supported; falls back to
+COPY+DELETE+EXPUNGE on servers without RFC 6851. UIDs may change after a
+MOVE/EXPUNGE, so refetch with `email-list` if you need them again.
+"""
+import argparse
+import json
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-move",
+                                description="Move messages between IMAP folders")
+    p.add_argument("--uid", action="append", default=[],
+                   help="Message UID (repeatable for batch).")
+    p.add_argument("--folder", default="INBOX",
+                   help="Source folder (aliases supported, default INBOX).")
+    p.add_argument("--to-folder", required=True,
+                   help="Destination folder. Must already exist (use email-folder-create).")
+    p.add_argument("--json", action="store_true",
+                   help="Emit a single JSON object describing the result.")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+    if not eh.require_imap(cfg):
+        return 0
+
+    try:
+        uids = eh.validate_uid_list(args.uid)
+    except Exception as e:
+        return eh.die("email-move", e, exit_code=2)
+
+    try:
+        with eh.open_imap(cfg) as box:
+            src = eh.set_folder(box, args.folder)
+            try:
+                dst = eh.find_folder(box, args.to_folder, strict=True)
+            except eh.FolderNotFound as e:
+                return eh.die("email-move", e, exit_code=2)
+            if dst == src:
+                return eh.die(
+                    "email-move",
+                    f"source and destination are the same folder ({src!r}); nothing to do",
+                    exit_code=2,
+                )
+            method = "MOVE"
+            try:
+                box.move(uids, dst)
+            except Exception:
+                # Fall back to COPY + DELETE + EXPUNGE for old servers.
+                method = "COPY+DELETE+EXPUNGE"
+                box.copy(uids, dst)
+                box.delete(uids)
+                box.expunge()
+    except eh.FolderNotFound as e:
+        return eh.die("email-move", e, exit_code=2)
+    except Exception as e:
+        return eh.die("email-move", e)
+
+    if args.json:
+        print(json.dumps({
+            "from_folder": src,
+            "to_folder": dst,
+            "uids": uids,
+            "method": method,
+        }, ensure_ascii=False))
+    else:
+        print(f"moved {len(uids)} message(s) from {src!r} to {dst!r} via {method}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

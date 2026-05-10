@@ -3,588 +3,863 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="dark light" />
+  <meta name="color-scheme" content="light" />
 
-  <title>GRAND — A security boundary for AI agents</title>
-  <meta name="description" content="GRAND is a secure control plane for AI agents. Agents run in isolated sandboxes inside your cluster — chat, scheduled plans, or one-shot tasks — and every command passes a deterministic guard before it ever reaches a server. Agents can also build new sandboxes on demand from a Dockerfile." />
+  <title>GRAND — Run AI agents without trusting them with your machine</title>
+  <meta name="description" content="GRAND is a multi-agent runtime. An LLM orchestrator routes tasks; agents execute inside isolated sandboxes; every command passes a deterministic Guard before it touches a server. First-class engine: Gonka — decentralised inference for less than a cent per million tokens." />
 
   <link rel="icon" type="image/svg+xml" href="./logo.svg" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="GRAND — A security boundary for AI agents" />
-  <meta property="og:description" content="Agents run in isolated sandboxes inside your cluster — chat, plans, ad-hoc tasks. Every command passes a deterministic guard. Agents can also build new sandboxes on demand." />
-  <meta property="og:image" content="./landing/assets/og.svg" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="GRAND — A security boundary for AI agents" />
-  <meta name="twitter:description" content="Agents run in isolated sandboxes inside your cluster — chat, plans, ad-hoc tasks. Every command passes a deterministic guard. Agents can also build new sandboxes on demand." />
-  <meta name="twitter:image" content="./landing/assets/og.svg" />
+  <meta property="og:title" content="GRAND — Run AI agents without trusting them with your machine" />
+  <meta property="og:description" content="A multi-agent runtime. Isolated sandboxes, deterministic Guard, decentralised inference via Gonka." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="./landing/style.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafafa;
+      --fg: #0a0a0a;
+      --muted: #6b7280;
+      --line: #0a0a0a;
+      --rule-soft: rgba(10, 10, 10, 0.18);
+      --accent: #10b981;
+      --accent-soft: rgba(16, 185, 129, 0.10);
+      --warn: #b45309;
+      --danger: #b91c1c;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-feature-settings: 'ss01', 'cv11';
+      letter-spacing: -0.01em;
+      line-height: 1.4;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .mono {
+      font-family: 'Geist Mono', ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: 0;
+    }
+
+    .masthead {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 24px;
+      padding: 22px 48px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .masthead .left,
+    .masthead .right {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .masthead .right { justify-content: flex-end; }
+    .masthead .center {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 3px 10px;
+      border: 1px solid var(--line);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+    .pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .double-rule {
+      border-bottom: 1px solid var(--line);
+      margin: 0 48px;
+      padding-bottom: 4px;
+    }
+
+    .display {
+      padding: 64px 48px 28px;
+      position: relative;
+    }
+    .display .axis {
+      position: absolute;
+      left: 48px;
+      right: 48px;
+      top: 14px;
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .display h1 {
+      margin: 0 0 40px;
+      font-weight: 800;
+      font-size: clamp(96px, 17vw, 280px);
+      line-height: 0.82;
+      letter-spacing: -0.06em;
+      text-align: center;
+    }
+    .display h1 .mark {
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .lede-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 24px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+    .lede-row .l,
+    .lede-row .r {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .lede-row .r { text-align: right; }
+    .lede {
+      max-width: 720px;
+      margin: 0 auto;
+      text-align: center;
+      font-size: clamp(20px, 2vw, 28px);
+      line-height: 1.35;
+      font-weight: 400;
+      letter-spacing: -0.015em;
+    }
+    .lede em {
+      font-style: italic;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .hero-cta {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 22px;
+      border: 1px solid var(--fg);
+      background: var(--fg);
+      color: var(--bg);
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 600;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .btn-primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--fg);
+    }
+    .btn-primary svg { width: 16px; height: 16px; }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--fg);
+      padding-bottom: 2px;
+    }
+    .btn-ghost:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .duo {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      padding: 0 48px;
+    }
+    .duo .col { padding: 36px 56px 36px; }
+    .duo .col.left { padding-left: 0; }
+    .duo .col.right { padding-right: 0; }
+    .duo .rule { background: var(--line); }
+    .duo .label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .duo .label .num { color: var(--fg); font-weight: 600; }
+    .duo h2 {
+      margin: 0 0 14px;
+      font-size: clamp(36px, 4.4vw, 60px);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      font-weight: 700;
+    }
+    .duo h2 em {
+      font-style: italic;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .duo p {
+      margin: 0 0 12px;
+      font-size: 16px;
+      line-height: 1.55;
+      max-width: 38ch;
+    }
+    .duo .meta {
+      margin-top: 22px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .duo .meta .row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 12px;
+    }
+    .duo .meta .k { color: var(--fg); }
+    .duo .link {
+      margin-top: 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--fg);
+      padding-bottom: 2px;
+    }
+    .duo .link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .stat {
+      margin: 18px 0 8px;
+      padding: 18px 20px 16px;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+    .stat .num {
+      font-weight: 800;
+      font-size: clamp(38px, 4.6vw, 64px);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+    }
+    .stat .num .lt {
+      color: var(--fg);
+      font-weight: 500;
+    }
+    .stat .unit {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      max-width: 12ch;
+      line-height: 1.3;
+    }
+    .stat .unit b {
+      display: block;
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    .bounty {
+      margin-top: 22px;
+      padding: 18px 20px 20px;
+      border: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bounty .meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .bounty .meta .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--warn);
+    }
+    .bounty h3 {
+      margin: 4px 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+    .bounty h3 em {
+      font-style: italic;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .bounty p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 100%;
+    }
+    .bounty .cta {
+      margin-top: 8px;
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--fg);
+      color: var(--bg);
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 600;
+      border: 1px solid var(--fg);
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .bounty .cta:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--fg);
+    }
+
+    .runrow {
+      margin: 0 48px;
+      padding: 36px 0 0;
+      border-top: 1px solid var(--line);
+    }
+    .runrow-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 22px;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .runrow-head .label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .runrow-head .label .num { color: var(--fg); font-weight: 600; }
+    .runrow-head h2 {
+      margin: 0;
+      font-size: clamp(28px, 3.4vw, 44px);
+      line-height: 1.0;
+      letter-spacing: -0.03em;
+      font-weight: 700;
+    }
+    .runrow-head h2 em {
+      font-style: italic;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .runrow .grid {
+      display: grid;
+      grid-template-columns: 1.7fr 1px 1fr;
+      border-top: 1px solid var(--line);
+      padding: 28px 0 36px;
+    }
+    .runrow .diag-col {
+      padding: 0 48px 0 0;
+      min-width: 0;
+    }
+    .runrow .diag-col .head,
+    .runrow .qs-col .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .runrow .diag-col .head b,
+    .runrow .qs-col .head b { color: var(--fg); font-weight: 600; }
+    .runrow .qs-col .head .arrow {
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0;
+      margin-right: 6px;
+    }
+    .runrow .rule { background: var(--line); align-self: stretch; }
+    .runrow .qs-col {
+      padding: 0 0 0 48px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .qs-step {
+      padding: 14px 0;
+      border-bottom: 1px dashed var(--rule-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .qs-step:first-of-type { padding-top: 0; }
+    .qs-step:last-of-type { padding-bottom: 0; border-bottom: 0; }
+    .qs-step .meta {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .qs-step .meta .n {
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .qs-step pre {
+      margin: 0;
+      padding: 11px 14px;
+      background: var(--fg);
+      color: var(--bg);
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .qs-step pre .prompt { color: #71717a; }
+    .qs-step pre .accent { color: var(--accent); }
+    .qs-step pre .comment { color: #71717a; font-style: italic; }
+
+    svg.diagram {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .diagram .node      { fill: var(--bg); stroke: var(--line); stroke-width: 1; }
+    .diagram .node-acc  { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
+    .diagram .node-guard{ fill: rgba(180, 83, 9, 0.06); stroke: var(--warn); stroke-width: 1; }
+    .diagram .node-deny { fill: var(--bg); stroke: var(--danger); stroke-width: 1; stroke-dasharray: 3 3; }
+    .diagram .node-ext  { fill: var(--bg); stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
+    .diagram .container { fill: none; stroke: var(--line); stroke-width: 1; stroke-dasharray: 4 3; }
+    .diagram .sb-wrap   { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
+    .diagram .sb-item   { fill: var(--bg); stroke: var(--accent); stroke-width: 1; }
+    .diagram .sb-ctrl   { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.4; }
+    .diagram .lbl       { font: 600 13px 'Geist', sans-serif; fill: var(--fg); }
+    .diagram .sub       { font: 400 10px 'Geist Mono', monospace; fill: var(--muted); letter-spacing: 0.04em; }
+    .diagram .ctitle    { font: 600 10px 'Geist Mono', monospace; fill: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; }
+    .diagram .glabel    { font: 700 12px 'Geist', sans-serif; fill: var(--warn); letter-spacing: 0.04em; }
+    .diagram .gtag      { font: 500 9px 'Geist Mono', monospace; fill: var(--warn); letter-spacing: 0.16em; text-transform: uppercase; }
+    .diagram .flow      { stroke: var(--fg); stroke-width: 1; fill: none; }
+    .diagram .flow-deny { stroke: var(--danger); stroke-width: 1.2; fill: none; stroke-dasharray: 3 3; }
+    .diagram .flow-ok   { stroke: var(--accent); stroke-width: 1.2; fill: none; }
+    .diagram .flow-ssh  { stroke: var(--accent); stroke-width: 1; fill: none; }
+    .diagram .edge      { font: 600 9px 'Geist Mono', monospace; letter-spacing: 0.18em; text-transform: uppercase; fill: var(--muted); }
+    .diagram .edge-ok   { fill: var(--accent); }
+    .diagram .edge-deny { fill: var(--danger); }
+    .diagram .edge-ssh  { fill: var(--accent); }
+    .diagram .caption   { font: 500 10px 'Geist Mono', monospace; fill: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+
+    .colophon {
+      padding: 16px 48px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .colophon .k { color: var(--fg); margin-right: 8px; }
+
+    @media (max-width: 980px) {
+      .runrow .grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding-top: 24px;
+      }
+      .runrow .diag-col { padding-right: 0; }
+      .runrow .rule { display: none; }
+      .runrow .qs-col {
+        padding: 24px 0 0;
+        border-top: 1px solid var(--line);
+      }
+      .display h1 {
+        font-size: clamp(96px, 18vw, 200px);
+        margin-bottom: 28px;
+      }
+    }
+
+    @media (max-width: 880px) {
+      .masthead,
+      .double-rule,
+      .display,
+      .colophon {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+      .double-rule { margin: 0 24px; }
+      .runrow { margin: 0 24px; }
+      .display .axis { left: 24px; right: 24px; }
+      .duo {
+        grid-template-columns: 1fr;
+        padding: 0 24px;
+      }
+      .duo .col { padding: 28px 0 24px; }
+      .duo .col.right { border-top: 1px solid var(--line); }
+      .duo .rule { display: none; }
+      .display { padding-top: 48px; }
+      .colophon { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .masthead { grid-template-columns: 1fr; }
+      .masthead .center,
+      .masthead .right { display: none; }
+    }
+  </style>
 </head>
-
 <body>
-  <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
-    <defs>
-      <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
-      </symbol>
-      <symbol id="i-github" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.92.58.1.79-.25.79-.56 0-.27-.01-1-.02-1.96-3.2.7-3.88-1.54-3.88-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.9-.39s1.98.13 2.9.39c2.21-1.49 3.18-1.18 3.18-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.13 0 1.54-.01 2.78-.01 3.16 0 .31.21.67.8.55 4.56-1.53 7.85-5.84 7.85-10.92C23.5 5.65 18.35.5 12 .5z"/>
-      </symbol>
-      <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </symbol>
-      <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-      </symbol>
-      <symbol id="i-cluster" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1.4"/>
-        <rect x="14" y="3" width="7" height="7" rx="1.4"/>
-        <rect x="3" y="14" width="7" height="7" rx="1.4"/>
-        <rect x="14" y="14" width="7" height="7" rx="1.4"/>
-      </symbol>
-      <symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m4 9 4 3-4 3"/><path d="M11 16h9"/><rect x="2" y="4" width="20" height="16" rx="2"/>
-      </symbol>
-      <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
-      </symbol>
-      <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>
-      </symbol>
-      <symbol id="i-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 3h6"/><path d="M10 3v7L4.5 19A2 2 0 0 0 6.2 22h11.6a2 2 0 0 0 1.7-3L14 10V3"/>
-      </symbol>
-      <symbol id="i-stethoscope" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M6 3v6a4 4 0 0 0 8 0V3"/><path d="M10 17a3 3 0 1 0 6 0v-2"/><circle cx="19" cy="13" r="2"/>
-      </symbol>
-      <symbol id="i-route" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a4 4 0 0 0 0-8h-6a4 4 0 0 1 0-8h3"/>
-      </symbol>
-      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m4 12 5 5L20 6"/>
-      </symbol>
-      <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>
-      </symbol>
-      <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>
-      </symbol>
-      <!-- GRAND · connected paths
-           one orchestrator at the top routes data through one of three connected
-           downstream channels — reads as an inverted trident. -->
-      <symbol id="i-grand" viewBox="0 0 64 64" fill="none">
-        <g stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-          <path d="M32 10 V26"/>
-          <path d="M32 26 H14 V54"/>
-          <path d="M32 26 V54"/>
-          <path d="M32 26 H50 V54"/>
-        </g>
-        <g fill="currentColor">
-          <path d="M14 60 L10 53 L18 53 Z"/>
-          <path d="M32 60 L28 53 L36 53 Z"/>
-          <path d="M50 60 L46 53 L54 53 Z"/>
-        </g>
-        <circle cx="32" cy="26" r="2.4" fill="currentColor"/>
-        <circle cx="32" cy="8" r="3.8" fill="currentColor"/>
-      </symbol>
-    </defs>
-  </svg>
 
-  <header class="site-header">
-    <div class="container row">
-      <a class="brand" href="#top" aria-label="GRAND home">
-        <svg class="mlogo" width="28" height="28" aria-hidden="true"><use href="#i-grand"/></svg>
-        <span class="word">GRAND</span>
-        <span class="meta">v0 · runtime</span>
-      </a>
-      <nav class="nav" aria-label="Primary">
-        <a href="#architecture" class="label-only">Architecture</a>
-        <a href="https://github.com/x0152/grand" class="gh" rel="noopener noreferrer">
-          <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
-          <span>GitHub</span>
-        </a>
-      </nav>
+  <header class="masthead">
+    <div class="left">
+      <span class="pill"><span class="dot"></span>v0 · in development</span>
     </div>
+    <div class="center">a runtime specimen</div>
+    <div class="right">mit license · 2026</div>
   </header>
+  <div class="double-rule"></div>
 
-  <main id="top">
+  <section class="display">
+    <div class="axis">
+      <span>display · geist 800</span>
+      <span>open source</span>
+    </div>
 
-  <section class="hero">
-    <div class="container">
-      <div class="grid">
-        <div class="copy reveal">
-          <span class="stamp">
-            <span class="dot" aria-hidden="true"></span>
-            <span>open source · v0</span>
-          </span>
+    <h1><span class="mark">▍</span>GRAND</h1>
 
-          <h1>
-            Run powerful AI agents <em>without trusting them</em> with your machine.
-          </h1>
+    <div class="lede-row">
+      <span class="l">§ a runtime</span>
+      <p class="lede">
+        Run powerful AI agents <em>without trusting them</em> with your machine.
+      </p>
+      <span class="r">§ for your infra</span>
+    </div>
 
-          <p class="lede">
-            Agents run in isolated sandboxes inside your cluster, can build new ones on demand from a Dockerfile, and every command passes a deterministic guard before execution.
-          </p>
-
-          <div class="ctas">
-            <a class="btn btn-primary" href="https://github.com/x0152/grand" rel="noopener noreferrer">
-              <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
-              View on GitHub
-              <svg class="arrow" width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg>
-            </a>
-            <a class="cta-inline" href="#architecture">See architecture</a>
-          </div>
-        </div>
-
-        <div class="chat-mock reveal" aria-hidden="true">
-          <div class="app-shell">
-            <aside class="app-side">
-              <div class="app-side-head">
-                <div class="app-brand">
-                  <svg class="mlogo" width="26" height="26" aria-hidden="true"><use href="#i-grand"/></svg>
-                  <div>
-                    <div class="app-brand-name">GRAND</div>
-                    <div class="app-brand-meta">v0 · runtime</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="app-new-chat">
-                <svg width="11" height="11" aria-hidden="true"><use href="#i-check"/></svg>
-                new chat
-              </div>
-
-              <div class="app-sessions">
-                <div class="app-session active">
-                  <svg width="11" height="11" aria-hidden="true"><use href="#i-terminal"/></svg>
-                  <div>
-                    <span>disk pressure edge-*</span>
-                    <small>today</small>
-                  </div>
-                </div>
-                <div class="app-session">
-                  <svg width="11" height="11" aria-hidden="true"><use href="#i-terminal"/></svg>
-                  <div>
-                    <span>node oom summary</span>
-                    <small>yesterday</small>
-                  </div>
-                </div>
-              </div>
-
-              <div class="app-nav">
-                <div class="app-kicker"><span class="num">02</span><span class="sep">/</span>activity</div>
-                <div class="app-nav-row">plans</div>
-                <div class="app-nav-row">logs</div>
-                <div class="app-kicker"><span class="num">03</span><span class="sep">/</span>configuration</div>
-                <div class="app-nav-row active">ai engine</div>
-                <div class="app-nav-row">hosts</div>
-                <div class="app-nav-row">skills</div>
-              </div>
-            </aside>
-
-            <div class="app-main">
-              <div class="app-chat">
-                <div class="app-chat-scroll">
-                  <div class="app-user-bubble">Investigate disk pressure on edge-* and propose safe cleanup.</div>
-                  <div class="app-assistant-bubble">
-                    <div class="app-assistant-meta">ops-default / gpt-4o-mini · 12s · ~840 tok</div>
-                    <p>Three edge hosts exceed 90% on <code>/var/lib/docker</code>. Guard blocked prune because command is outside profile whitelist.</p>
-                    <div class="app-step-badges">
-                      <span><svg width="10" height="10" aria-hidden="true"><use href="#i-shield"/></svg>ssh.diagnostic · allowed</span>
-                      <span class="denied"><svg width="10" height="10" aria-hidden="true"><use href="#i-shield"/></svg>docker.prune · denied</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="app-composer">
-                  <span class="ic"><svg width="12" height="12" aria-hidden="true"><use href="#i-doc"/></svg></span>
-                  <span class="input">type a message — shift+enter for newline</span>
-                  <span class="send"><svg width="12" height="12" aria-hidden="true"><use href="#i-arrow"/></svg></span>
-                </div>
-              </div>
-
-              <aside class="app-resources">
-                <div class="app-kicker"><span class="num">01</span><span class="sep">/</span>resources</div>
-                <div class="app-resource-card">
-                  <b>active step</b>
-                  <span>guard.inspect / 2.1s</span>
-                </div>
-                <div class="app-resource-card">
-                  <b>connection</b>
-                  <span>edge-prod (ssh scoped)</span>
-                </div>
-                <div class="app-resource-card">
-                  <b>session</b>
-                  <span>sess_8a3f · live</span>
-                </div>
-              </aside>
-            </div>
-          </div>
-          <span class="scan-line" aria-hidden="true"></span>
-        </div>
-      </div>
+    <div class="hero-cta">
+      <a class="btn-primary" href="https://github.com/x0152/grand">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.92.58.1.79-.25.79-.56 0-.27-.01-1-.02-1.96-3.2.7-3.88-1.54-3.88-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.9-.39s1.98.13 2.9.39c2.21-1.49 3.18-1.18 3.18-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.13 0 1.54-.01 2.78-.01 3.16 0 .31.21.67.8.55 4.56-1.53 7.85-5.84 7.85-10.92C23.5 5.65 18.35.5 12 .5z"/>
+        </svg>
+        view on github →
+      </a>
+      <a class="btn-ghost" href="#run">how to run ↓</a>
     </div>
   </section>
 
-  <section class="section architecture" id="architecture">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="kicker"><span>architecture</span></span>
-        <h2>One trust boundary, enforced before execution.</h2>
-        <p>The Agent Loop reasons through an LLM and proposes tool calls. The Guard authorizes each call against capability profiles — denied calls stop before execution. Allowed calls fan out to per-task agents that SSH into in-cluster sandboxes; the <code>runtimectl</code> sandbox can also build brand-new sandboxes on demand from a Dockerfile. The same scoped SSH reaches your external servers. Every step lands in PostgreSQL.</p>
+  <section class="duo">
+    <div class="col left">
+      <div class="label"><span class="num">01</span> <span>the runtime · grand</span></div>
+      <h2>A boundary, not a chatbot.</h2>
+      <p>
+        An LLM orchestrator routes tasks. Per-task agents run inside isolated sandboxes —
+        <span class="mono">base · browser · ffmpeg · netsec · runtimectl</span>. The Guard
+        authorises every command, every domain, every IP — before it touches a server.
+      </p>
+
+      <div class="meta">
+        <div class="row"><span class="k">interface</span><span>web · telegram · plans</span></div>
+        <div class="row"><span class="k">guard</span><span>commands · domains · ips</span></div>
+        <div class="row"><span class="k">engine</span><span>gonka or any openai-compatible</span></div>
       </div>
 
-      <div class="diagram-wrap reveal">
-        <svg class="diagram" viewBox="0 0 1100 660" role="img" aria-label="GRAND architecture. Telegram and web chat feed the GRAND container, which runs Web Panel, Agent Loop and LLM client (talking to an external LLM provider over API), backed by PostgreSQL. Every tool call from the Agent Loop passes through the Guard; denied calls go to a blocked outcome, allowed calls fan out into per-task agents. Each agent opens scoped SSH on port 22 — to in-cluster sandbox containers (base, browser, ffmpeg, netsec, runtimectl) for specialized tools, and to your external servers and APIs for the actual operation. The runtimectl sandbox is the controller: it can build and register new sandboxes on demand from a Dockerfile.">
+      <a class="link" href="https://github.com/x0152/grand">view on github →</a>
+    </div>
+
+    <div class="rule" aria-hidden="true"></div>
+
+    <div class="col right">
+      <div class="label"><span class="num">02</span> <span>the engine · gonka</span></div>
+      <h2>Cheap inference. <em>Decentralised.</em></h2>
+
+      <div class="stat">
+        <span class="num"><span class="lt">&lt;</span>$0.01</span>
+        <span class="unit"><b>per 1M tokens</b>open peer marketplace</span>
+      </div>
+
+      <p>
+        Gonka is a decentralised inference network. An open marketplace of providers serves
+        any OpenAI-compatible model — no central provider, no subscription, settled per
+        request from a wallet.
+      </p>
+
+      <div class="bounty">
+        <div class="meta">
+          <span class="dot"></span>
+          <span>protocol · in development &amp; testing</span>
+        </div>
+        <h3>Help build it. <em>Get paid in USDT.</em></h3>
+        <p>
+          Open issues come with bounties paid in <span class="mono">USDT</span> — ship a PR,
+          get rewarded by the protocol.
+        </p>
+        <a class="cta" href="https://gonka.ai">browse bounties →</a>
+      </div>
+
+      <a class="link" href="https://gonka.ai">about gonka →</a>
+    </div>
+  </section>
+
+  <section class="runrow" id="run">
+    <div class="runrow-head">
+      <span class="label"><span class="num">03</span> <span>how it works · how to run</span></span>
+      <h2>The architecture. <em>Three commands.</em></h2>
+    </div>
+
+    <div class="grid">
+      <div class="diag-col">
+        <div class="head">
+          <span><b>fig. 01</b> · architecture</span>
+          <span>scale · n.t.s.</span>
+        </div>
+        <svg class="diagram" viewBox="0 0 1100 660" role="img" aria-label="GRAND architecture diagram">
           <defs>
             <marker id="m-allow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
-              <path d="M0,0 L10,5 L0,10 z" fill="#14b8a6"/>
+              <path d="M0,0 L10,5 L0,10 z" fill="#10b981"/>
             </marker>
             <marker id="m-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
-              <path d="M0,0 L10,5 L0,10 z" fill="#f43f5e"/>
+              <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/>
             </marker>
             <marker id="m-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
-              <path d="M0,0 L10,5 L0,10 z" fill="#71717a"/>
+              <path d="M0,0 L10,5 L0,10 z" fill="#0a0a0a"/>
             </marker>
             <marker id="m-flow-bi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-              <path d="M0,0 L10,5 L0,10 z" fill="#71717a"/>
+              <path d="M0,0 L10,5 L0,10 z" fill="#0a0a0a"/>
             </marker>
             <marker id="m-ssh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
-              <path d="M0,0 L10,5 L0,10 z" fill="#14b8a6"/>
+              <path d="M0,0 L10,5 L0,10 z" fill="#10b981"/>
             </marker>
           </defs>
 
-          <rect class="node trig" x="60" y="22" width="120" height="38"/>
-          <text x="120" y="40" text-anchor="middle" class="node-label">telegram</text>
-          <text x="120" y="54" text-anchor="middle" class="node-sub">bot</text>
+          <rect class="node" x="60" y="22" width="120" height="38"/>
+          <text x="120" y="40" text-anchor="middle" class="lbl">telegram</text>
+          <text x="120" y="54" text-anchor="middle" class="sub">bot</text>
 
-          <rect class="node trig" x="200" y="22" width="120" height="38"/>
-          <text x="260" y="40" text-anchor="middle" class="node-label">web chat</text>
-          <text x="260" y="54" text-anchor="middle" class="node-sub">react ui</text>
+          <rect class="node" x="200" y="22" width="120" height="38"/>
+          <text x="260" y="40" text-anchor="middle" class="lbl">web chat</text>
+          <text x="260" y="54" text-anchor="middle" class="sub">react ui</text>
 
-          <rect class="node external" x="900" y="18" width="180" height="46"/>
-          <text x="990" y="38" text-anchor="middle" class="node-label">llm provider</text>
-          <text x="990" y="54" text-anchor="middle" class="node-sub">openai · ollama · local</text>
+          <rect class="node-ext" x="900" y="18" width="180" height="46"/>
+          <text x="990" y="38" text-anchor="middle" class="lbl">llm provider</text>
+          <text x="990" y="54" text-anchor="middle" class="sub">openai · ollama · gonka</text>
 
-          <rect class="container-box" x="40" y="92" width="1020" height="384" rx="10"/>
-          <text x="58" y="112" class="container-title">GRAND · docker-compose / k8s</text>
+          <rect class="container" x="40" y="92" width="1020" height="384" rx="6"/>
+          <text x="58" y="112" class="ctitle">grand · docker compose / k8s</text>
 
           <rect class="node" x="66" y="130" width="170" height="58"/>
-          <text x="151" y="155" text-anchor="middle" class="node-label">web panel</text>
-          <text x="151" y="172" text-anchor="middle" class="node-sub">react</text>
+          <text x="151" y="155" text-anchor="middle" class="lbl">web panel</text>
+          <text x="151" y="172" text-anchor="middle" class="sub">react</text>
 
-          <rect class="node node-accent" x="290" y="130" width="240" height="58"/>
-          <text x="410" y="155" text-anchor="middle" class="node-label">agent loop</text>
-          <text x="410" y="172" text-anchor="middle" class="node-sub">control plane · llm reasoning</text>
+          <rect class="node-acc" x="290" y="130" width="240" height="58"/>
+          <text x="410" y="155" text-anchor="middle" class="lbl">agent loop</text>
+          <text x="410" y="172" text-anchor="middle" class="sub">control plane · llm reasoning</text>
 
           <rect class="node" x="900" y="130" width="140" height="58"/>
-          <text x="970" y="155" text-anchor="middle" class="node-label">llm client</text>
-          <text x="970" y="172" text-anchor="middle" class="node-sub">openai-compatible</text>
+          <text x="970" y="155" text-anchor="middle" class="lbl">llm client</text>
+          <text x="970" y="172" text-anchor="middle" class="sub">openai-compatible</text>
 
           <rect class="node" x="66" y="232" width="170" height="58"/>
-          <text x="151" y="257" text-anchor="middle" class="node-label">postgresql</text>
-          <text x="151" y="274" text-anchor="middle" class="node-sub">session log · audit</text>
+          <text x="151" y="257" text-anchor="middle" class="lbl">postgresql</text>
+          <text x="151" y="274" text-anchor="middle" class="sub">session log · audit</text>
 
-          <rect class="node guard-node" x="340" y="222" width="160" height="78" rx="8"/>
-          <text x="420" y="252" text-anchor="middle" class="guard-label">GUARD</text>
-          <text x="420" y="270" text-anchor="middle" class="node-sub">profiles · whitelist</text>
-          <text x="420" y="286" text-anchor="middle" class="guard-tag">authorize</text>
+          <rect class="node-guard" x="340" y="222" width="160" height="78" rx="4"/>
+          <text x="420" y="252" text-anchor="middle" class="glabel">GUARD</text>
+          <text x="420" y="270" text-anchor="middle" class="sub">profiles · whitelist</text>
+          <text x="420" y="286" text-anchor="middle" class="gtag">authorize</text>
 
-          <rect class="node block-node" x="560" y="232" width="150" height="58"/>
-          <text x="635" y="257" text-anchor="middle" class="node-label">blocked</text>
-          <text x="635" y="274" text-anchor="middle" class="node-sub">denied before exec</text>
+          <rect class="node-deny" x="560" y="232" width="150" height="58"/>
+          <text x="635" y="257" text-anchor="middle" class="lbl">blocked</text>
+          <text x="635" y="274" text-anchor="middle" class="sub">denied before exec</text>
 
-          <rect class="node node-accent" x="90" y="356" width="110" height="50"/>
-          <text x="145" y="378" text-anchor="middle" class="node-label">agent</text>
-          <text x="145" y="392" text-anchor="middle" class="node-sub">per-task</text>
+          <rect class="node-acc" x="90" y="356" width="110" height="50"/>
+          <text x="145" y="378" text-anchor="middle" class="lbl">agent</text>
+          <text x="145" y="392" text-anchor="middle" class="sub">per-task</text>
 
-          <rect class="node node-accent" x="220" y="356" width="110" height="50"/>
-          <text x="275" y="378" text-anchor="middle" class="node-label">agent</text>
-          <text x="275" y="392" text-anchor="middle" class="node-sub">per-task</text>
+          <rect class="node-acc" x="220" y="356" width="110" height="50"/>
+          <text x="275" y="378" text-anchor="middle" class="lbl">agent</text>
+          <text x="275" y="392" text-anchor="middle" class="sub">per-task</text>
 
-          <rect class="node node-accent" x="350" y="356" width="110" height="50"/>
-          <text x="405" y="378" text-anchor="middle" class="node-label">agent</text>
-          <text x="405" y="392" text-anchor="middle" class="node-sub">per-task</text>
+          <rect class="node-acc" x="350" y="356" width="110" height="50"/>
+          <text x="405" y="378" text-anchor="middle" class="lbl">agent</text>
+          <text x="405" y="392" text-anchor="middle" class="sub">per-task</text>
 
-          <rect class="node node-accent" x="480" y="356" width="110" height="50"/>
-          <text x="535" y="378" text-anchor="middle" class="node-label">agent</text>
-          <text x="535" y="392" text-anchor="middle" class="node-sub">per-task</text>
+          <rect class="node-acc" x="480" y="356" width="110" height="50"/>
+          <text x="535" y="378" text-anchor="middle" class="lbl">agent</text>
+          <text x="535" y="392" text-anchor="middle" class="sub">per-task</text>
 
-          <rect class="sb-wrap" x="70" y="494" width="660" height="110" rx="8"/>
+          <rect class="sb-wrap" x="70" y="494" width="660" height="110" rx="4"/>
 
-          <rect class="node sb-item" x="90" y="510" width="110" height="56"/>
-          <text x="145" y="532" text-anchor="middle" class="node-label">base</text>
-          <text x="145" y="549" text-anchor="middle" class="node-sub">python · cli · ssh :22</text>
+          <rect class="sb-item" x="90" y="510" width="110" height="56"/>
+          <text x="145" y="532" text-anchor="middle" class="lbl">base</text>
+          <text x="145" y="549" text-anchor="middle" class="sub">python · cli</text>
 
-          <rect class="node sb-item" x="220" y="510" width="110" height="56"/>
-          <text x="275" y="532" text-anchor="middle" class="node-label">browser</text>
-          <text x="275" y="549" text-anchor="middle" class="node-sub">playwright · ssh :22</text>
+          <rect class="sb-item" x="220" y="510" width="110" height="56"/>
+          <text x="275" y="532" text-anchor="middle" class="lbl">browser</text>
+          <text x="275" y="549" text-anchor="middle" class="sub">playwright</text>
 
-          <rect class="node sb-item" x="350" y="510" width="110" height="56"/>
-          <text x="405" y="532" text-anchor="middle" class="node-label">ffmpeg</text>
-          <text x="405" y="549" text-anchor="middle" class="node-sub">media · ssh :22</text>
+          <rect class="sb-item" x="350" y="510" width="110" height="56"/>
+          <text x="405" y="532" text-anchor="middle" class="lbl">ffmpeg</text>
+          <text x="405" y="549" text-anchor="middle" class="sub">media</text>
 
-          <rect class="node sb-item" x="480" y="510" width="110" height="56"/>
-          <text x="535" y="532" text-anchor="middle" class="node-label">netsec</text>
-          <text x="535" y="549" text-anchor="middle" class="node-sub">nmap · dig · ssh :22</text>
+          <rect class="sb-item" x="480" y="510" width="110" height="56"/>
+          <text x="535" y="532" text-anchor="middle" class="lbl">netsec</text>
+          <text x="535" y="549" text-anchor="middle" class="sub">nmap · dig</text>
 
-          <rect class="node sb-item sb-controller" x="610" y="510" width="110" height="56"/>
-          <text x="665" y="532" text-anchor="middle" class="node-label">runtimectl</text>
-          <text x="665" y="549" text-anchor="middle" class="node-sub">controller · builds new</text>
+          <rect class="sb-ctrl" x="610" y="510" width="110" height="56"/>
+          <text x="665" y="532" text-anchor="middle" class="lbl">runtimectl</text>
+          <text x="665" y="549" text-anchor="middle" class="sub">controller</text>
 
-          <text x="400" y="590" text-anchor="middle" class="container-title">sandboxes · in-cluster · sibling containers · runtimectl spawns more on demand</text>
+          <text x="400" y="590" text-anchor="middle" class="ctitle">sandboxes · ssh :22 · sibling containers</text>
 
-          <rect class="node external" x="780" y="494" width="290" height="110"/>
-          <text x="925" y="528" text-anchor="middle" class="node-label">your infra</text>
-          <text x="925" y="546" text-anchor="middle" class="node-sub">linux · vm · bare metal · apis</text>
-          <text x="925" y="562" text-anchor="middle" class="node-sub">scoped ssh · per-host credentials</text>
-          <text x="925" y="590" text-anchor="middle" class="container-title">your servers · external</text>
+          <rect class="node-ext" x="780" y="494" width="290" height="110"/>
+          <text x="925" y="528" text-anchor="middle" class="lbl">your infra</text>
+          <text x="925" y="546" text-anchor="middle" class="sub">linux · vm · bare metal · apis</text>
+          <text x="925" y="562" text-anchor="middle" class="sub">scoped ssh · per-host credentials</text>
+          <text x="925" y="590" text-anchor="middle" class="ctitle">your servers · external</text>
 
-          <text x="555" y="638" text-anchor="middle" class="caption">sandboxes are sibling containers shipped with GRAND · runtimectl can build new ones on demand · the same scoped ssh from any agent reaches your external servers</text>
+          <text x="555" y="638" text-anchor="middle" class="caption">runtimectl can build new sandboxes on demand · scoped ssh reaches your external servers</text>
 
           <path class="flow" d="M120 60 V92" marker-end="url(#m-flow)"/>
           <path class="flow" d="M260 60 V92" marker-end="url(#m-flow)"/>
 
           <path class="flow" d="M970 64 V130" marker-start="url(#m-flow-bi)" marker-end="url(#m-flow-bi)"/>
-          <text x="980" y="110" class="edge-label">api</text>
+          <text x="980" y="110" class="edge">api</text>
 
           <path class="flow" d="M530 159 H900" marker-start="url(#m-flow-bi)" marker-end="url(#m-flow-bi)"/>
 
           <path class="flow" d="M410 188 V222" marker-end="url(#m-flow)"/>
-          <text x="418" y="208" class="edge-label">tool calls</text>
+          <text x="418" y="208" class="edge">tool calls</text>
 
-          <path class="deny" d="M500 261 H560" marker-end="url(#m-deny)"/>
-          <text x="528" y="252" text-anchor="middle" class="edge-label edge-label-deny">DENY</text>
+          <path class="flow-deny" d="M500 261 H560" marker-end="url(#m-deny)"/>
+          <text x="528" y="252" text-anchor="middle" class="edge edge-deny">deny</text>
 
-          <path class="allow" d="M420 300 V330"/>
-          <path class="allow" d="M145 330 H535"/>
-          <path class="allow" d="M145 330 V356" marker-end="url(#m-allow)"/>
-          <path class="allow" d="M275 330 V356" marker-end="url(#m-allow)"/>
-          <path class="allow" d="M405 330 V356" marker-end="url(#m-allow)"/>
-          <path class="allow" d="M535 330 V356" marker-end="url(#m-allow)"/>
-          <text x="436" y="320" class="edge-label edge-label-allow">ALLOW</text>
+          <path class="flow-ok" d="M420 300 V330"/>
+          <path class="flow-ok" d="M145 330 H535"/>
+          <path class="flow-ok" d="M145 330 V356" marker-end="url(#m-allow)"/>
+          <path class="flow-ok" d="M275 330 V356" marker-end="url(#m-allow)"/>
+          <path class="flow-ok" d="M405 330 V356" marker-end="url(#m-allow)"/>
+          <path class="flow-ok" d="M535 330 V356" marker-end="url(#m-allow)"/>
+          <text x="436" y="320" class="edge edge-ok">allow</text>
 
-          <path class="ssh" d="M145 406 V510" marker-end="url(#m-ssh)"/>
-          <path class="ssh" d="M275 406 V510" marker-end="url(#m-ssh)"/>
-          <path class="ssh" d="M405 406 V510" marker-end="url(#m-ssh)"/>
-          <path class="ssh" d="M535 406 V510" marker-end="url(#m-ssh)"/>
-          <text x="152" y="448" class="edge-label edge-label-ssh">ssh</text>
-          <text x="282" y="448" class="edge-label edge-label-ssh">ssh</text>
-          <text x="412" y="448" class="edge-label edge-label-ssh">ssh</text>
-          <text x="542" y="448" class="edge-label edge-label-ssh">ssh</text>
+          <path class="flow-ssh" d="M145 406 V510" marker-end="url(#m-ssh)"/>
+          <path class="flow-ssh" d="M275 406 V510" marker-end="url(#m-ssh)"/>
+          <path class="flow-ssh" d="M405 406 V510" marker-end="url(#m-ssh)"/>
+          <path class="flow-ssh" d="M535 406 V510" marker-end="url(#m-ssh)"/>
+          <text x="152" y="448" class="edge edge-ssh">ssh</text>
+          <text x="282" y="448" class="edge edge-ssh">ssh</text>
+          <text x="412" y="448" class="edge edge-ssh">ssh</text>
+          <text x="542" y="448" class="edge edge-ssh">ssh</text>
 
-          <path class="ssh" d="M590 381 H750 V549 H780" marker-end="url(#m-ssh)"/>
-          <text x="600" y="372" class="edge-label edge-label-ssh">ssh · external</text>
+          <path class="flow-ssh" d="M590 381 H750 V549 H780" marker-end="url(#m-ssh)"/>
+          <text x="600" y="372" class="edge edge-ssh">ssh · external</text>
         </svg>
+      </div>
 
-        <div class="legend" aria-hidden="true">
-          <span><i class="allow"></i> allow</span>
-          <span><i class="deny"></i> deny</span>
-          <span><i class="ssh"></i> ssh</span>
-          <span><i class="solid"></i> control flow</span>
-          <span><i class="container"></i> GRAND container</span>
-          <span><i class="cluster"></i> sandboxes · in-cluster</span>
+      <div class="rule" aria-hidden="true"></div>
+
+      <div class="qs-col">
+        <div class="head">
+          <span><span class="arrow">▶</span> <b>quick start</b> · 3 commands</span>
+          <span>~3 min · first run</span>
+        </div>
+
+        <div class="qs-step">
+          <div class="meta"><span class="n">01</span> <span>clone</span></div>
+<pre><span class="prompt">$</span> git clone <span class="accent">github.com/x0152/grand</span></pre>
+        </div>
+
+        <div class="qs-step">
+          <div class="meta"><span class="n">02</span> <span>configure</span></div>
+<pre><span class="prompt">$</span> cp .env.example .env
+<span class="comment"># set AUTH_TOKEN + LLM key</span></pre>
+        </div>
+
+        <div class="qs-step">
+          <div class="meta"><span class="n">03</span> <span>run</span></div>
+<pre><span class="prompt">$</span> docker compose up --build -d
+<span class="comment"># → localhost:27173</span></pre>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section capabilities">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="kicker"><span>capabilities &amp; guardrails</span></span>
-        <h2>What it does. What it refuses to do.</h2>
-      </div>
-
-      <div class="grid-3" data-stagger="70">
-        <div class="card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-cluster"/></svg></span>
-          <h3>Specialized sandboxes</h3>
-          <p class="lead">The right environment per job — CLI, browser, media, network, controller.</p>
-          <p class="sub"><code>base</code> · <code>browser</code> · <code>ffmpeg</code> · <code>netsec</code> · <code>runtimectl</code> — sibling containers, swap in your own.</p>
-        </div>
-        <div class="card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-flask"/></svg></span>
-          <h3>Sandboxes on demand</h3>
-          <p class="lead">Need Rust, Node 20, a niche DB client? The agent builds it for you.</p>
-          <p class="sub">The <code>runtimectl</code> sandbox writes a Dockerfile and runs <code>runtimectl up</code>; provisioning is async — you get a sandbox name immediately, ssh works the moment it's ready.</p>
-        </div>
-        <div class="card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-shield"/></svg></span>
-          <h3>Guard profiles</h3>
-          <p class="lead">Deterministic rejection — free-form shell on production never happens.</p>
-          <p class="sub">Capabilities and command whitelists declared per host; every tool call is authorized before it runs.</p>
-        </div>
-        <div class="card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-route"/></svg></span>
-          <h3>Constrained SSH</h3>
-          <p class="lead">Agents reach your servers under scoped users — not your shell credentials.</p>
-          <p class="sub">Per-connection users and keys. Blast radius is defined by the server, not by the agent's creativity.</p>
-        </div>
-        <div class="card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-bolt"/></svg></span>
-          <h3>Plans &amp; schedules</h3>
-          <p class="lead">Save a multi-step task once, run it on a cron, or trigger it from chat.</p>
-          <p class="sub">Plans are stored in PostgreSQL with their steps and parameters. Each run is async — chat returns the run id, you watch progress in the UI.</p>
-        </div>
-        <div class="card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-doc"/></svg></span>
-          <h3>Session logs</h3>
-          <p class="lead">Every prompt, tool call, and guard decision — queryable.</p>
-          <p class="sub">Persisted per connection in PostgreSQL; browse from the UI or query directly.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section examples" id="examples">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="kicker"><span>try asking</span></span>
-        <h2>One sentence in chat. <em>Real work in the cluster.</em></h2>
-        <p>A few of the prompts shipped with GRAND — every one of them passes through the guard and runs from a sandbox, not your laptop.</p>
-      </div>
-
-      <div class="grid-3" data-stagger="60">
-        <div class="card prompt-card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-eye"/></svg></span>
-          <h3>Screenshot a website</h3>
-          <div class="outcomes">
-            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>png image</span>
-            <span class="outcome muted">sandbox · browser</span>
-          </div>
-          <p class="prompt">Screenshot the Hacker News homepage.</p>
-        </div>
-        <div class="card prompt-card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-cluster"/></svg></span>
-          <h3>Trending repos this week</h3>
-          <div class="outcomes">
-            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>table · 5 rows</span>
-            <span class="outcome muted">sandbox · browser</span>
-          </div>
-          <p class="prompt">Top 5 trending GitHub repos this week as a table: name, description, stars, link.</p>
-        </div>
-        <div class="card prompt-card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-stethoscope"/></svg></span>
-          <h3>Plot Bitcoin price</h3>
-          <div class="outcomes">
-            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>line chart · png</span>
-            <span class="outcome muted">sandbox · base · matplotlib</span>
-          </div>
-          <p class="prompt">Bitcoin price for the last 30 days. Plot it with matplotlib (pyplot) and send me the PNG.</p>
-        </div>
-        <div class="card prompt-card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-bolt"/></svg></span>
-          <h3>Schedule a daily brief</h3>
-          <div class="outcomes">
-            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>digest · mon–fri 09:00</span>
-            <span class="outcome muted">recurring plan</span>
-          </div>
-          <p class="prompt">Daily plan, weekdays 9:00: top 5 Hacker News stories with one-sentence summaries, sent to me.</p>
-        </div>
-        <div class="card prompt-card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-flask"/></svg></span>
-          <h3>Spin up a Rust workspace</h3>
-          <div class="outcomes">
-            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>sandbox · async build</span>
-            <span class="outcome muted">runtimectl · on-demand</span>
-          </div>
-          <p class="prompt">Provision a sandbox with Rust + Cargo in the background. Tell me the sandbox name and how to check when it is ready.</p>
-        </div>
-        <div class="card prompt-card reveal">
-          <span class="icon"><svg width="20" height="20" aria-hidden="true"><use href="#i-shield"/></svg></span>
-          <h3>Quick security scan</h3>
-          <div class="outcomes">
-            <span class="outcome"><svg width="10" height="10" aria-hidden="true"><use href="#i-check"/></svg>open ports · short table</span>
-            <span class="outcome muted">sandbox · netsec</span>
-          </div>
-          <p class="prompt">Quick port scan of scanme.nmap.org (public test target). Show open ports and services as a small table.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section deployment" id="deployment">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="kicker"><span>deploy</span></span>
-        <h2>Helm chart. <em>docker compose up</em> for homelab.</h2>
-      </div>
-
-      <div class="grid">
-        <div class="reveal">
-          <div class="code-block">
-            <div class="head">helm · install</div>
-<pre><span class="c-key">export</span> TAG=$(git rev-parse --short HEAD)
-<span class="c-key">export</span> REGISTRY=ghcr.io/<span class="c-str">your-org</span>
-
-docker build -f Dockerfile.prod -t ${REGISTRY}/mantis:${TAG} .
-docker push ${REGISTRY}/mantis:${TAG}
-
-helm upgrade --install mantis ./helm/mantis \
-  --namespace mantis --create-namespace \
-  --set app.image.repository=${REGISTRY}/mantis \
-  --set app.image.tag=${TAG} \
-  --set secrets.authToken=<span class="c-str">'change-me'</span>
-</pre>
-          </div>
-        </div>
-
-        <div class="points reveal" data-stagger="60">
-          <div class="item reveal">
-            <b>Kubernetes-native</b>
-            <span>Sandboxes are pods — short-lived, replaceable, observable.</span>
-          </div>
-          <div class="item reveal">
-            <b>Off your laptop</b>
-            <span>Control plane, guard, and sandboxes all live in the cluster.</span>
-          </div>
-          <div class="item reveal">
-            <b>Bring your own model</b>
-            <span>Any OpenAI-compatible API. Cloud or local. Fallback presets are first-class.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="final">
-    <div class="container reveal">
-      <span class="kicker"><span>open source · mit · early</span></span>
-      <h2>A sharper boundary between agents and infrastructure.</h2>
-      <div class="ctas">
-        <a class="btn btn-primary" href="https://github.com/x0152/grand" rel="noopener noreferrer">
-          <svg width="14" height="14" aria-hidden="true"><use href="#i-github"/></svg>
-          View on GitHub
-          <svg class="arrow" width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg>
-        </a>
-        <a class="cta-inline" href="https://github.com/x0152/grand#readme" rel="noopener noreferrer">Read docs</a>
-      </div>
-    </div>
-  </section>
-
-  </main>
-
-  <footer class="footer">
-    <div class="container row">
-      <div>
-        <span>GRAND · v0 · runtime</span>
-        <span style="margin-left:12px">© <span data-year>2025</span> GRAND contributors</span>
-      </div>
-      <div class="links">
-        <a href="https://github.com/x0152/grand">github</a>
-        <a href="https://github.com/x0152/grand#readme">readme</a>
-        <a href="https://github.com/x0152/grand/blob/main/helm/mantis/README.md">helm</a>
-        <a href="https://github.com/x0152/grand/issues">issues</a>
-      </div>
-    </div>
+  <footer class="colophon">
+    <div><span class="k">install</span>docker compose up</div>
+    <div><span class="k">port</span>localhost:27173</div>
+    <div><span class="k">repo</span>github.com/x0152/grand</div>
+    <div><span class="k">network</span>gonka.ai</div>
   </footer>
 
-  <script src="./landing/script.js" defer></script>
 </body>
 </html>

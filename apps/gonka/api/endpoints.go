@@ -14,6 +14,7 @@ import (
 
 type UseCases struct {
 	CreateWallet  *usecases.CreateWallet
+	ImportWallet  *usecases.ImportWallet
 	DeriveAddress *usecases.DeriveAddress
 	GetBalance    *usecases.GetBalance
 	GetAccount    *usecases.GetAccount
@@ -31,6 +32,7 @@ func NewEndpoints(uc UseCases) *Endpoints {
 func (e *Endpoints) Register(api huma.API) {
 	huma.Register(api, huma.Operation{OperationID: "gonka-config", Method: http.MethodGet, Path: "/api/gonka/config"}, e.config)
 	huma.Register(api, huma.Operation{OperationID: "gonka-create-wallet", Method: http.MethodPost, Path: "/api/gonka/wallet", DefaultStatus: 201}, e.createWallet)
+	huma.Register(api, huma.Operation{OperationID: "gonka-import-wallet", Method: http.MethodPost, Path: "/api/gonka/wallet/import"}, e.importWallet)
 	huma.Register(api, huma.Operation{OperationID: "gonka-derive-address", Method: http.MethodPost, Path: "/api/gonka/wallet/derive"}, e.deriveAddress)
 	huma.Register(api, huma.Operation{OperationID: "gonka-wallet-balance", Method: http.MethodGet, Path: "/api/gonka/wallet/balance"}, e.balance)
 	huma.Register(api, huma.Operation{OperationID: "gonka-wallet-account", Method: http.MethodGet, Path: "/api/gonka/wallet/account"}, e.account)
@@ -45,6 +47,19 @@ func (e *Endpoints) config(ctx context.Context, _ *struct{}) (*ConfigOutput, err
 
 func (e *Endpoints) createWallet(ctx context.Context, _ *struct{}) (*WalletOutput, error) {
 	wallet, err := e.uc.CreateWallet.Execute(ctx)
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	out := &WalletOutput{}
+	out.Body.Address = wallet.Address
+	out.Body.PrivateKeyHex = wallet.PrivateKeyHex
+	out.Body.Mnemonic = wallet.Mnemonic
+	out.Body.Words = wallet.Words
+	return out, nil
+}
+
+func (e *Endpoints) importWallet(ctx context.Context, input *ImportWalletInput) (*WalletOutput, error) {
+	wallet, err := e.uc.ImportWallet.Execute(ctx, input.Body.Mnemonic)
 	if err != nil {
 		return nil, mapErr(err)
 	}

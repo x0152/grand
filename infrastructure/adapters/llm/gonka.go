@@ -24,8 +24,11 @@ type Gonka struct {
 	opts GonkaOptions
 }
 
+const defaultPinnedGonkaBalanceSourceURL = "http://node1.gonka.ai:8000"
+
 type GonkaOptions struct {
-	PinEndpointEnabled bool
+	PinEndpointEnabled  bool
+	PinBalanceSourceURL string
 }
 
 func NewGonka() *Gonka {
@@ -33,6 +36,7 @@ func NewGonka() *Gonka {
 }
 
 func NewGonkaWithOptions(opts GonkaOptions) *Gonka {
+	opts.PinBalanceSourceURL = strings.TrimSpace(opts.PinBalanceSourceURL)
 	return &Gonka{
 		OpenAI: NewOpenAI(),
 		opts:   opts,
@@ -63,7 +67,7 @@ func (g *Gonka) ListModels(ctx context.Context, baseURL, apiKey string) ([]types
 }
 
 func (g *Gonka) GetInferenceLimit(ctx context.Context, baseURL, apiKey string) (types.InferenceLimit, error) {
-	sourceURL, err := normalizeGonkaSourceURL(baseURL)
+	balanceSourceURL, err := g.resolveBalanceSourceURL(baseURL)
 	if err != nil {
 		return types.InferenceLimit{}, err
 	}
@@ -77,7 +81,7 @@ func (g *Gonka) GetInferenceLimit(ctx context.Context, baseURL, apiKey string) (
 		return types.InferenceLimit{}, fmt.Errorf("derive Gonka address: %w", err)
 	}
 
-	amount, err := gonkachain.QueryBalance(ctx, sourceURL, address)
+	amount, err := gonkachain.QueryBalance(ctx, balanceSourceURL, address)
 	if err != nil {
 		return types.InferenceLimit{}, err
 	}
@@ -239,6 +243,25 @@ func normalizeGonkaSourceURL(raw string) (string, error) {
 		return "", fmt.Errorf("invalid gonka source URL %q", strings.TrimSpace(raw))
 	}
 	return strings.TrimRight(sourceURL, "/"), nil
+}
+
+func (g *Gonka) resolveBalanceSourceURL(baseURL string) (string, error) {
+	sourceURL, err := normalizeGonkaSourceURL(baseURL)
+	if err != nil {
+		return "", err
+	}
+	if !g.opts.PinEndpointEnabled {
+		return sourceURL, nil
+	}
+	raw := g.opts.PinBalanceSourceURL
+	if raw == "" {
+		raw = defaultPinnedGonkaBalanceSourceURL
+	}
+	pinnedSourceURL, err := normalizeGonkaSourceURL(raw)
+	if err != nil {
+		return "", fmt.Errorf("invalid pinned gonka balance source URL %q: %w", raw, err)
+	}
+	return pinnedSourceURL, nil
 }
 
 func resolveDistributedGonkaEndpoints(ctx context.Context, sourceURL string) ([]gonkaopenai.Endpoint, error) {

@@ -105,6 +105,70 @@ func (r *Runner) CreateWallet(ctx context.Context) (Wallet, error) {
 		return Wallet{}, fmt.Errorf("inferenced returned incomplete wallet data")
 	}
 
+	hex, err := r.exportPrivateKey(ctx, keyringDir)
+	if err != nil {
+		return Wallet{}, err
+	}
+
+	return Wallet{
+		Address:       info.Address,
+		PrivateKeyHex: hex,
+		Mnemonic:      info.Mnemonic,
+		Words:         strings.Fields(info.Mnemonic),
+	}, nil
+}
+
+func (r *Runner) ImportWallet(ctx context.Context, mnemonic string) (Wallet, error) {
+	if !r.Available() {
+		return Wallet{}, ErrNotInstalled
+	}
+
+	phrase := strings.TrimSpace(mnemonic)
+	if phrase == "" {
+		return Wallet{}, fmt.Errorf("mnemonic is required")
+	}
+
+	keyringDir, err := os.MkdirTemp("", "mantis-gonka-keyring-*")
+	if err != nil {
+		return Wallet{}, fmt.Errorf("create keyring dir: %w", err)
+	}
+	defer os.RemoveAll(keyringDir)
+
+	addOut, err := r.run(ctx, []byte(phrase+"\n"),
+		"keys", "add", walletAccountID,
+		"--recover", "--no-backup",
+		"--keyring-backend", keyringBackend,
+		"--keyring-dir", keyringDir,
+		"--output", "json",
+	)
+	if err != nil {
+		return Wallet{}, fmt.Errorf("inferenced keys add --recover: %w", err)
+	}
+
+	var info struct {
+		Address string `json:"address"`
+	}
+	if err := json.Unmarshal([]byte(addOut), &info); err != nil {
+		return Wallet{}, fmt.Errorf("parse inferenced output: %w", err)
+	}
+	if info.Address == "" {
+		return Wallet{}, fmt.Errorf("inferenced returned no address")
+	}
+
+	hex, err := r.exportPrivateKey(ctx, keyringDir)
+	if err != nil {
+		return Wallet{}, err
+	}
+
+	return Wallet{
+		Address:       info.Address,
+		PrivateKeyHex: hex,
+		Mnemonic:      phrase,
+		Words:         strings.Fields(phrase),
+	}, nil
+}
+
+func (r *Runner) exportPrivateKey(ctx context.Context, keyringDir string) (string, error) {
 	exportOut, err := r.run(ctx, []byte("y\n"),
 		"keys", "export", walletAccountID,
 		"--keyring-backend", keyringBackend,
@@ -112,23 +176,16 @@ func (r *Runner) CreateWallet(ctx context.Context) (Wallet, error) {
 		"--unarmored-hex", "--unsafe",
 	)
 	if err != nil {
-		return Wallet{}, fmt.Errorf("inferenced keys export: %w", err)
+		return "", fmt.Errorf("inferenced keys export: %w", err)
 	}
 	hex := hexLine.FindString(exportOut)
 	if hex == "" {
 		hex = strings.TrimSpace(exportOut)
 	}
 	if len(hex) != 64 {
-		return Wallet{}, fmt.Errorf("inferenced returned invalid private key length=%d", len(hex))
+		return "", fmt.Errorf("inferenced returned invalid private key length=%d", len(hex))
 	}
-
-	words := strings.Fields(info.Mnemonic)
-	return Wallet{
-		Address:       info.Address,
-		PrivateKeyHex: hex,
-		Mnemonic:      info.Mnemonic,
-		Words:         words,
-	}, nil
+	return hex, nil
 }
 
 func (r *Runner) run(ctx context.Context, stdin []byte, args ...string) (string, error) {

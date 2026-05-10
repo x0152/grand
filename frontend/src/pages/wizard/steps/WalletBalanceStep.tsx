@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Loader2, RotateCw } from '@/lib/icons'
+import { Loader2, QrCode, RotateCw } from '@/lib/icons'
 import { api } from '@/api'
 import type { GonkaBalance } from '@/types'
 import { AddressDisplay } from '../components/AddressDisplay'
+import { QRDisplay } from '../components/QRDisplay'
 import { formatGnk } from '../utils'
 
 interface WalletBalanceStepProps {
@@ -27,6 +28,7 @@ export function WalletBalanceStep({
 }: WalletBalanceStepProps) {
   const [loading, setLoading] = useState(false)
   const [refreshError, setRefreshError] = useState('')
+  const [showQR, setShowQR] = useState(true)
 
   const onBalanceChangeRef = useRef(onBalanceChange)
   useEffect(() => {
@@ -59,6 +61,32 @@ export function WalletBalanceStep({
   return (
     <div className="space-y-4">
       <AddressDisplay label="Send GNK to this address" address={address} />
+
+      {address && (
+        <div className="rounded-md border border-zinc-200/80 dark:border-zinc-800/70 bg-zinc-50 dark:bg-zinc-900 px-3 py-2.5">
+          <button
+            type="button"
+            onClick={() => setShowQR(v => !v)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <span className="flex items-center gap-2 text-[12.5px] text-zinc-700 dark:text-zinc-300">
+              <QrCode size={14} />
+              Scan from your wallet
+            </span>
+            <span className="text-[11.5px] text-zinc-500 dark:text-zinc-500">
+              {showQR ? 'hide QR' : 'show QR'}
+            </span>
+          </button>
+          {showQR && (
+            <div className="mt-3">
+              <QRDisplay
+                value={address}
+                caption="Open Keplr / Cosmostation / Leap → Send → Scan address."
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <div
         className={`rounded-md border px-4 py-3 transition-colors ${

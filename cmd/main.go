@@ -165,7 +165,8 @@ func main() {
 
 	openaiAdapter := llm.NewOpenAI()
 	gonkaAdapter := llm.NewGonkaWithOptions(llm.GonkaOptions{
-		PinEndpointEnabled: envBool("GONKA_PIN_ENDPOINT_ENABLED", false),
+		PinEndpointEnabled:  envBool("GONKA_PIN_ENDPOINT_ENABLED", true),
+		PinBalanceSourceURL: env("GONKA_PIN_BALANCE_SOURCE_URL", ""),
 	})
 	llmAdapter := llm.NewRouter("openai", map[string]protocols.LLM{
 		"openai": openaiAdapter,
@@ -283,24 +284,26 @@ func main() {
 
 	if isEnabled(enabled, "gonka") {
 		gonkaApp := gonkaapp.NewApp(gonkaapp.Options{
-			BinaryPath:     env("GONKA_INFERENCED_BIN", ""),
-			DefaultNodeURL: env("GONKA_DEFAULT_NODE_URL", "https://node4.gonka.ai"),
+			BinaryPath:         env("GONKA_INFERENCED_BIN", ""),
+			DefaultNodeURL:     env("GONKA_DEFAULT_NODE_URL", "https://node4.gonka.ai"),
+			PinEndpointEnabled: envBool("GONKA_PIN_ENDPOINT_ENABLED", true),
+			PinBalanceNodeURL:  env("GONKA_PIN_BALANCE_SOURCE_URL", "http://node1.gonka.ai:8000"),
 		})
 		gonkaApp.Register(api)
 	}
 
+	configApp := configapp.NewApp(configapp.Stores{
+		AppConfig: appConfigStore,
+		LlmConn:   llmConnStore,
+		Model:     modelStore,
+		Preset:    presetStore,
+		Settings:  settingsStore,
+		Channel:   channelStore,
+		Conn:      connectionStore,
+		Skill:     skillStore,
+		Plan:      planStore,
+	}, loadConfigEnv())
 	if isEnabled(enabled, "config") {
-		configApp := configapp.NewApp(configapp.Stores{
-			AppConfig: appConfigStore,
-			LlmConn:   llmConnStore,
-			Model:     modelStore,
-			Preset:    presetStore,
-			Settings:  settingsStore,
-			Channel:   channelStore,
-			Conn:      connectionStore,
-			Skill:     skillStore,
-			Plan:      planStore,
-		}, loadConfigEnv())
 		configApp.Register(api)
 	}
 
@@ -328,6 +331,12 @@ func main() {
 		log.Printf("runtime: docker adapter ready (network=%s)", rt.Network())
 
 		bootstrapper := runtimeapp.NewBootstrapper(rt, connectionStore, keyIssuer, specBuilder)
+		bootstrapper.SetEnvProvider(makeSandboxEnvProvider(configApp))
+		configApp.ApplyConfig().SetOnApply(func(ctx context.Context, _ types.GlobalConfigDraft) {
+			if err := bootstrapper.RestartSandbox(ctx, "email"); err != nil {
+				log.Printf("runtime bootstrap: restart email: %v", err)
+			}
+		})
 		go func() {
 			if err := bootstrapper.Run(context.Background()); err != nil {
 				log.Printf("runtime bootstrap: %v", err)
@@ -444,6 +453,45 @@ func env(key, fallback string) string {
 	return fallback
 }
 
+func makeSandboxEnvProvider(app *configapp.App) func(name string) map[string]string {
+	return func(name string) map[string]string {
+		if name != "email" {
+			return nil
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		records, err := app.ConfigStore().Get(ctx, []string{configusecases.AppConfigID})
+		if err != nil {
+			log.Printf("runtime bootstrap: load email config: %v", err)
+			return nil
+		}
+		var draft types.GlobalConfigDraft
+		if rec, ok := records[configusecases.AppConfigID]; ok {
+			draft = rec.Draft
+		}
+		merged := app.Resolver().ResolveValues(draft)
+		if merged.Email.Skipped {
+			return map[string]string{}
+		}
+		out := map[string]string{}
+		add := func(k, v string) {
+			if s := strings.TrimSpace(v); s != "" {
+				out[k] = s
+			}
+		}
+		add("SANDBOX_EMAIL_ADDRESS", merged.Email.Address)
+		add("SANDBOX_EMAIL_SMTP_HOST", merged.Email.SMTPHost)
+		add("SANDBOX_EMAIL_SMTP_PORT", merged.Email.SMTPPort)
+		add("SANDBOX_EMAIL_SMTP_USER", merged.Email.SMTPUsername)
+		add("SANDBOX_EMAIL_SMTP_PASS", merged.Email.SMTPPassword)
+		add("SANDBOX_EMAIL_IMAP_HOST", merged.Email.IMAPHost)
+		add("SANDBOX_EMAIL_IMAP_PORT", merged.Email.IMAPPort)
+		add("SANDBOX_EMAIL_IMAP_USER", merged.Email.IMAPUsername)
+		add("SANDBOX_EMAIL_IMAP_PASS", merged.Email.IMAPPassword)
+		return out
+	}
+}
+
 func loadConfigEnv() configusecases.EnvSnapshot {
 	return configusecases.EnvSnapshot{
 		LLMBaseURL:      env("MANTIS_LLM_BASE_URL", env("VITE_LLM_BASE_URL", "")),
@@ -453,6 +501,15 @@ func loadConfigEnv() configusecases.EnvSnapshot {
 		GonkaPrivateKey: env("GONKA_PRIVATE_KEY", env("MANTIS_GONKA_PRIVATE_KEY", "")),
 		TGBotToken:      env("MANTIS_TG_BOT_TOKEN", env("VITE_TG_BOT_TOKEN", "")),
 		TGUserIDs:       parseUserIDs(env("MANTIS_TG_USER_IDS", env("VITE_TG_USER_IDS", ""))),
+		EmailAddress:    env("MANTIS_EMAIL_ADDRESS", ""),
+		EmailSMTPHost:   env("MANTIS_EMAIL_SMTP_HOST", ""),
+		EmailSMTPPort:   env("MANTIS_EMAIL_SMTP_PORT", ""),
+		EmailSMTPUser:   env("MANTIS_EMAIL_SMTP_USER", ""),
+		EmailSMTPPass:   env("MANTIS_EMAIL_SMTP_PASS", ""),
+		EmailIMAPHost:   env("MANTIS_EMAIL_IMAP_HOST", ""),
+		EmailIMAPPort:   env("MANTIS_EMAIL_IMAP_PORT", ""),
+		EmailIMAPUser:   env("MANTIS_EMAIL_IMAP_USER", ""),
+		EmailIMAPPass:   env("MANTIS_EMAIL_IMAP_PASS", ""),
 	}
 }
 

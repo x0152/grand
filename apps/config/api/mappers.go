@@ -21,5 +21,6 @@ func draftFromUpdateInput(input *UpdateConfigInput) types.GlobalConfigDraft {
 		Gonka:    input.Body.Gonka,
 		Models:   models,
 		Telegram: tg,
+		Email:    input.Body.Email,
 	}
 }

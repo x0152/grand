@@ -28,6 +28,7 @@ type BuiltinMeta struct {
 var builtinMeta = []BuiltinMeta{
 	{Name: "base", ProfileID: "base", Description: "General-purpose workhorse sandbox — Python 3.12 + scientific stack, DB clients (psql, mysql, redis, sqlite), shell and networking utilities."},
 	{Name: "browser", ProfileID: "browser", Description: "Headless Chromium + Playwright — web navigation, screenshots, PDF, parsing.", CapAdd: []string{"SYS_ADMIN"}},
+	{Name: "email", ProfileID: "email", Description: "Mailbox sandbox — read/search the user's IMAP inbox, send via SMTP, mark/move messages, and create/rename/delete custom folders. Credentials are injected from the saved wizard configuration. ALWAYS start with `email-status` (verifies SMTP/IMAP and shows which server folder names map to Inbox/Sent/Spam/Trash/Drafts on this provider) and run `email-folders` whenever you need a folder that isn't a standard alias — never guess folder names. Folder management: `email-folder-create --name X` (then `email-move --uid N --to-folder X` to organize) and `email-mark --uid N --seen/--flagged` to flag messages. Special-use folders (Inbox/Sent/Spam/Trash/Drafts/Archive) are protected from rename/delete. All tools support a `--json` flag. If the user skipped the Email step every helper prints a friendly \"not configured — re-run wizard\" hint instead of failing."},
 	{Name: "ffmpeg", ProfileID: "media", Description: "FFmpeg + MediaInfo + ImageMagick — video, audio, image processing. IMPORTANT: ffmpeg/ffprobe/imagemagick cannot read chat artifacts directly — before EVERY invocation you MUST upload the input file into this sandbox via ssh_upload_<sandbox_name>, and re-upload it on every run (do NOT assume a previous upload is still there: tmpfs is wiped on restart and the artifact may have been overwritten or expired)."},
 	{Name: "netsec", ProfileID: "netsec", Description: "Network / pentest toolkit — nmap, dig, nikto, ffuf, hashcat + net-* wrappers with hard timeouts."},
 	{Name: "runtimectl", ProfileID: "runtimectl", Description: "Runtime controller. Ask it in plain language to provision a new sandbox (e.g. \"need rust + cargo + curl\"); it builds, runs and registers the container."},
@@ -111,7 +112,21 @@ if [ -n "${SANDBOX_SSH_PUBLIC_KEY:-}" ]; then
     chmod 600 /home/sandbox/.ssh/authorized_keys
 fi
 : > /home/sandbox/.ssh/environment
-env | sed -n 's/^\(SANDBOX_[A-Z_]*\)=\(.*\)$/\1=\2/p' | grep -v '^SANDBOX_SSH_PUBLIC_KEY=' >> /home/sandbox/.ssh/environment || true
+# Per-sandbox secret diversion. Sandboxes that opt in by creating
+# /etc/sandbox/secrets/<name>/ at build time get their SANDBOX_<NAME>_*
+# env vars written to a root/group-only file instead of the agent-readable
+# .ssh/environment, so the agent's shell (and therefore the LLM context)
+# never sees raw credentials.
+if [ -d /etc/sandbox/secrets/email ]; then
+    cred=/etc/sandbox/secrets/email/credentials.env
+    : > "$cred"
+    chmod 600 "$cred"
+    if id -u emailsec >/dev/null 2>&1; then
+        chown emailsec:emailsec "$cred"
+    fi
+    env | grep -E '^SANDBOX_EMAIL_[A-Z_]+=' >> "$cred" || true
+fi
+env | sed -n 's/^\(SANDBOX_[A-Z_]*\)=\(.*\)$/\1=\2/p' | grep -vE '^(SANDBOX_SSH_PUBLIC_KEY|SANDBOX_EMAIL_)=' >> /home/sandbox/.ssh/environment || true
 env | sed -n 's/^\(RUNTIMECTL_[A-Z_]*\)=\(.*\)$/\1=\2/p' >> /home/sandbox/.ssh/environment || true
 chmod 600 /home/sandbox/.ssh/environment
 chmod 700 /home/sandbox/.ssh

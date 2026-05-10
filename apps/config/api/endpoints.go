@@ -16,6 +16,7 @@ type UseCases struct {
 	UpdateConfig *usecases.UpdateConfig
 	ApplyConfig  *usecases.ApplyConfig
 	ResetConfig  *usecases.ResetConfig
+	VerifyEmail  *usecases.VerifyEmail
 }
 
 type Endpoints struct {
@@ -31,6 +32,7 @@ func (e *Endpoints) Register(api huma.API) {
 	huma.Register(api, huma.Operation{OperationID: "update-config", Method: http.MethodPut, Path: "/api/config"}, e.updateConfig)
 	huma.Register(api, huma.Operation{OperationID: "apply-config", Method: http.MethodPost, Path: "/api/config/apply"}, e.applyConfig)
 	huma.Register(api, huma.Operation{OperationID: "reset-config", Method: http.MethodPost, Path: "/api/config/reset"}, e.resetConfig)
+	huma.Register(api, huma.Operation{OperationID: "verify-email", Method: http.MethodPost, Path: "/api/config/email/verify"}, e.verifyEmail)
 }
 
 func (e *Endpoints) getConfig(ctx context.Context, _ *struct{}) (*ConfigOutput, error) {
@@ -64,6 +66,16 @@ func (e *Endpoints) resetConfig(ctx context.Context, _ *struct{}) (*ConfigOutput
 		return nil, mapErr(err)
 	}
 	return toConfigOutput(cfg), nil
+}
+
+func (e *Endpoints) verifyEmail(ctx context.Context, input *VerifyEmailInput) (*VerifyEmailOutput, error) {
+	res, err := e.uc.VerifyEmail.Execute(ctx, input.Body)
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	out := &VerifyEmailOutput{}
+	out.Body = res
+	return out, nil
 }
 
 func mapErr(err error) error {

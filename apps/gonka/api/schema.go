@@ -25,6 +25,12 @@ type DeriveAddressOutput struct {
 	}
 }
 
+type ImportWalletInput struct {
+	Body struct {
+		Mnemonic string `json:"mnemonic" required:"true" minLength:"1"`
+	}
+}
+
 type BalanceInput struct {
 	Address string `query:"address" required:"true"`
 	NodeURL string `query:"nodeUrl" required:"true"`

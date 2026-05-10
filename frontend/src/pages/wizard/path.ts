@@ -26,7 +26,7 @@ export function buildPath({ state, gonkaConfig, mode, status }: BuildPathOptions
 
 function buildFullPath(state: State, gonkaConfig: GonkaConfig | null): StepId[] {
   if (state.provider === 'openai') {
-    return ['provider', 'openai', 'telegram', 'finish']
+    return ['provider', 'openai', 'telegram', 'email', 'finish']
   }
   const path: StepId[] = ['provider', 'wallet-choice']
   if (state.walletMode === 'create') {
@@ -37,6 +37,6 @@ function buildFullPath(state: State, gonkaConfig: GonkaConfig | null): StepId[] 
   } else {
     path.push('wallet-import')
   }
-  path.push('wallet-balance', 'gonka-models', 'telegram', 'finish')
+  path.push('wallet-balance', 'gonka-models', 'telegram', 'email', 'finish')
   return path
 }

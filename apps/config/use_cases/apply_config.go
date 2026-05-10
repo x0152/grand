@@ -25,6 +25,14 @@ const (
 	connectionsWaitTickInterval    = 500 * time.Millisecond
 )
 
+var legacyEmailSkillNames = map[string]struct{}{
+	"email_status": {},
+	"email_list":   {},
+	"email_search": {},
+	"email_read":   {},
+	"email_send":   {},
+}
+
 type ApplyConfig struct {
 	store         protocols.Store[string, types.AppConfig]
 	resolver      *Resolver
@@ -36,6 +44,7 @@ type ApplyConfig struct {
 	connStore     protocols.Store[string, types.Connection]
 	skillStore    protocols.Store[string, types.Skill]
 	planStore     protocols.Store[string, types.Plan]
+	onApply       func(context.Context, types.GlobalConfigDraft)
 }
 
 type ApplyDeps struct {
@@ -62,6 +71,10 @@ func NewApplyConfig(store protocols.Store[string, types.AppConfig], resolver *Re
 		skillStore:    deps.SkillStore,
 		planStore:     deps.PlanStore,
 	}
+}
+
+func (uc *ApplyConfig) SetOnApply(f func(context.Context, types.GlobalConfigDraft)) {
+	uc.onApply = f
 }
 
 func (uc *ApplyConfig) Execute(ctx context.Context) error {
@@ -102,6 +115,10 @@ func (uc *ApplyConfig) Execute(ctx context.Context) error {
 
 	if err := uc.applySeeds(ctx); err != nil {
 		return err
+	}
+
+	if uc.onApply != nil {
+		uc.onApply(ctx, values)
 	}
 
 	return nil
@@ -388,6 +405,11 @@ func (uc *ApplyConfig) applySeeds(ctx context.Context) error {
 			return err
 		}
 	}
+	if conn, ok := connsByName["email"]; ok {
+		if err := uc.removeLegacyEmailSkills(ctx, conn.ID); err != nil {
+			return err
+		}
+	}
 	return uc.seedPlans(ctx)
 }
 
@@ -446,6 +468,23 @@ func (uc *ApplyConfig) seedSkillsFor(ctx context.Context, connID string, list []
 		}
 	}
 	return nil
+}
+
+func (uc *ApplyConfig) removeLegacyEmailSkills(ctx context.Context, connID string) error {
+	existing, err := uc.skillStore.List(ctx, types.ListQuery{Filter: map[string]string{"connection_id": connID}})
+	if err != nil {
+		return err
+	}
+	ids := make([]string, 0, len(existing))
+	for _, sk := range existing {
+		if _, ok := legacyEmailSkillNames[sk.Name]; ok {
+			ids = append(ids, sk.ID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	return uc.skillStore.Delete(ctx, ids)
 }
 
 func (uc *ApplyConfig) seedPlans(ctx context.Context) error {

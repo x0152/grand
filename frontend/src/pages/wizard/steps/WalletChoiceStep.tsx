@@ -31,10 +31,10 @@ export function WalletChoiceStep({ walletMode, gonkaConfig, onSelect }: WalletCh
       <BigChoiceCard
         icon={Wallet}
         title="I already have a wallet"
-        description="Paste a private key from your wallet app — GRAND will use it to sign requests."
+        description="Connect by recovery phrase — same one you use in Keplr or Cosmostation."
         bullets={[
-          '64-character private key (with or without 0x)',
-          'Stays on your server, never leaves',
+          '12 or 24 words from your wallet app',
+          'Private key import is available as a fallback',
           'Switch wallets anytime in settings',
         ]}
         selected={walletMode === 'import'}

@@ -80,8 +80,15 @@ function isNextDisabled(stepId: StepId, state: State): boolean {
     }
     case 'telegram': {
       if (state.tgSkip || state.tgLinkedUser) return false
-      if (state.tgTokenKnown && !state.tgToken.trim()) return false
+      if (state.tgTokenKnown) return false
       return true
+    }
+    case 'email': {
+      if (state.emailSkip) return false
+      const hasAddress = !!state.emailAddress.trim()
+      const hasSmtp = !!state.emailSmtpHost.trim() && (state.emailSmtpPasswordKnown || !!state.emailSmtpPassword.trim())
+      const hasImap = !!state.emailImapHost.trim() && (state.emailImapPasswordKnown || !!state.emailImapPassword.trim())
+      return !(hasAddress && (hasSmtp || hasImap))
     }
     case 'finish':
       return false

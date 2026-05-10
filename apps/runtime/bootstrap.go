@@ -32,6 +32,7 @@ type Bootstrapper struct {
 	connectionStore protocols.Store[string, types.Connection]
 	keyIssuer       *keys.Issuer
 	specBuilder     *spec.Builder
+	envProvider     func(name string) map[string]string
 }
 
 func NewBootstrapper(
@@ -46,6 +47,10 @@ func NewBootstrapper(
 		keyIssuer:       keyIssuer,
 		specBuilder:     specBuilder,
 	}
+}
+
+func (b *Bootstrapper) SetEnvProvider(p func(name string) map[string]string) {
+	b.envProvider = p
 }
 
 func (b *Bootstrapper) Run(ctx context.Context) error {
@@ -168,6 +173,42 @@ func (b *Bootstrapper) seedBuiltins(ctx context.Context, key types.SandboxKey) e
 	return nil
 }
 
+func (b *Bootstrapper) RestartSandbox(ctx context.Context, sandboxName string) error {
+	key, err := b.keyIssuer.Ensure(ctx)
+	if err != nil {
+		return fmt.Errorf("issue sandbox key: %w", err)
+	}
+	conns, err := b.connectionStore.List(ctx, types.ListQuery{Page: types.Page{Limit: 1000}})
+	if err != nil {
+		return err
+	}
+	var conn types.Connection
+	found := false
+	for _, c := range conns {
+		if c.Name == sandboxName {
+			conn = c
+			found = true
+			break
+		}
+	}
+	if !found || conn.Dockerfile == "" {
+		return fmt.Errorf("sandbox %q not found or has no dockerfile", sandboxName)
+	}
+	if err := b.rt.Stop(ctx, sandboxName); err != nil {
+		log.Printf("runtime restart: stop %s: %v", sandboxName, err)
+	}
+	if err := b.rt.Remove(ctx, sandboxName); err != nil {
+		log.Printf("runtime restart: remove %s: %v", sandboxName, err)
+	}
+	if err := b.ensureSandbox(ctx, conn, sandboxName, key); err != nil {
+		return err
+	}
+	if err := b.rt.EnsureGatewayAttached(ctx, sandboxName); err != nil {
+		log.Printf("runtime restart: gateway attach %s: %v", sandboxName, err)
+	}
+	return nil
+}
+
 func (b *Bootstrapper) ensureSandbox(ctx context.Context, conn types.Connection, sandboxName string, key types.SandboxKey) error {
 	wantHash := dockerfileHash(conn.Dockerfile)
 	container, err := b.rt.Inspect(ctx, sandboxName)
@@ -194,7 +235,7 @@ func (b *Bootstrapper) ensureSandbox(ctx context.Context, conn types.Connection,
 		ctx,
 		sandboxName,
 		conn,
-		envForSandbox(sandboxName, key.PublicKey),
+		b.envForSandbox(sandboxName, key.PublicKey),
 		map[string]string{dockerfileHashLabel: wantHash},
 	)
 	started, err := b.rt.Run(ctx, spec)
@@ -231,11 +272,16 @@ func dockerfileHash(s string) string {
 	return hex.EncodeToString(sum[:8])
 }
 
-func envForSandbox(name, publicKey string) map[string]string {
+func (b *Bootstrapper) envForSandbox(name, publicKey string) map[string]string {
 	env := map[string]string{pubkeyEnvVar: publicKey}
 	if name == "runtimectl" {
 		env["RUNTIMECTL_URL"] = "http://app:8080"
 		env["RUNTIMECTL_TOKEN"] = os.Getenv("RUNTIME_API_TOKEN")
+	}
+	if b.envProvider != nil {
+		for k, v := range b.envProvider(name) {
+			env[k] = v
+		}
 	}
 	return env
 }

@@ -21,7 +21,7 @@ export function stepMeta(stepId: StepId): StepMeta {
     case 'wallet-import':
       return {
         title: 'Use your existing wallet',
-        subtitle: 'Paste your private key. We’ll use it to sign requests for you.',
+        subtitle: 'Paste your recovery phrase — or a private key if that’s all your wallet shows.',
       }
     case 'wallet-create':
       return {
@@ -30,13 +30,13 @@ export function stepMeta(stepId: StepId): StepMeta {
       }
     case 'wallet-reveal':
       return {
-        title: 'Save your 24 secret words',
+        title: 'Save your secret words',
         subtitle: 'Write them on paper or save them in a password manager. We won’t show them again.',
       }
     case 'wallet-balance':
       return {
         title: 'Top up your wallet',
-        subtitle: `Send at least ${MIN_BALANCE_GNK} GNK to the address below. Continue once it arrives.`,
+        subtitle: `Scan the QR or copy the address. Send at least ${MIN_BALANCE_GNK} GNK and we’ll continue.`,
       }
     case 'gonka-models':
       return {
@@ -47,6 +47,11 @@ export function stepMeta(stepId: StepId): StepMeta {
       return {
         title: 'Talk to GRAND on Telegram?',
         subtitle: 'Paste a bot token and send the code to the bot — we’ll detect you. Or tick the box below to stay on chat-only.',
+      }
+    case 'email':
+      return {
+        title: 'Connect your mailbox',
+        subtitle: 'Add SMTP/IMAP credentials so GRAND can read and send mail. Skip to add it later.',
       }
     case 'finish':
       return {

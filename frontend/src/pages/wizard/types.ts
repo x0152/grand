@@ -2,6 +2,7 @@ import type { ConfigSource, GonkaBalance, TelegramWizardUser } from '@/types'
 
 export type Provider = 'openai' | 'gonka'
 export type WalletMode = 'create' | 'import'
+export type WalletImportMode = 'mnemonic' | 'private-key'
 export type ModelRow = { name: string; role: 'chat' | 'summary' | 'vision' | '' }
 export type WizardMode = 'full' | 'resume'
 
@@ -15,6 +16,7 @@ export type StepId =
   | 'wallet-balance'
   | 'gonka-models'
   | 'telegram'
+  | 'email'
   | 'finish'
 
 export interface State {
@@ -24,9 +26,11 @@ export interface State {
   openaiApiKeyKnown: boolean
   modelRows: ModelRow[]
   walletMode: WalletMode
+  walletImportMode: WalletImportMode
   gonkaNodeUrl: string
   gonkaPrivateKey: string
   gonkaPrivateKeyKnown: boolean
+  gonkaMnemonicInput: string
   gonkaAddress: string
   gonkaMnemonicWords: string[]
   mnemonicAcknowledged: boolean
@@ -37,6 +41,18 @@ export interface State {
   tgLinkedUser: TelegramWizardUser | null
   tgAllowedUserIds: number[]
   tgSkip: boolean
+  emailAddress: string
+  emailSmtpHost: string
+  emailSmtpPort: string
+  emailSmtpUsername: string
+  emailSmtpPassword: string
+  emailSmtpPasswordKnown: boolean
+  emailImapHost: string
+  emailImapPort: string
+  emailImapUsername: string
+  emailImapPassword: string
+  emailImapPasswordKnown: boolean
+  emailSkip: boolean
 }
 
 export interface StepMeta {

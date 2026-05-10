@@ -1,4 +1,4 @@
-import type { Settings, Model, Preset, Connection, Skill, Plan, PlanRun, GuardProfile, GuardEvent, GuardEventKind, GuardTestResult, ChatSession, ChatMessage, SessionLog, LlmConnection, ProviderModel, InferenceLimit, Channel, User, ContextStatus, SandboxStatus, GonkaConfig, GonkaWallet, GonkaBalance, GonkaAccountStatus, TelegramWizardBot, TelegramWizardUser, GlobalConfig, GlobalConfigDraft } from './types'
+import type { Settings, Model, Preset, Connection, Skill, Plan, PlanRun, GuardProfile, GuardEvent, GuardEventKind, GuardTestResult, ChatSession, ChatMessage, SessionLog, LlmConnection, ProviderModel, InferenceLimit, Channel, User, ContextStatus, SandboxStatus, GonkaConfig, GonkaWallet, GonkaBalance, GonkaAccountStatus, TelegramWizardBot, TelegramWizardUser, GlobalConfig, GlobalConfigDraft, EmailDraft, EmailVerifyResult } from './types'
 
 export class UnauthorizedError extends Error {
   constructor(message = 'Unauthorized') {
@@ -50,6 +50,8 @@ export const api = {
       request<GlobalConfig>('/config', { method: 'PUT', body: JSON.stringify(draft) }),
     apply: () => request<{ ok: boolean }>('/config/apply', { method: 'POST' }),
     reset: () => request<GlobalConfig>('/config/reset', { method: 'POST' }),
+    verifyEmail: (draft: EmailDraft) =>
+      request<EmailVerifyResult>('/config/email/verify', { method: 'POST', body: JSON.stringify(draft) }),
   },
   llmConnections: {
     list: () => request<LlmConnection[]>('/llm-connections'),
@@ -137,6 +139,11 @@ export const api = {
   gonka: {
     config: () => request<GonkaConfig>('/gonka/config'),
     createWallet: () => request<GonkaWallet>('/gonka/wallet', { method: 'POST' }),
+    importWallet: (mnemonic: string) =>
+      request<GonkaWallet>('/gonka/wallet/import', {
+        method: 'POST',
+        body: JSON.stringify({ mnemonic }),
+      }),
     deriveAddress: (privateKeyHex: string) =>
       request<{ address: string }>('/gonka/wallet/derive', {
         method: 'POST',

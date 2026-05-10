@@ -11,8 +11,10 @@ import (
 const MinBalanceGNK = "0.1"
 
 type Options struct {
-	BinaryPath     string
-	DefaultNodeURL string
+	BinaryPath         string
+	DefaultNodeURL     string
+	PinEndpointEnabled bool
+	PinBalanceNodeURL  string
 }
 
 type App struct {
@@ -26,9 +28,13 @@ func NewApp(opts Options) *App {
 		runner: runner,
 		endpoints: api.NewEndpoints(api.UseCases{
 			CreateWallet:  usecases.NewCreateWallet(runner),
+			ImportWallet:  usecases.NewImportWallet(runner),
 			DeriveAddress: usecases.NewDeriveAddress(),
-			GetBalance:    usecases.NewGetBalance(),
-			GetAccount:    usecases.NewGetAccount(),
+			GetBalance: usecases.NewGetBalance(usecases.GetBalanceOptions{
+				PinEndpointEnabled: opts.PinEndpointEnabled,
+				PinNodeURL:         opts.PinBalanceNodeURL,
+			}),
+			GetAccount: usecases.NewGetAccount(),
 			GetConfig: usecases.NewGetConfig(runner, usecases.GetConfigOptions{
 				DefaultNodeURL: opts.DefaultNodeURL,
 				MinBalanceGNK:  MinBalanceGNK,

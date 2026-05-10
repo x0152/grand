@@ -378,6 +378,39 @@ code, kbd, pre, samp, .font-mono {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   WIZARD STEP TRANSITIONS · direction-aware slide + fade so the user
+   actually sees that they advanced. Old step is unmounted instantly
+   (React key swap), so only the entry is animated.
+   ────────────────────────────────────────────────────────────────────────── */
+
+@keyframes wizard-step-in-next {
+  from { opacity: 0; transform: translate3d(28px, 0, 0); filter: blur(2px); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0);    filter: blur(0); }
+}
+
+@keyframes wizard-step-in-back {
+  from { opacity: 0; transform: translate3d(-28px, 0, 0); filter: blur(2px); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0);     filter: blur(0); }
+}
+
+.wizard-step {
+  will-change: transform, opacity;
+}
+.wizard-step-next {
+  animation: wizard-step-in-next 320ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
+}
+.wizard-step-back {
+  animation: wizard-step-in-back 320ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wizard-step-next,
+  .wizard-step-back {
+    animation: none;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
    BRAND LOGO  ·  Connected paths (inverted trident)
    ──────────────────────────────────────────────────────────────────────────
    One orchestrator at the top routes data through one of three connected
@@ -410,6 +443,29 @@ code, kbd, pre, samp, .font-mono {
   opacity: 0.28;
   transition: opacity 200ms ease-out;
 }
+
+/* idle state · no chat is working → static fully filled, no animation */
+.brand-logo:not([data-state]) .brand-channel,
+.brand-logo:not([data-state]) .brand-arrow,
+.brand-logo[data-state="idle"] .brand-channel,
+.brand-logo[data-state="idle"] .brand-arrow {
+  opacity: 1;
+  animation: none;
+}
+.brand-logo:not([data-state]) .brand-orchestrator,
+.brand-logo:not([data-state]) .brand-stem,
+.brand-logo:not([data-state]) .brand-halo,
+.brand-logo[data-state="idle"] .brand-orchestrator,
+.brand-logo[data-state="idle"] .brand-stem,
+.brand-logo[data-state="idle"] .brand-halo {
+  animation: none;
+}
+.brand-logo:not([data-state]) .brand-orchestrator,
+.brand-logo[data-state="idle"] .brand-orchestrator { opacity: 1; }
+.brand-logo:not([data-state]) .brand-stem,
+.brand-logo[data-state="idle"] .brand-stem { opacity: 1; }
+.brand-logo:not([data-state]) .brand-halo,
+.brand-logo[data-state="idle"] .brand-halo { opacity: 0; }
 
 /* the stem and the junction always read at full strength —
    they're the spine of the figure */

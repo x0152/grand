@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""Create a new IMAP folder (a.k.a. "label" on Gmail).
+
+Examples:
+  email-folder-create --name Receipts
+  email-folder-create --name "Receipts/2026"   # nested, server-specific delimiter
+  email-folder-create --name Чеки              # non-ASCII names are fine
+
+Refuses names that contain control characters, IMAP wildcards (* %) or
+quotes. If the folder already exists this is a no-op (exit 0) so the
+command is safe to retry.
+"""
+import argparse
+import json
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-folder-create",
+                                description="Create an IMAP folder")
+    p.add_argument("--name", required=True, help="Folder name to create.")
+    p.add_argument("--subscribe", action="store_true",
+                   help="Also SUBSCRIBE to the folder (some clients only "
+                        "show subscribed folders).")
+    p.add_argument("--json", action="store_true")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+    if not eh.require_imap(cfg):
+        return 0
+
+    try:
+        name = eh.validate_folder_name(args.name)
+    except Exception as e:
+        return eh.die("email-folder-create", e, exit_code=2)
+
+    try:
+        with eh.open_imap(cfg) as box:
+            existing = {f.name for f in eh.list_folders(box)}
+            if name in existing:
+                created = False
+            else:
+                box.folder.create(name)
+                created = True
+            subscribed = False
+            if args.subscribe:
+                try:
+                    box.folder.subscribe(name, True)
+                    subscribed = True
+                except Exception:
+                    # Subscription is best-effort; the folder still exists.
+                    pass
+    except Exception as e:
+        return eh.die("email-folder-create", e)
+
+    if args.json:
+        print(json.dumps({
+            "name": name,
+            "created": created,
+            "subscribed": subscribed,
+        }, ensure_ascii=False))
+    else:
+        verb = "created" if created else "already existed"
+        extra = " (subscribed)" if subscribed else ""
+        print(f"folder {name!r} {verb}{extra}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

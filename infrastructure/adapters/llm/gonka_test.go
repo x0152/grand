@@ -77,6 +77,41 @@ func TestGonkaGetInferenceLimit_ServerError(t *testing.T) {
 	}
 }
 
+func TestGonkaGetInferenceLimit_PinnedUsesBalanceSourceURL(t *testing.T) {
+	var defaultSourceHits int
+	defaultSource := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defaultSourceHits++
+		http.Error(w, "unexpected default source hit", http.StatusInternalServerError)
+	}))
+	defer defaultSource.Close()
+
+	var pinnedSourcePath string
+	pinnedSource := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pinnedSourcePath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"balances":[{"denom":"ngonka","amount":"42000000000"}]}`)
+	}))
+	defer pinnedSource.Close()
+
+	g := NewGonkaWithOptions(GonkaOptions{
+		PinEndpointEnabled:  true,
+		PinBalanceSourceURL: pinnedSource.URL,
+	})
+	limit, err := g.GetInferenceLimit(context.Background(), defaultSource.URL, gonkaTestPrivateKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if limit.Type != "balance" || limit.Label != "Balance: 42.00 GNK" {
+		t.Fatalf("unexpected limit: %+v", limit)
+	}
+	if defaultSourceHits != 0 {
+		t.Fatalf("unexpected default source hits: %d", defaultSourceHits)
+	}
+	if !strings.HasPrefix(pinnedSourcePath, "/chain-api/cosmos/bank/v1beta1/balances/") {
+		t.Fatalf("unexpected pinned source path: %s", pinnedSourcePath)
+	}
+}
+
 func TestNormalizeGonkaEndpointURL(t *testing.T) {
 	cases := []struct {
 		in   string

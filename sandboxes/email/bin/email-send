@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""Send a message via SMTP.
+
+After SMTP delivery succeeds the helper also IMAP-APPENDs the message to
+the resolved Sent folder (controlled by SANDBOX_EMAIL_SAVE_SENT, default
+on) so the user can actually find their outgoing mail in their mailbox —
+many providers (Mail.ru, Yandex, custom servers) do not auto-save SMTP
+traffic.
+
+For replies pass `--reply-to-uid <UID>` (and optionally
+`--reply-folder <F>`); the helper fetches the source's Message-ID,
+Subject and From and wires up In-Reply-To + References headers and the
+"Re: …" subject automatically. In that mode `--subject` and `--to` are
+optional — they're inherited from the source message.
+"""
+import argparse
+import json
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-send", description="Send an email message")
+    p.add_argument("--to", default=None,
+                   help="Recipient(s). Comma-separated for multiple. "
+                        "Optional only when --reply-to-uid is given.")
+    p.add_argument("--subject", default=None,
+                   help="Subject. Optional only when --reply-to-uid is given "
+                        "(then it's derived from the source as 'Re: …').")
+    p.add_argument("--body", default=None,
+                   help="Plain-text body. If omitted, read from stdin.")
+    p.add_argument("--body-file", default=None,
+                   help="Read plain-text body from this file instead of --body/stdin.")
+    p.add_argument("--html-file", default=None,
+                   help="Optional HTML alternative body, read from this file.")
+    p.add_argument("--cc", default=None)
+    p.add_argument("--bcc", default=None,
+                   help="BCC recipients (not added to headers — only delivered to).")
+    p.add_argument("--from-name", default=None,
+                   help="Display name for the From header (overrides "
+                        "SANDBOX_EMAIL_DISPLAY_NAME).")
+    p.add_argument("--in-reply-to", dest="in_reply_to", default=None,
+                   help="Message-ID to reply to (sets In-Reply-To and References "
+                        "headers). Use full Message-ID including angle brackets, "
+                        "e.g. <abc@host>.")
+    p.add_argument("--reply-to-uid", dest="reply_to_uid", default=None,
+                   help="UID to reply to. Fetches its Message-ID/Subject/From and "
+                        "sets In-Reply-To, References, To and Subject (Re: …) "
+                        "automatically.")
+    p.add_argument("--reply-folder", default="INBOX",
+                   help="Folder to look up --reply-to-uid in (default: INBOX).")
+    p.add_argument("--attach", action="append", default=[],
+                   help="Path to a file to attach (repeatable).")
+    p.add_argument("--no-save-sent", action="store_true",
+                   help="Skip IMAP APPEND to the Sent folder (overrides "
+                        "SANDBOX_EMAIL_SAVE_SENT).")
+    p.add_argument("--json", action="store_true",
+                   help="Emit a single JSON object describing the send result.")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+    if not eh.require_smtp(cfg):
+        return 0
+
+    to = args.to
+    subject = args.subject
+    in_reply_to = args.in_reply_to
+    references = None
+
+    if args.reply_to_uid:
+        try:
+            uid = eh.validate_uid(args.reply_to_uid)
+        except Exception as e:
+            return eh.die("email-send", e, exit_code=2)
+        try:
+            with eh.open_imap(cfg) as box:
+                eh.set_folder(box, args.reply_folder)
+                src = next(iter(box.fetch(f"UID {uid}",
+                                          mark_seen=False, headers_only=True)), None)
+        except eh.FolderNotFound as e:
+            return eh.die("email-send", e, exit_code=2)
+        except Exception as e:
+            return eh.die("email-send", f"could not load reply source uid={uid}: {e}")
+        if src is None:
+            print(f"email-send: no message with uid {uid} in {args.reply_folder}",
+                  file=sys.stderr)
+            return 1
+        if src.headers and src.headers.get("message-id"):
+            in_reply_to = src.headers["message-id"][0]
+        existing_refs = ""
+        if src.headers and src.headers.get("references"):
+            existing_refs = " ".join(src.headers["references"])
+        references = (existing_refs + " " + (in_reply_to or "")).strip() or None
+        if not to:
+            to = src.from_ or ""
+        if subject:
+            if not subject.lower().startswith("re:"):
+                subject = "Re: " + subject
+        else:
+            subject = "Re: " + (src.subject or "")
+    else:
+        if not to:
+            return eh.die("email-send",
+                           "--to is required (or use --reply-to-uid to inherit it)",
+                           exit_code=2)
+        if subject is None:
+            return eh.die("email-send",
+                           "--subject is required (or use --reply-to-uid to inherit it)",
+                           exit_code=2)
+
+    if args.body is not None:
+        body = args.body
+    elif args.body_file:
+        try:
+            eh.assert_safe_path(args.body_file, must_exist=True)
+            with open(args.body_file, encoding="utf-8") as fh:
+                body = fh.read()
+        except Exception as e:
+            return eh.die("email-send", f"--body-file: {e}", exit_code=2)
+    else:
+        body = sys.stdin.read()
+
+    html_body = None
+    if args.html_file:
+        try:
+            eh.assert_safe_path(args.html_file, must_exist=True)
+            with open(args.html_file, encoding="utf-8") as fh:
+                html_body = fh.read()
+        except Exception as e:
+            return eh.die("email-send", f"--html-file: {e}", exit_code=2)
+
+    try:
+        msg = eh.build_message(
+            cfg,
+            to=to,
+            subject=subject,
+            body=body,
+            cc=args.cc,
+            bcc=args.bcc,
+            in_reply_to=in_reply_to,
+            references=references,
+            html_body=html_body,
+            attachments=args.attach,
+            from_name=args.from_name,
+        )
+    except Exception as e:
+        return eh.die("email-send", f"cannot build message: {e}", exit_code=2)
+
+    try:
+        recipients = eh.smtp_send(cfg, msg)
+    except Exception as e:
+        return eh.die("email-send", e)
+
+    save_sent = cfg.save_sent and not args.no_save_sent
+    sent_folder = ""
+    sent_ok = False
+    sent_detail = "skipped (save_sent=false)"
+    if save_sent and cfg.imap_ready():
+        sent_folder, sent_ok, sent_detail = eh.append_to_sent(cfg, msg)
+    elif save_sent:
+        sent_detail = "imap not configured"
+
+    if args.json:
+        result = {
+            "message_id": msg["Message-ID"],
+            "from": msg["From"],
+            "to": recipients,
+            "subject": subject,
+            "in_reply_to": in_reply_to,
+            "saved_to_sent": sent_ok,
+            "sent_folder": sent_folder,
+            "sent_detail": sent_detail,
+        }
+        print(json.dumps(result, ensure_ascii=False))
+    else:
+        print(f"sent message-id={msg['Message-ID']} to {', '.join(recipients)}")
+        if save_sent:
+            if sent_ok:
+                print(f"saved a copy to IMAP folder {sent_folder!r}")
+            else:
+                # Non-fatal — the email was already delivered to SMTP.
+                print(f"warning: could not save copy to Sent folder ({sent_detail})",
+                      file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

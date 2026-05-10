@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""Read one message by UID.
+
+Body extraction prefers text/plain, falls back to a stripped text rendering
+of HTML, and only as a last resort dumps raw HTML. Use --raw to get the
+full RFC822 source, --save-attachments to dump attachments to a directory.
+
+UID must be a positive integer (e.g. `--uid 12345`). Get it from
+`email-list` or `email-search` first.
+"""
+import argparse
+import json
+import os
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-read", description="Read one message by UID")
+    p.add_argument("--uid", required=True, help="Positive integer UID from email-list/search.")
+    p.add_argument("--folder", default="INBOX",
+                   help="Folder to look up the UID in (aliases supported). "
+                        "Run email-folders if you don't know the exact name.")
+    p.add_argument("--with-body", action="store_true",
+                   help="Print the message body (default: headers + attachment list only).")
+    p.add_argument("--prefer-html", action="store_true",
+                   help="Print raw HTML body instead of text rendering.")
+    p.add_argument("--raw", action="store_true",
+                   help="Dump the full RFC822 source to stdout (overrides --with-body).")
+    p.add_argument("--save-attachments", default=None, metavar="DIR",
+                   help="Save every attachment into DIR (created if missing).")
+    p.add_argument("--json", action="store_true",
+                   help="Emit a single JSON object (with body if --with-body).")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+    if not eh.require_imap(cfg):
+        return 0
+
+    try:
+        uid = eh.validate_uid(args.uid)
+    except Exception as e:
+        return eh.die("email-read", e, exit_code=2)
+
+    try:
+        with eh.open_imap(cfg) as box:
+            chosen = eh.set_folder(box, args.folder)
+            messages = list(box.fetch(f"UID {uid}", mark_seen=False))
+    except eh.FolderNotFound as e:
+        return eh.die("email-read", e, exit_code=2)
+    except Exception as e:
+        return eh.die("email-read", e)
+
+    if not messages:
+        print(f"(no message with uid {uid} in {chosen!r})", file=sys.stderr)
+        return 1
+    m = messages[0]
+
+    if args.raw:
+        sys.stdout.buffer.write(m.obj.as_bytes())
+        return 0
+
+    msg_id_hdr = ""
+    if m.headers and m.headers.get("message-id"):
+        msg_id_hdr = m.headers["message-id"][0]
+
+    saved_paths = []
+    if args.save_attachments:
+        try:
+            eh.assert_safe_path(args.save_attachments)
+        except Exception as e:
+            return eh.die("email-read", f"--save-attachments: {e}", exit_code=2)
+        os.makedirs(args.save_attachments, exist_ok=True)
+        for a in m.attachments or ():
+            name = a.filename or f"attachment-{m.uid}.bin"
+            safe = os.path.basename(name)  # never escape the dir
+            path = os.path.join(args.save_attachments, safe)
+            with open(path, "wb") as fh:
+                fh.write(a.payload)
+            saved_paths.append(path)
+
+    body = ""
+    body_kind = ""
+    if args.with_body:
+        body, body_kind = eh.extract_body(m, prefer_html=args.prefer_html)
+
+    if args.json:
+        record = eh.message_record(m, folder=chosen)
+        record["message_id"] = msg_id_hdr or record.get("message_id")
+        record["attachments"] = [
+            {
+                "filename": a.filename or "",
+                "content_type": a.content_type,
+                "size": len(a.payload),
+            }
+            for a in m.attachments or ()
+        ]
+        if saved_paths:
+            record["saved_attachments"] = saved_paths
+        if args.with_body:
+            record["body_kind"] = body_kind
+            record["body"] = body
+        print(json.dumps(record, ensure_ascii=False))
+        return 0
+
+    print(f"uid:        {m.uid}")
+    print(f"folder:     {chosen}")
+    print(f"date:       {m.date}")
+    print(f"from:       {m.from_}")
+    print(f"to:         {', '.join(m.to or [])}")
+    if m.cc:
+        print(f"cc:         {', '.join(m.cc)}")
+    if m.reply_to:
+        print(f"reply-to:   {', '.join(m.reply_to)}")
+    print(f"subject:    {m.subject or ''}")
+    if msg_id_hdr:
+        print(f"message-id: {msg_id_hdr}")
+    flags = " ".join(m.flags or ()) or "(none)"
+    print(f"flags:      {flags}")
+    if m.attachments:
+        print(f"attachments: {len(m.attachments)}")
+        for a in m.attachments:
+            name = a.filename or "(unnamed)"
+            print(f"  - {name} ({a.content_type}, {len(a.payload)}B)")
+    for path in saved_paths:
+        print(f"saved: {path}")
+
+    if args.with_body:
+        print()
+        if body_kind:
+            print(f"[body kind: {body_kind}]")
+        print(body or "(empty body)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

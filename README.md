@@ -83,35 +83,55 @@ Multi-agent system where an LLM orchestrates a pool of isolated agents, each run
 
 ### Option A: Local Docker Compose (fastest)
 
-First start does not require a separate `docker build` step.
-`docker compose up --build` builds everything automatically — the app, the
-frontend, **and all sandbox images** (base, browser, ffmpeg, netsec,
-runtimectl). The dedicated `sandbox-prebuild` service runs once before the
-backend starts so that by the time the UI is reachable every sandbox is
-ready and tools work immediately. Subsequent boots are fast: the hash on
-each image is checked first and the build is skipped if nothing changed.
+```bash
+git clone https://github.com/x0152/grand.git
+cd grand
+./quickstart.sh
+```
+
+That's it. `quickstart.sh` checks Docker, creates `.env` from
+`.env.example`, generates a random `AUTH_TOKEN` / `RUNTIME_API_TOKEN`,
+runs `docker compose up --build -d`, and prints the URL + login token at
+the end. Everything else (LLM provider, models, Telegram, email/SMTP) is
+configured from the in-app setup wizard — no `.env` editing required for
+the first run.
+
+Prefer to do it by hand:
 
 ```bash
 cp .env.example .env
-# edit .env and set at least: AUTH_TOKEN, MANTIS_LLM_BASE_URL, MANTIS_LLM_API_KEY, MANTIS_LLM_MODEL
+# edit AUTH_TOKEN and RUNTIME_API_TOKEN to long random strings
 docker compose up --build -d
 ```
 
-The very first run downloads/builds five sandbox images and may take a few
-minutes — watch the progress with:
+Then open http://localhost:27173 and sign in with `AUTH_TOKEN`.
+
+#### What to expect on the first boot
+
+| Run | Wall time | Why |
+|---|---|---|
+| First boot | ~3–6 min | Pulls Alpine/Python base layers and builds **7 sandbox images** — `sandbox-base` plus 6 builtins (`base`, `browser`, `email`, `ffmpeg`, `netsec`, `runtimectl`) |
+| Subsequent boots | <30 s | Each Dockerfile is hashed; unchanged sandboxes are skipped |
+
+The dedicated `sandbox-prebuild` service runs once before the backend
+starts, so every sandbox is ready the moment the UI is reachable. Watch
+the progress live — it prints one line per image:
 
 ```bash
 docker compose logs -f sandbox-prebuild
+# sandbox-prebuild: base         building (sha=…)
+# sandbox-prebuild: base         ready (12s)
+# sandbox-prebuild: browser      ready (1m04s)
+# …
+# sandbox-prebuild: all 7 sandbox images ready
 ```
-
-When you see `sandbox-prebuild: all 5 sandbox images ready` the backend
-will start. Then open http://localhost:27173 and sign in with `AUTH_TOKEN`.
 
 Useful commands:
 
 ```bash
-docker compose logs -f app
-docker compose down
+docker compose logs -f app             # backend logs
+docker compose logs -f sandbox-prebuild # sandbox build progress
+docker compose down                    # stop everything
 ```
 
 ### Option B: Kubernetes (Helm)
@@ -127,6 +147,20 @@ docker build -f frontend/Dockerfile.prod -t ${REGISTRY}/mantis-frontend:${TAG} f
 
 docker push ${REGISTRY}/mantis:${TAG}
 docker push ${REGISTRY}/mantis-frontend:${TAG}
+```
+
+Sandbox Dockerfiles are embedded inside the app image, so no extra push
+step is needed. The backend bootstraps them on first start (in the
+runtime mode that owns Docker — DIND sidecar or host-socket): each
+Dockerfile is hashed and built once, then cached. Plan for **~3–6 min on
+the first pod start**, and <30 s on subsequent ones. Follow progress with:
+
+```bash
+kubectl -n mantis logs -f deploy/app | grep -E 'runtime bootstrap|sandbox'
+# runtime bootstrap: building base image base
+# runtime bootstrap: base image base ready
+# runtime bootstrap: building browser
+# …
 ```
 
 #### 2) Deploy with Helm

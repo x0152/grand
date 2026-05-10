@@ -10,7 +10,11 @@ import (
 )
 
 type App struct {
-	endpoints *api.Endpoints
+	endpoints   *api.Endpoints
+	applyConfig *usecases.ApplyConfig
+	verifyEmail *usecases.VerifyEmail
+	store       protocols.Store[string, types.AppConfig]
+	resolver    *usecases.Resolver
 }
 
 type Stores struct {
@@ -27,23 +31,42 @@ type Stores struct {
 
 func NewApp(stores Stores, env usecases.EnvSnapshot) *App {
 	resolver := usecases.NewResolver(env)
+	apply := usecases.NewApplyConfig(stores.AppConfig, resolver, usecases.ApplyDeps{
+		LlmConnStore:  stores.LlmConn,
+		ModelStore:    stores.Model,
+		PresetStore:   stores.Preset,
+		SettingsStore: stores.Settings,
+		ChannelStore:  stores.Channel,
+		ConnStore:     stores.Conn,
+		SkillStore:    stores.Skill,
+		PlanStore:     stores.Plan,
+	})
+	verify := usecases.NewVerifyEmail()
 	return &App{
+		applyConfig: apply,
+		verifyEmail: verify,
+		store:       stores.AppConfig,
+		resolver:    resolver,
 		endpoints: api.NewEndpoints(api.UseCases{
 			GetConfig:    usecases.NewGetConfig(stores.AppConfig, resolver),
 			UpdateConfig: usecases.NewUpdateConfig(stores.AppConfig, resolver),
-			ApplyConfig: usecases.NewApplyConfig(stores.AppConfig, resolver, usecases.ApplyDeps{
-				LlmConnStore:  stores.LlmConn,
-				ModelStore:    stores.Model,
-				PresetStore:   stores.Preset,
-				SettingsStore: stores.Settings,
-				ChannelStore:  stores.Channel,
-				ConnStore:     stores.Conn,
-				SkillStore:    stores.Skill,
-				PlanStore:     stores.Plan,
-			}),
-			ResetConfig: usecases.NewResetConfig(stores.AppConfig, resolver),
+			ApplyConfig:  apply,
+			ResetConfig:  usecases.NewResetConfig(stores.AppConfig, resolver),
+			VerifyEmail:  verify,
 		}),
 	}
+}
+
+func (a *App) ApplyConfig() *usecases.ApplyConfig {
+	return a.applyConfig
+}
+
+func (a *App) ConfigStore() protocols.Store[string, types.AppConfig] {
+	return a.store
+}
+
+func (a *App) Resolver() *usecases.Resolver {
+	return a.resolver
 }
 
 func (a *App) Register(api huma.API) {

@@ -107,12 +107,27 @@ export interface TelegramConfigResolved {
   source: ConfigSource
 }
 
+export interface EmailConfigResolved {
+  address: ConfigField
+  smtpHost: ConfigField
+  smtpPort: ConfigField
+  smtpUsername: ConfigField
+  smtpPassword: ConfigSecret
+  imapHost: ConfigField
+  imapPort: ConfigField
+  imapUsername: ConfigField
+  imapPassword: ConfigSecret
+  skipped: boolean
+  source: ConfigSource
+}
+
 export interface GlobalConfig {
   provider: ConfigField
   openai: OpenAIConfigResolved
   gonka: GonkaConfigResolved
   models: ConfigModelRow[]
   telegram: TelegramConfigResolved
+  email: EmailConfigResolved
 }
 
 export interface OpenAIDraft {
@@ -131,12 +146,37 @@ export interface TelegramDraft {
   skipped: boolean
 }
 
+export interface EmailDraft {
+  address: string
+  smtpHost: string
+  smtpPort: string
+  smtpUsername: string
+  smtpPassword: string
+  imapHost: string
+  imapPort: string
+  imapUsername: string
+  imapPassword: string
+  skipped: boolean
+}
+
+export interface EmailProbe {
+  ok: boolean
+  skipped: boolean
+  detail?: string
+}
+
+export interface EmailVerifyResult {
+  smtp: EmailProbe
+  imap: EmailProbe
+}
+
 export interface GlobalConfigDraft {
   provider: string
   openai: OpenAIDraft
   gonka: GonkaDraft
   models: ConfigModelRow[]
   telegram: TelegramDraft
+  email: EmailDraft
 }
 
 export interface Model {

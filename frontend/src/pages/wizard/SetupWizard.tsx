@@ -6,12 +6,11 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { AlertCircle } from '@/lib/icons'
 import { api } from '@/api'
 import type { GlobalConfig, GlobalConfigDraft, GonkaConfig, ProviderModel } from '@/types'
-import type { ModelRow, Provider, State, StepId, WalletMode, WizardMode } from './types'
+import type { ModelRow, Provider, State, StepId, WalletImportMode, WalletMode, WizardMode } from './types'
 import { DEFAULT_GONKA_NODE, MIN_BALANCE_GNK } from './seeds'
 import { buildPath } from './path'
 import { deriveStatus } from './status'
-import { telegramSummary } from './utils'
-import { StepHeader } from './components/StepHeader'
+import { ProgressBar, StepIntro } from './components/StepHeader'
 import { NavBar } from './components/NavBar'
 import { ProviderStep } from './steps/ProviderStep'
 import { OpenAIStep } from './steps/OpenAIStep'
@@ -22,7 +21,9 @@ import { WalletRevealStep } from './steps/WalletRevealStep'
 import { WalletBalanceStep } from './steps/WalletBalanceStep'
 import { GonkaModelsStep } from './steps/GonkaModelsStep'
 import { TelegramStep } from './steps/TelegramStep'
+import { EmailStep } from './steps/EmailStep'
 import { FinishStep } from './steps/FinishStep'
+import { telegramSummary, emailSummary } from './utils'
 
 interface SetupWizardProps {
   mode?: WizardMode
@@ -32,6 +33,7 @@ interface SetupWizardProps {
 export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps) {
   const [state, setState] = useState<State | null>(null)
   const [stepId, setStepId] = useState<StepId>('provider')
+  const [direction, setDirection] = useState<'next' | 'back'>('next')
   const [gonkaConfig, setGonkaConfig] = useState<GonkaConfig | null>(null)
   const [resolved, setResolved] = useState<GlobalConfig | null>(null)
   const [error, setError] = useState('')
@@ -131,15 +133,20 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
   const update = <K extends keyof State>(key: K, value: State[K]) =>
     setState(prev => (prev ? { ...prev, [key]: value } : prev))
 
+  const goTo = (next: StepId, dir: 'next' | 'back' = 'next') => {
+    setDirection(dir)
+    setStepId(next)
+  }
+
   const goNext = () => {
     setError('')
     const next = path[currentIdx + 1]
-    if (next) setStepId(next)
+    if (next) goTo(next, 'next')
   }
   const goBack = () => {
     setError('')
     const prev = path[currentIdx - 1]
-    if (prev) setStepId(prev)
+    if (prev) goTo(prev, 'back')
   }
 
   const onCompleteClick = async () => {
@@ -164,13 +171,13 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
       if (prev.provider === p) return prev
       return { ...prev, provider: p, modelRows: [{ name: '', role: 'chat' }] }
     })
-    if (p === 'openai') setStepId('openai')
-    else setStepId('wallet-choice')
+    if (p === 'openai') goTo('openai', 'next')
+    else goTo('wallet-choice', 'next')
   }
 
   const onWalletModeSelect = (walletMode: WalletMode) => {
     update('walletMode', walletMode)
-    setStepId(walletMode === 'create' ? 'wallet-create' : 'wallet-import')
+    goTo(walletMode === 'create' ? 'wallet-create' : 'wallet-import', 'next')
   }
 
   const onCreateWallet = async () => {
@@ -186,7 +193,7 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
         gonkaMnemonicWords: wallet.words,
         mnemonicAcknowledged: false,
       } : prev)
-      setStepId('wallet-reveal')
+      goTo('wallet-reveal', 'next')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Wallet creation failed')
     } finally {
@@ -198,11 +205,22 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
     setSubmitting(true)
     setError('')
     try {
-      const { address } = await api.gonka.deriveAddress(state.gonkaPrivateKey.trim())
-      setState(prev => prev ? { ...prev, gonkaAddress: address, gonkaPrivateKeyKnown: true } : prev)
-      setStepId('wallet-balance')
+      if (state.walletImportMode === 'mnemonic') {
+        const wallet = await api.gonka.importWallet(state.gonkaMnemonicInput)
+        setState(prev => prev ? {
+          ...prev,
+          gonkaPrivateKey: wallet.privateKeyHex,
+          gonkaPrivateKeyKnown: true,
+          gonkaAddress: wallet.address,
+          gonkaMnemonicWords: wallet.words,
+        } : prev)
+      } else {
+        const { address } = await api.gonka.deriveAddress(state.gonkaPrivateKey.trim())
+        setState(prev => prev ? { ...prev, gonkaAddress: address, gonkaPrivateKeyKnown: true } : prev)
+      }
+      goTo('wallet-balance', 'next')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Invalid private key')
+      setError(e instanceof Error ? e.message : 'Could not connect that wallet')
     } finally {
       setSubmitting(false)
     }
@@ -238,107 +256,146 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
         </div>
 
         <Card className="bg-[var(--grand-surface)] p-7 space-y-6 border-0 shadow-none">
-          <StepHeader path={path} stepId={stepId} />
+          <ProgressBar path={path} stepId={stepId} />
 
-          {stepId === 'provider' && (
-            <ProviderStep provider={state.provider} gonkaConfig={gonkaConfig} onSelect={onProviderSelect} />
-          )}
+          <div
+            key={stepId}
+            className={`wizard-step space-y-6 ${direction === 'back' ? 'wizard-step-back' : 'wizard-step-next'}`}
+          >
+            <StepIntro path={path} stepId={stepId} />
 
-          {stepId === 'openai' && (
-            <OpenAIStep
-              baseUrl={state.openaiBaseUrl}
-              apiKey={state.openaiApiKey}
-              modelRows={state.modelRows}
-              available={availableModels}
-              loadingModels={loadingModels}
-              modelsError={modelsError}
-              onChangeBaseUrl={v => update('openaiBaseUrl', v)}
-              onChangeApiKey={v => update('openaiApiKey', v)}
-              onChangeModelRows={rows => update('modelRows', rows)}
-              onLoadModels={onLoadOpenAIModels}
-            />
-          )}
+            {stepId === 'provider' && (
+              <ProviderStep provider={state.provider} gonkaConfig={gonkaConfig} onSelect={onProviderSelect} />
+            )}
 
-          {stepId === 'wallet-choice' && (
-            <WalletChoiceStep
-              walletMode={state.walletMode}
-              gonkaConfig={gonkaConfig}
-              onSelect={onWalletModeSelect}
-            />
-          )}
+            {stepId === 'openai' && (
+              <OpenAIStep
+                baseUrl={state.openaiBaseUrl}
+                apiKey={state.openaiApiKey}
+                modelRows={state.modelRows}
+                available={availableModels}
+                loadingModels={loadingModels}
+                modelsError={modelsError}
+                onChangeBaseUrl={v => update('openaiBaseUrl', v)}
+                onChangeApiKey={v => update('openaiApiKey', v)}
+                onChangeModelRows={rows => update('modelRows', rows)}
+                onLoadModels={onLoadOpenAIModels}
+              />
+            )}
 
-          {stepId === 'wallet-import' && (
-            <WalletImportStep
-              privateKey={state.gonkaPrivateKey}
-              nodeUrl={state.gonkaNodeUrl}
-              submitting={submitting}
-              onChangePrivateKey={v => update('gonkaPrivateKey', v)}
-              onChangeNodeUrl={v => update('gonkaNodeUrl', v)}
-              onConfirm={onUseExisting}
-            />
-          )}
+            {stepId === 'wallet-choice' && (
+              <WalletChoiceStep
+                walletMode={state.walletMode}
+                gonkaConfig={gonkaConfig}
+                onSelect={onWalletModeSelect}
+              />
+            )}
 
-          {stepId === 'wallet-create' && (
-            <WalletCreateStep
-              gonkaConfig={gonkaConfig}
-              nodeUrl={state.gonkaNodeUrl}
-              submitting={submitting}
-              onChangeNodeUrl={v => update('gonkaNodeUrl', v)}
-              onCreate={onCreateWallet}
-            />
-          )}
+            {stepId === 'wallet-import' && (
+              <WalletImportStep
+                importMode={state.walletImportMode}
+                mnemonic={state.gonkaMnemonicInput}
+                privateKey={state.gonkaPrivateKey}
+                nodeUrl={state.gonkaNodeUrl}
+                submitting={submitting}
+                onChangeImportMode={(m: WalletImportMode) => update('walletImportMode', m)}
+                onChangeMnemonic={v => update('gonkaMnemonicInput', v)}
+                onChangePrivateKey={v => update('gonkaPrivateKey', v)}
+                onChangeNodeUrl={v => update('gonkaNodeUrl', v)}
+                onConfirm={onUseExisting}
+              />
+            )}
 
-          {stepId === 'wallet-reveal' && (
-            <WalletRevealStep
-              address={state.gonkaAddress}
-              words={state.gonkaMnemonicWords}
-              acknowledged={state.mnemonicAcknowledged}
-              onAcknowledge={v => update('mnemonicAcknowledged', v)}
-            />
-          )}
+            {stepId === 'wallet-create' && (
+              <WalletCreateStep
+                gonkaConfig={gonkaConfig}
+                nodeUrl={state.gonkaNodeUrl}
+                submitting={submitting}
+                onChangeNodeUrl={v => update('gonkaNodeUrl', v)}
+                onCreate={onCreateWallet}
+              />
+            )}
 
-          {stepId === 'wallet-balance' && (
-            <WalletBalanceStep
-              address={state.gonkaAddress}
-              nodeUrl={state.gonkaNodeUrl}
-              minBalance={MIN_BALANCE_GNK}
-              balance={state.gonkaBalance}
-              onBalanceChange={b => update('gonkaBalance', b)}
-              bypass={state.bypassBalance}
-              onBypassChange={v => update('bypassBalance', v)}
-            />
-          )}
+            {stepId === 'wallet-reveal' && (
+              <WalletRevealStep
+                address={state.gonkaAddress}
+                words={state.gonkaMnemonicWords}
+                acknowledged={state.mnemonicAcknowledged}
+                onAcknowledge={v => update('mnemonicAcknowledged', v)}
+              />
+            )}
 
-          {stepId === 'gonka-models' && (
-            <GonkaModelsStep
-              modelRows={state.modelRows}
-              available={availableModels}
-              loadingModels={loadingModels}
-              modelsError={modelsError}
-              onChange={rows => update('modelRows', rows)}
-              onReload={onReloadGonkaModels}
-            />
-          )}
+            {stepId === 'wallet-balance' && (
+              <WalletBalanceStep
+                address={state.gonkaAddress}
+                nodeUrl={state.gonkaNodeUrl}
+                minBalance={MIN_BALANCE_GNK}
+                balance={state.gonkaBalance}
+                onBalanceChange={b => update('gonkaBalance', b)}
+                bypass={state.bypassBalance}
+                onBypassChange={v => update('bypassBalance', v)}
+              />
+            )}
 
-          {stepId === 'telegram' && (
-            <TelegramStep
-              token={state.tgToken}
-              linkedUser={state.tgLinkedUser}
-              skip={state.tgSkip}
-              onChangeToken={v => update('tgToken', v)}
-              onChangeLinkedUser={v => update('tgLinkedUser', v)}
-              onChangeSkip={v => update('tgSkip', v)}
-            />
-          )}
+            {stepId === 'gonka-models' && (
+              <GonkaModelsStep
+                modelRows={state.modelRows}
+                available={availableModels}
+                loadingModels={loadingModels}
+                modelsError={modelsError}
+                onChange={rows => update('modelRows', rows)}
+                onReload={onReloadGonkaModels}
+              />
+            )}
 
-          {stepId === 'finish' && (
-            <FinishStep
-              provider={state.provider}
-              chatModel={state.modelRows.find(r => r.role === 'chat')?.name}
-              endpoint={state.provider === 'openai' ? state.openaiBaseUrl : state.gonkaNodeUrl}
-              telegramLabel={telegramSummary(state)}
-            />
-          )}
+            {stepId === 'telegram' && (
+              <TelegramStep
+                token={state.tgToken}
+                linkedUser={state.tgLinkedUser}
+                skip={state.tgSkip}
+                onChangeToken={v => update('tgToken', v)}
+                onChangeLinkedUser={v => update('tgLinkedUser', v)}
+                onChangeSkip={v => update('tgSkip', v)}
+              />
+            )}
+
+            {stepId === 'email' && (
+              <EmailStep
+                address={state.emailAddress}
+                smtpHost={state.emailSmtpHost}
+                smtpPort={state.emailSmtpPort}
+                smtpUsername={state.emailSmtpUsername}
+                smtpPassword={state.emailSmtpPassword}
+                smtpPasswordKnown={state.emailSmtpPasswordKnown}
+                imapHost={state.emailImapHost}
+                imapPort={state.emailImapPort}
+                imapUsername={state.emailImapUsername}
+                imapPassword={state.emailImapPassword}
+                imapPasswordKnown={state.emailImapPasswordKnown}
+                skip={state.emailSkip}
+                onChangeAddress={v => update('emailAddress', v)}
+                onChangeSmtpHost={v => update('emailSmtpHost', v)}
+                onChangeSmtpPort={v => update('emailSmtpPort', v)}
+                onChangeSmtpUsername={v => update('emailSmtpUsername', v)}
+                onChangeSmtpPassword={v => update('emailSmtpPassword', v)}
+                onChangeImapHost={v => update('emailImapHost', v)}
+                onChangeImapPort={v => update('emailImapPort', v)}
+                onChangeImapUsername={v => update('emailImapUsername', v)}
+                onChangeImapPassword={v => update('emailImapPassword', v)}
+                onChangeSkip={v => update('emailSkip', v)}
+              />
+            )}
+
+            {stepId === 'finish' && (
+              <FinishStep
+                provider={state.provider}
+                chatModel={state.modelRows.find(r => r.role === 'chat')?.name}
+                endpoint={state.provider === 'openai' ? state.openaiBaseUrl : state.gonkaNodeUrl}
+                telegramLabel={telegramSummary(state)}
+                emailLabel={emailSummary(state)}
+              />
+            )}
+          </div>
 
           {error && (
             <div className="flex items-start gap-2 rounded-md border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-[12px] text-rose-500">
@@ -364,6 +421,7 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
 
 function initialState(cfg: GlobalConfig, defaultGonkaNode: string): State {
   const provider = (cfg.provider.value || 'openai') as Provider
+  const linkedFromConfig = (cfg.telegram.allowedUserIds ?? [])[0]
   return {
     provider,
     openaiBaseUrl: cfg.openai.baseUrl.value,
@@ -371,9 +429,11 @@ function initialState(cfg: GlobalConfig, defaultGonkaNode: string): State {
     openaiApiKeyKnown: cfg.openai.apiKey.set,
     modelRows: cfg.models.length ? cfg.models.map(m => ({ name: m.name, role: m.role })) : [{ name: '', role: 'chat' }],
     walletMode: 'create',
+    walletImportMode: 'mnemonic',
     gonkaNodeUrl: cfg.gonka.nodeUrl.value || defaultGonkaNode,
     gonkaPrivateKey: '',
     gonkaPrivateKeyKnown: cfg.gonka.privateKey.set,
+    gonkaMnemonicInput: '',
     gonkaAddress: '',
     gonkaMnemonicWords: [],
     mnemonicAcknowledged: false,
@@ -381,9 +441,21 @@ function initialState(cfg: GlobalConfig, defaultGonkaNode: string): State {
     gonkaBalance: null,
     tgToken: cfg.telegram.token.value || '',
     tgTokenKnown: cfg.telegram.token.set,
-    tgLinkedUser: null,
+    tgLinkedUser: linkedFromConfig ? { id: linkedFromConfig, name: '' } : null,
     tgAllowedUserIds: cfg.telegram.allowedUserIds ?? [],
     tgSkip: cfg.telegram.skipped,
+    emailAddress: cfg.email.address.value || '',
+    emailSmtpHost: cfg.email.smtpHost.value || '',
+    emailSmtpPort: cfg.email.smtpPort.value || '',
+    emailSmtpUsername: cfg.email.smtpUsername.value || '',
+    emailSmtpPassword: cfg.email.smtpPassword.value || '',
+    emailSmtpPasswordKnown: cfg.email.smtpPassword.set,
+    emailImapHost: cfg.email.imapHost.value || '',
+    emailImapPort: cfg.email.imapPort.value || '',
+    emailImapUsername: cfg.email.imapUsername.value || '',
+    emailImapPassword: cfg.email.imapPassword.value || '',
+    emailImapPasswordKnown: cfg.email.imapPassword.set,
+    emailSkip: cfg.email.skipped,
   }
 }
 
@@ -416,6 +488,18 @@ function buildDraft(state: State): GlobalConfigDraft {
       token: state.tgToken.trim(),
       allowedUserIds: state.tgSkip ? [] : merged,
       skipped: state.tgSkip,
+    },
+    email: {
+      address: state.emailAddress.trim(),
+      smtpHost: state.emailSmtpHost.trim(),
+      smtpPort: state.emailSmtpPort.trim(),
+      smtpUsername: state.emailSmtpUsername.trim(),
+      smtpPassword: state.emailSmtpPassword.trim(),
+      imapHost: state.emailImapHost.trim(),
+      imapPort: state.emailImapPort.trim(),
+      imapUsername: state.emailImapUsername.trim(),
+      imapPassword: state.emailImapPassword.trim(),
+      skipped: state.emailSkip,
     },
   }
 }

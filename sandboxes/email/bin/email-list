@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+"""List recent messages in a folder.
+
+Output is tab-separated `key=value` rows by default (one per line) so
+the agent can grep/awk/cut. Pass --json to switch to JSON Lines if you
+need to consume the result programmatically (e.g. via jq).
+
+Tip: if you don't know your provider's exact folder names, run
+`email-folders` first or rely on the built-in aliases (Inbox, Sent,
+Spam, Trash, Drafts, Archive). Errors include the available folder
+list so you can self-correct in one shot.
+"""
+import argparse
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-list", description="List mailbox messages")
+    p.add_argument("--folder", default="INBOX",
+                   help="Folder name. Aliases (Inbox/Sent/Spam/Trash/Drafts/Archive) "
+                        "are auto-translated to whatever the server actually calls "
+                        "them. Run email-folders to discover non-standard names.")
+    p.add_argument("--limit", type=int, default=20)
+    p.add_argument("--since", default=None, help="YYYY-MM-DD (inclusive lower bound).")
+    p.add_argument("--before", default=None, help="YYYY-MM-DD (exclusive upper bound).")
+    p.add_argument("--unseen", action="store_true", help="Only unseen (\\Seen=False) messages.")
+    p.add_argument("--seen", action="store_true", help="Only seen (\\Seen=True) messages.")
+    p.add_argument("--flagged", action="store_true", help="Only flagged messages.")
+    p.add_argument("--json", action="store_true",
+                   help="Emit JSON Lines (one message object per line).")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+    if not eh.require_imap(cfg):
+        return 0
+
+    try:
+        crit, charset = eh.imap_criteria(args)
+    except Exception as e:
+        return eh.die("email-list", e, exit_code=2)
+
+    try:
+        with eh.open_imap(cfg) as box:
+            chosen = eh.set_folder(box, args.folder)
+            messages = eh.fetch_messages(box, crit, charset=charset,
+                                         limit=args.limit, headers_only=True)
+    except eh.FolderNotFound as e:
+        return eh.die("email-list", e, exit_code=2)
+    except Exception as e:
+        return eh.die("email-list", e)
+
+    eh.print_messages(messages, folder=chosen, as_json=args.json,
+                       empty_hint=f"(no messages in {chosen!r})")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

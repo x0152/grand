@@ -61,9 +61,13 @@ import {
   LinkSimple as PLinkSimple,
   Path as PPath,
   Wallet as PWallet,
+  QrCode as PQrCode,
+  Key as PKey,
+  TextAa as PTextAa,
   Infinity as PInfinity,
   GithubLogo as PGithubLogo,
   ArrowSquareOut as PArrowSquareOut,
+  Envelope as PEnvelope,
   type IconProps as PhosphorIconProps,
   type IconWeight,
 } from '@phosphor-icons/react'
@@ -146,6 +150,10 @@ export const Filter = adapt(PFunnel)
 export const Link2 = adapt(PLinkSimple)
 export const Route = adapt(PPath)
 export const Wallet = adapt(PWallet)
+export const QrCode = adapt(PQrCode)
+export const Key = adapt(PKey)
+export const TextAa = adapt(PTextAa)
 export const Infinity = adapt(PInfinity)
 export const Github = adapt(PGithubLogo)
 export const ExternalLink = adapt(PArrowSquareOut)
+export const Mail = adapt(PEnvelope)

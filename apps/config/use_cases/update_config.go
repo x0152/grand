@@ -61,5 +61,13 @@ func mergeDrafts(existing, in types.GlobalConfigDraft) types.GlobalConfigDraft {
 	if strings.TrimSpace(out.Telegram.Token) == "" && !out.Telegram.Skipped {
 		out.Telegram.Token = existing.Telegram.Token
 	}
+	if !out.Email.Skipped {
+		if strings.TrimSpace(out.Email.SMTPPassword) == "" {
+			out.Email.SMTPPassword = existing.Email.SMTPPassword
+		}
+		if strings.TrimSpace(out.Email.IMAPPassword) == "" {
+			out.Email.IMAPPassword = existing.Email.IMAPPassword
+		}
+	}
 	return out
 }

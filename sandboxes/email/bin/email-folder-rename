@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Rename an IMAP folder.
+
+Examples:
+  email-folder-rename --from Receipts --to Bills
+  email-folder-rename --from Чеки --to "Чеки/2026"
+
+Refuses to rename special-use folders (INBOX, Sent, Spam, Trash, Drafts,
+Archive) — moving those would silently break Mail.app, Gmail clients and
+the wizard's own auto-discovery.
+"""
+import argparse
+import json
+import sys
+
+sys.path.insert(0, "/usr/local/libexec/email")
+import email_helper as eh
+
+
+def main():
+    p = argparse.ArgumentParser(prog="email-folder-rename",
+                                description="Rename an IMAP folder")
+    p.add_argument("--from", dest="from_name", required=True,
+                   help="Current folder name (aliases not allowed — use literal name).")
+    p.add_argument("--to", dest="to_name", required=True,
+                   help="New folder name.")
+    p.add_argument("--json", action="store_true")
+    args = p.parse_args()
+
+    cfg = eh.load_config()
+    if not eh.require_imap(cfg):
+        return 0
+
+    try:
+        new_name = eh.validate_folder_name(args.to_name)
+    except Exception as e:
+        return eh.die("email-folder-rename", e, exit_code=2)
+
+    try:
+        with eh.open_imap(cfg) as box:
+            try:
+                source = eh.find_folder(box, args.from_name, strict=True)
+            except eh.FolderNotFound as e:
+                return eh.die("email-folder-rename", e, exit_code=2)
+            try:
+                eh.assert_not_protected(box, source, op="rename")
+            except PermissionError as e:
+                return eh.die("email-folder-rename", e, exit_code=2)
+            existing = {f.name for f in eh.list_folders(box)}
+            if new_name in existing:
+                return eh.die(
+                    "email-folder-rename",
+                    f"destination folder {new_name!r} already exists",
+                    exit_code=2,
+                )
+            box.folder.rename(source, new_name)
+    except Exception as e:
+        return eh.die("email-folder-rename", e)
+
+    if args.json:
+        print(json.dumps({
+            "from": source,
+            "to": new_name,
+        }, ensure_ascii=False))
+    else:
+        print(f"renamed folder {source!r} -> {new_name!r}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

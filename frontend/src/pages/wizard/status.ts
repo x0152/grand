@@ -46,11 +46,19 @@ export function deriveStatus(config: GlobalConfig | null): WizardStatus {
     })
   }
 
-  const tgDone = config.telegram.skipped || config.telegram.token.set
+  const tgDone = config.telegram.token.set
   steps.push({
     id: 'telegram',
     done: tgDone,
     source: config.telegram.source,
+    optional: true,
+  })
+
+  const emailDone = config.email.smtpPassword.set || config.email.imapPassword.set
+  steps.push({
+    id: 'email',
+    done: emailDone,
+    source: config.email.source,
     optional: true,
   })
 
