@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { FormField } from '@/components/FormField'
-import { Loader2, ShieldAlert, TextAa, Key, type IconComponent } from '@/lib/icons'
+import { Loader2, Key, TextAa, type IconComponent } from '@/lib/icons'
+import { AppleAction } from '../components/apple/AppleAction'
+import { AppleNote } from '../components/apple/AppleNote'
+import { GonkaServerSetting } from '../components/GonkaServerSetting'
+import { StepHero } from '../components/StepHero'
 import type { WalletImportMode } from '../types'
 import { isValidMnemonic, isValidPrivateKey } from '../utils'
 
@@ -31,148 +31,181 @@ export function WalletImportStep({
   onChangeNodeUrl,
   onConfirm,
 }: WalletImportStepProps) {
-  const [showServer, setShowServer] = useState(false)
   const wordCount = mnemonic.trim() ? mnemonic.trim().split(/\s+/).length : 0
+  const mnemonicValid = isValidMnemonic(mnemonic)
+  const privateKeyValid = isValidPrivateKey(privateKey)
   const canSubmit =
-    !!nodeUrl.trim() &&
-    (importMode === 'mnemonic' ? isValidMnemonic(mnemonic) : isValidPrivateKey(privateKey))
+    !!nodeUrl.trim() && (importMode === 'mnemonic' ? mnemonicValid : privateKeyValid)
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2">
-        <ModeButton
-          icon={TextAa}
-          title="Recovery phrase"
-          subtitle="12 or 24 words"
-          selected={importMode === 'mnemonic'}
-          onClick={() => onChangeImportMode('mnemonic')}
-        />
-        <ModeButton
-          icon={Key}
-          title="Private key"
-          subtitle="advanced"
-          selected={importMode === 'private-key'}
-          onClick={() => onChangeImportMode('private-key')}
-        />
-      </div>
+    <div className="space-y-10">
+      <StepHero stepId="wallet-import" align="left" />
+
+      <ImportModeToggle value={importMode} onChange={onChangeImportMode} />
 
       {importMode === 'mnemonic' ? (
-        <div className="space-y-2">
-          <FormField
-            label="Recovery phrase"
-            hint={
-              wordCount === 0
-                ? 'The 12 or 24 words from your wallet app, separated by spaces. Lowercase only.'
-                : isValidMnemonic(mnemonic)
-                  ? `${wordCount} words · looks good`
-                  : `${wordCount} word${wordCount === 1 ? '' : 's'} · need 12, 15, 18, 21, or 24`
-            }
-          >
-            <textarea
-              value={mnemonic}
-              onChange={e => onChangeMnemonic(e.target.value)}
-              placeholder="word1 word2 word3 …"
-              spellCheck={false}
-              autoCapitalize="off"
-              autoCorrect="off"
-              rows={3}
-              className="flex w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 font-mono text-[12.5px] text-zinc-900 dark:text-zinc-50 outline-none placeholder:text-zinc-400 focus-visible:border-teal-500/60 focus-visible:ring-2 focus-visible:ring-teal-500/20 resize-none"
-            />
-          </FormField>
-        </div>
+        <MnemonicEntry
+          value={mnemonic}
+          onChange={onChangeMnemonic}
+          wordCount={wordCount}
+          valid={mnemonicValid}
+        />
       ) : (
-        <div className="space-y-3">
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2.5 text-[12px] text-amber-700 dark:text-amber-400 leading-relaxed flex items-start gap-2">
-            <ShieldAlert size={16} className="mt-0.5 shrink-0" />
-            <div>
-              Not recommended. A recovery phrase is safer and works with Keplr, Cosmostation, and
-              Leap. Use the private key only if your wallet shows nothing else.
-            </div>
-          </div>
-          <FormField
-            label="Private key"
-            hint="64 hexadecimal characters from your wallet app. With or without “0x”."
-          >
-            <Input
-              type="password"
-              value={privateKey}
-              onChange={e => onChangePrivateKey(e.target.value)}
-              placeholder="0x..."
-              className="font-mono"
-            />
-          </FormField>
-        </div>
+        <PrivateKeyEntry
+          value={privateKey}
+          onChange={onChangePrivateKey}
+        />
       )}
 
-      <Button onClick={onConfirm} disabled={!canSubmit || submitting} className="w-full h-10">
-        {submitting ? (
-          <>
-            <Loader2 size={14} className="animate-spin" /> checking…
-          </>
-        ) : (
-          'Use this wallet'
-        )}
-      </Button>
+      <AppleAction
+        fullWidth
+        onClick={() => void onConfirm()}
+        disabled={!canSubmit || submitting}
+        leading={submitting ? <Loader2 size={16} className="animate-spin" /> : undefined}
+      >
+        {submitting ? 'Connecting wallet…' : 'Use this wallet'}
+      </AppleAction>
 
-      <div className="pt-1">
-        {!showServer ? (
-          <button
-            type="button"
-            onClick={() => setShowServer(true)}
-            className="text-[11.5px] text-zinc-500 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400"
-          >
-            Server: <span className="font-mono">{nodeUrl || 'default'}</span> · change
-          </button>
-        ) : (
-          <FormField label="Gonka server" hint="Where GRAND sends your AI requests. The default works.">
-            <Input
-              value={nodeUrl}
-              onChange={e => onChangeNodeUrl(e.target.value)}
-              placeholder="https://node4.gonka.ai"
-            />
-          </FormField>
-        )}
-      </div>
+      <GonkaServerSetting nodeUrl={nodeUrl} onChange={onChangeNodeUrl} />
     </div>
   )
 }
 
-interface ModeButtonProps {
+function ImportModeToggle({
+  value,
+  onChange,
+}: {
+  value: WalletImportMode
+  onChange: (mode: WalletImportMode) => void
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <ModeTile
+        icon={TextAa}
+        title="Recovery phrase"
+        subtitle="12 or 24 words · recommended"
+        selected={value === 'mnemonic'}
+        onClick={() => onChange('mnemonic')}
+      />
+      <ModeTile
+        icon={Key}
+        title="Private key"
+        subtitle="Advanced fallback"
+        selected={value === 'private-key'}
+        onClick={() => onChange('private-key')}
+      />
+    </div>
+  )
+}
+
+function ModeTile({
+  icon: Icon,
+  title,
+  subtitle,
+  selected,
+  onClick,
+}: {
   icon: IconComponent
   title: string
   subtitle: string
   selected: boolean
   onClick: () => void
-}
-
-function ModeButton({ icon: Icon, title, subtitle, selected, onClick }: ModeButtonProps) {
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors ${
+      className={`flex items-start gap-3 rounded-2xl px-4 py-4 text-left ring-1 transition-all ${
         selected
-          ? 'border-teal-500/70 bg-teal-500/5'
-          : 'border-zinc-200 dark:border-zinc-800 bg-transparent hover:border-zinc-300 dark:hover:border-zinc-700'
+          ? 'ring-2 ring-emerald-500 bg-emerald-500/[0.05]'
+          : 'ring-[var(--grand-border-2)] bg-[var(--grand-surface)] hover:ring-[var(--grand-border)]'
       }`}
     >
       <div
-        className={`size-8 rounded-md flex items-center justify-center shrink-0 ${
+        className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
           selected
-            ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400'
-            : 'bg-zinc-100 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400'
+            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+            : 'bg-[var(--grand-surface-2)] text-[var(--grand-fg-2)]'
         }`}
       >
-        <Icon size={16} />
+        <Icon size={20} />
       </div>
       <div className="min-w-0">
-        <div className="text-[12.5px] font-medium text-zinc-900 dark:text-zinc-50 truncate">
-          {title}
-        </div>
-        <div className="text-[10.5px] uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-          {subtitle}
-        </div>
+        <div className="text-[14.5px] font-semibold tracking-tight text-[var(--grand-fg)]">{title}</div>
+        <div className="text-[12px] text-[var(--grand-muted)] mt-0.5">{subtitle}</div>
       </div>
     </button>
+  )
+}
+
+function MnemonicEntry({
+  value,
+  onChange,
+  wordCount,
+  valid,
+}: {
+  value: string
+  onChange: (v: string) => void
+  wordCount: number
+  valid: boolean
+}) {
+  const hint =
+    wordCount === 0
+      ? 'The 12 or 24 words from your wallet app, separated by spaces. Lowercase only.'
+      : valid
+        ? `${wordCount} words · looks good`
+        : `${wordCount} word${wordCount === 1 ? '' : 's'} · need 12, 15, 18, 21, or 24`
+
+  const hintTone = wordCount > 0 ? (valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400') : 'text-[var(--grand-muted-2)]'
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-2xl bg-[var(--grand-surface)] ring-1 ring-[var(--grand-border-2)] p-5 focus-within:ring-emerald-500/60 transition-all">
+        <textarea
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="word1 word2 word3 word4 …"
+          spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
+          rows={4}
+          className="w-full bg-transparent outline-none font-mono text-[15px] tracking-tight text-[var(--grand-fg)] placeholder:text-[var(--grand-muted-2)] resize-none leading-relaxed"
+        />
+      </div>
+      <p className={`px-2 text-[13px] ${hintTone}`}>{hint}</p>
+    </div>
+  )
+}
+
+function PrivateKeyEntry({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className="space-y-4">
+      <AppleNote tone="warning" title="Not recommended">
+        A recovery phrase is safer and works with Keplr, Cosmostation, and Leap. Use the private
+        key only if your wallet shows nothing else.
+      </AppleNote>
+
+      <div className="rounded-2xl bg-[var(--grand-surface)] ring-1 ring-[var(--grand-border-2)] p-5 focus-within:ring-emerald-500/60 transition-all">
+        <input
+          type="password"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="0x... · 64 hexadecimal characters"
+          autoComplete="new-password"
+          autoCapitalize="off"
+          autoCorrect="off"
+          className="w-full bg-transparent outline-none font-mono text-[15px] tracking-tight text-[var(--grand-fg)] placeholder:text-[var(--grand-muted-2)]"
+        />
+      </div>
+      <p className="px-2 text-[13px] text-[var(--grand-muted-2)]">
+        64 hexadecimal characters from your wallet app. With or without “0x”.
+      </p>
+    </div>
   )
 }

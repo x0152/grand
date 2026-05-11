@@ -6,6 +6,7 @@ type SessionLog struct {
 	ID           string     `json:"id"`
 	ConnectionID string     `json:"connectionId"`
 	AgentName    string     `json:"agentName"`
+	Host         string     `json:"host,omitempty"`
 	Prompt       string     `json:"prompt,omitempty"`
 	Status       string     `json:"status"`
 	MessageID    string     `json:"messageId,omitempty"`

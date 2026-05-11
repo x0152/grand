@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AlertCircle, CheckCircle2, Loader2, ScrollText, X } from '@/lib/icons'
 import { api } from '../../api'
 import type { SessionLog, Step } from '../../types'
-import { EntryLine, PromptBanner } from '../LogEntries'
+import { SessionView } from '../LogEntries'
 import { extractStepPrompt, stepToEntries } from './stepHelpers'
 import { fmtDuration, formatArgs } from './utils'
 
@@ -78,14 +78,14 @@ export function StepPanel({ step, onClose }: { step: Step; onClose: () => void }
       <PanelHeader step={step} isRunning={isRunning} isError={isError} onClose={onClose} />
       <PanelMeta step={step} log={log} hasLog={hasLog} />
       <div ref={logScrollRef} onScroll={handleScroll} className="flex-1 overflow-auto min-h-0">
-        <div className="bg-[var(--grand-bg)] px-4 py-4 space-y-1 min-h-[120px]">
-          {logPrompt && <PromptBanner prompt={logPrompt} />}
+        <div className="bg-[var(--grand-bg)] px-4 py-4 space-y-3 min-h-[120px]">
           <PanelBody
             log={log}
             hasLog={hasLog}
             isRunning={isRunning}
             stepEntries={stepEntries}
             stepResultPresent={!!step.result}
+            prompt={logPrompt}
           />
         </div>
       </div>
@@ -182,42 +182,34 @@ interface PanelBodyProps {
   isRunning: boolean
   stepEntries: ReturnType<typeof stepToEntries>
   stepResultPresent: boolean
+  prompt?: string
 }
 
-function PanelBody({ log, hasLog, isRunning, stepEntries, stepResultPresent }: PanelBodyProps) {
+function PanelBody({ log, hasLog, isRunning, stepEntries, stepResultPresent, prompt }: PanelBodyProps) {
   if (hasLog) {
     if (!log) {
       return (
-        <div className="font-mono text-[12.5px] flex items-center gap-2 text-[var(--grand-muted)] py-2">
-          <Loader2 size={13} className="animate-spin" />
-          <span>Loading log…</span>
-        </div>
+        <SessionView entries={[]} prompt={prompt} isRunning={true} />
       )
     }
+    const sessionRunning = log.status === 'running' || isRunning
     return (
       <>
-        {log.entries.map((entry, i) => <EntryLine key={i} entry={entry} />)}
-        {log.entries.length === 0 && log.status !== 'running' && (
-          <p className="text-[var(--grand-muted)] text-[12.5px] font-mono">No entries</p>
-        )}
-        {(log.status === 'running' || isRunning) && (
-          <div className="font-mono text-[12.5px] flex items-center gap-2 text-[var(--grand-muted)] py-2">
-            <Loader2 size={13} className="animate-spin" />
-            <span>{log.entries.length === 0 ? 'Waiting for output…' : 'Running…'}</span>
-          </div>
+        <SessionView
+          entries={log.entries}
+          host={log.host}
+          agentName={log.agentName}
+          isRunning={sessionRunning}
+          prompt={prompt}
+        />
+        {log.entries.length === 0 && !sessionRunning && !prompt && (
+          <p className="text-[var(--grand-muted)] text-[12.5px] font-mono mt-2">No entries</p>
         )}
       </>
     )
   }
+  const stepRunning = isRunning && !stepResultPresent
   return (
-    <>
-      {stepEntries.map((entry, i) => <EntryLine key={i} entry={entry} />)}
-      {isRunning && !stepResultPresent && (
-        <div className="font-mono text-[12.5px] flex items-center gap-2 text-[var(--grand-muted)] py-2">
-          <Loader2 size={13} className="animate-spin" />
-          <span>Running…</span>
-        </div>
-      )}
-    </>
+    <SessionView entries={stepEntries} isRunning={stepRunning} prompt={prompt} />
   )
 }

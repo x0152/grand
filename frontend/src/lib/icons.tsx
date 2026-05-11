@@ -51,6 +51,7 @@ import {
   Moon as PMoon,
   Gauge as PGauge,
   ArrowLeft as PArrowLeft,
+  ArrowRight as PArrowRight,
   FloppyDisk as PFloppy,
   Lightning as PLightning,
   Circle as PCircle,
@@ -140,6 +141,7 @@ export const Sun = adapt(PSun)
 export const Moon = adapt(PMoon)
 export const Gauge = adapt(PGauge)
 export const ArrowLeft = adapt(PArrowLeft)
+export const ArrowRight = adapt(PArrowRight)
 export const Save = adapt(PFloppy)
 export const Zap = adapt(PLightning)
 export const Circle = adapt(PCircle)

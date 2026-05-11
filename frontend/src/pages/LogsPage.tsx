@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ScrollText, Terminal, ChevronRight, ChevronDown, Clock, CheckCircle2, Loader2, Filter, Trash2 } from '@/lib/icons'
 import { api } from '../api'
-import { EntryLine, PromptBanner } from '../components/LogEntries'
+import { SessionView } from '../components/LogEntries'
 import type { SessionLog, Connection } from '../types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -82,12 +82,17 @@ function SessionCard({ log, expanded, onToggle }: { log: SessionLog; expanded: b
       </div>
 
       {expanded && (
-        <div className="bg-[var(--grand-bg)] px-5 py-4 space-y-1 max-h-125 overflow-y-auto">
-          {log.prompt && <PromptBanner prompt={log.prompt} />}
+        <div className="bg-[var(--grand-bg)] px-5 py-4 max-h-125 overflow-y-auto">
           {log.entries.length === 0 && !log.prompt ? (
             <p className="text-[var(--grand-muted)] text-[12px] font-mono">No entries yet</p>
           ) : (
-            log.entries.map((entry, i) => <EntryLine key={i} entry={entry} />)
+            <SessionView
+              entries={log.entries}
+              host={log.host}
+              agentName={log.agentName}
+              isRunning={isRunning}
+              prompt={log.prompt}
+            />
           )}
         </div>
       )}

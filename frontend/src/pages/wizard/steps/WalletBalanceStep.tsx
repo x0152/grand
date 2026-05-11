@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Loader2, QrCode, RotateCw } from '@/lib/icons'
+import { CheckCircle2, Loader2, RotateCw } from '@/lib/icons'
 import { api } from '@/api'
 import type { GonkaBalance } from '@/types'
 import { AddressDisplay } from '../components/AddressDisplay'
+import { AppleAction } from '../components/apple/AppleAction'
 import { QRDisplay } from '../components/QRDisplay'
+import { StepHero } from '../components/StepHero'
 import { formatGnk } from '../utils'
 
 interface WalletBalanceStepProps {
@@ -28,7 +29,6 @@ export function WalletBalanceStep({
 }: WalletBalanceStepProps) {
   const [loading, setLoading] = useState(false)
   const [refreshError, setRefreshError] = useState('')
-  const [showQR, setShowQR] = useState(true)
 
   const onBalanceChangeRef = useRef(onBalanceChange)
   useEffect(() => {
@@ -59,70 +59,145 @@ export function WalletBalanceStep({
   }, [refresh, sufficient])
 
   return (
-    <div className="space-y-4">
-      <AddressDisplay label="Send GNK to this address" address={address} />
+    <div className="space-y-10">
+      <StepHero stepId="wallet-balance" align="left" />
 
       {address && (
-        <div className="rounded-md border border-zinc-200/80 dark:border-zinc-800/70 bg-zinc-50 dark:bg-zinc-900 px-3 py-2.5">
-          <button
-            type="button"
-            onClick={() => setShowQR(v => !v)}
-            className="flex items-center justify-between w-full text-left"
-          >
-            <span className="flex items-center gap-2 text-[12.5px] text-zinc-700 dark:text-zinc-300">
-              <QrCode size={14} />
-              Scan from your wallet
-            </span>
-            <span className="text-[11.5px] text-zinc-500 dark:text-zinc-500">
-              {showQR ? 'hide QR' : 'show QR'}
-            </span>
-          </button>
-          {showQR && (
-            <div className="mt-3">
-              <QRDisplay
-                value={address}
-                caption="Open Keplr / Cosmostation / Leap → Send → Scan address."
-              />
-            </div>
-          )}
+        <div className="flex justify-center">
+          <QRDisplay
+            value={address}
+            caption="Open Keplr / Cosmostation / Leap on your phone → Send → Scan this QR."
+          />
         </div>
       )}
 
-      <div
-        className={`rounded-md border px-4 py-3 transition-colors ${
-          sufficient
-            ? 'border-teal-500/40 bg-teal-500/5'
-            : 'border-zinc-200/80 dark:border-zinc-800/70 bg-zinc-50 dark:bg-zinc-900'
-        }`}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-500">Balance</div>
-            <div className="mt-1 text-[20px] font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-              {balance ? `${formatGnk(balance.gnk)} GNK` : '—'}
-            </div>
+      <AddressDisplay label="Send GNK to this address" address={address} copyMessage="Address copied" />
+
+      <BalanceCard
+        balance={balance}
+        sufficient={sufficient}
+        loading={loading}
+        refreshError={refreshError}
+        minBalance={minBalance}
+        onRefresh={refresh}
+      />
+
+      <BypassToggle bypass={bypass} onChange={onBypassChange} />
+    </div>
+  )
+}
+
+function BalanceCard({
+  balance,
+  sufficient,
+  loading,
+  refreshError,
+  minBalance,
+  onRefresh,
+}: {
+  balance: GonkaBalance | null
+  sufficient: boolean
+  loading: boolean
+  refreshError: string
+  minBalance: number
+  onRefresh: () => void
+}) {
+  return (
+    <div
+      className={`rounded-3xl ring-1 px-6 py-5 transition-all ${
+        sufficient
+          ? 'ring-emerald-500/40 bg-emerald-500/[0.06]'
+          : 'ring-[var(--grand-border-2)] bg-[var(--grand-surface)]'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-[12px] font-mono uppercase tracking-[0.16em] text-[var(--grand-muted-2)]">
+            Wallet balance
           </div>
-          <Button variant="secondary" size="sm" onClick={refresh} disabled={loading}>
-            {loading ? <Loader2 size={12} className="animate-spin" /> : <RotateCw size={12} />} refresh
-          </Button>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-[34px] font-semibold tabular-nums tracking-tight text-[var(--grand-fg)]">
+              {balance ? formatGnk(balance.gnk) : '—'}
+            </span>
+            <span className="text-[14px] font-medium uppercase tracking-wide text-[var(--grand-muted)]">
+              GNK
+            </span>
+          </div>
         </div>
-        {refreshError && <p className="mt-2 text-[11.5px] text-rose-500">{refreshError}</p>}
-        {!sufficient && (
-          <p className="mt-2 text-[11.5px] text-zinc-500 dark:text-zinc-500">
-            We check every few seconds. You need at least {minBalance} GNK.
-          </p>
-        )}
+        <AppleAction
+          variant="secondary"
+          onClick={onRefresh}
+          disabled={loading}
+          className="h-10 px-4 rounded-full text-[13px]"
+          leading={loading ? <Loader2 size={13} className="animate-spin" /> : <RotateCw size={13} />}
+        >
+          Refresh
+        </AppleAction>
       </div>
 
-      <label className="flex items-start gap-2 text-[12px] text-zinc-500 dark:text-zinc-500 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={bypass}
-          onChange={e => onBypassChange(e.target.checked)}
-          className="mt-0.5 size-4 accent-amber-500"
-        />
-        <span>I’ll add money later. Skip this for now.</span>
-      </label>
+      {refreshError && (
+        <p className="mt-3 text-[13px] text-rose-600 dark:text-rose-400">{refreshError}</p>
+      )}
+
+      {sufficient ? (
+        <div className="mt-3 flex items-center gap-2 text-[13.5px] text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 size={16} weight="fill" />
+          <span>Funded — you’re ready to chat. Tap Continue.</span>
+        </div>
+      ) : (
+        <p className="mt-3 text-[13px] text-[var(--grand-muted)]">
+          We re-check every few seconds. You need at least{' '}
+          <span className="font-medium text-[var(--grand-fg-2)]">{minBalance} GNK</span>.
+        </p>
+      )}
     </div>
+  )
+}
+
+function BypassToggle({
+  bypass,
+  onChange,
+}: {
+  bypass: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!bypass)}
+      className={`w-full flex items-center gap-4 rounded-2xl ring-1 px-5 py-4 text-left transition-all ${
+        bypass
+          ? 'ring-amber-500/50 bg-amber-500/[0.06]'
+          : 'ring-[var(--grand-border-2)] bg-[var(--grand-surface)] hover:ring-[var(--grand-border)]'
+      }`}
+    >
+      <span
+        className={`size-7 shrink-0 rounded-md ring-2 inline-flex items-center justify-center transition-colors ${
+          bypass
+            ? 'bg-amber-500 ring-amber-500 text-white'
+            : 'ring-[var(--grand-border)]'
+        }`}
+      >
+        {bypass && (
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
+            <path
+              d="M3 8.2 6.5 11.5 13 5"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14.5px] font-medium text-[var(--grand-fg)]">
+          I’ll add money later
+        </span>
+        <span className="block text-[12.5px] text-[var(--grand-muted)] mt-0.5">
+          Skip the funding check for now. You can top up any time from Setup.
+        </span>
+      </span>
+    </button>
   )
 }

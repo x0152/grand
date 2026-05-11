@@ -24,9 +24,11 @@ COPY bin/ /usr/local/libexec/email/
 # Set up the secrets dir + sudoers + wrapper stubs. Done in one RUN to
 # keep the layer small and to fail loudly if visudo doesn't accept the
 # rule (mistake here would either lock everyone out or allow too much).
+# /etc/sandbox/secrets/email is just a marker the init script looks for
+# at boot. The actual credentials.env lives under /run/sandbox-secrets/
+# at runtime because the rootfs is mounted read-only.
 RUN mkdir -p /etc/sandbox/secrets/email \
-    && chown -R emailsec:emailsec /etc/sandbox/secrets \
-    && chmod 0700 /etc/sandbox/secrets/email \
+    && chmod 0755 /etc/sandbox/secrets/email \
     && chmod 0755 /usr/local/libexec/email \
     && chmod 0755 /usr/local/libexec/email/email-* \
     && chmod 0644 /usr/local/libexec/email/email_helper.py \

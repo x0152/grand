@@ -1,7 +1,10 @@
-import { Button } from '@/components/ui/button'
 import { Loader2, RotateCw } from '@/lib/icons'
 import type { ProviderModel } from '@/types'
+import { AppleAction } from '../components/apple/AppleAction'
+import { AppleNote } from '../components/apple/AppleNote'
+import { AppleSection } from '../components/apple/AppleSection'
 import { ModelEditor } from '../components/ModelEditor'
+import { StepHero } from '../components/StepHero'
 import type { ModelRow } from '../types'
 
 interface GonkaModelsStepProps {
@@ -21,44 +24,56 @@ export function GonkaModelsStep({
   onChange,
   onReload,
 }: GonkaModelsStepProps) {
+  const empty = available && available.length === 0 && !loadingModels && !modelsError
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onReload}
-          disabled={loadingModels}
-          className="h-8 text-[12px]"
-        >
-          {loadingModels ? (
-            <>
-              <Loader2 size={12} className="animate-spin" /> Loading…
-            </>
-          ) : (
-            <>
-              <RotateCw size={12} /> Reload
-            </>
-          )}
-        </Button>
-        {available && (
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-500">
-            {available.length} model{available.length === 1 ? '' : 's'} found
-          </span>
+    <div className="space-y-10">
+      <StepHero stepId="gonka-models" align="left" />
+
+      <AppleSection
+        title="Available on this server"
+        trailing={
+          <div className="flex items-center gap-3">
+            {available && (
+              <span className="text-[12px] font-mono text-[var(--grand-muted-2)]">
+                {available.length} found
+              </span>
+            )}
+            <AppleAction
+              variant="secondary"
+              className="h-9 px-4 text-[13px] rounded-xl"
+              onClick={onReload}
+              disabled={loadingModels}
+              leading={
+                loadingModels ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <RotateCw size={13} />
+                )
+              }
+            >
+              {loadingModels ? 'Loading' : 'Reload'}
+            </AppleAction>
+          </div>
+        }
+      >
+        {modelsError && (
+          <div className="mb-3 rounded-2xl ring-1 ring-rose-500/30 bg-rose-500/[0.06] px-4 py-3 text-[13px] text-rose-600 dark:text-rose-400">
+            {modelsError}
+          </div>
         )}
-      </div>
-      {modelsError && (
-        <div className="rounded-md border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-[12px] text-rose-500">
-          {modelsError}
-        </div>
-      )}
-      {available && available.length === 0 && !loadingModels && !modelsError && (
-        <div className="rounded-md border border-zinc-200/70 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-[12px] text-zinc-600 dark:text-zinc-400">
-          No models found on this Gonka server. Type the model name yourself, or change the server in the previous step.
-        </div>
-      )}
-      <ModelEditor rows={modelRows} onChange={onChange} available={available} listId="wizard-gonka-models" />
+        {empty && (
+          <AppleNote tone="warning" title="No models advertised">
+            This Gonka node didn’t list any models. You can still type the model name manually,
+            or change the server in the previous step.
+          </AppleNote>
+        )}
+        <ModelEditor
+          rows={modelRows}
+          onChange={onChange}
+          available={available}
+          loadingModels={loadingModels}
+        />
+      </AppleSection>
     </div>
   )
 }

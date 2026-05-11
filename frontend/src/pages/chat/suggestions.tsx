@@ -17,14 +17,23 @@ import {
   Image,
   Sun,
   Terminal,
+  Mail,
+  Filter,
+  MessageSquareText,
   type IconComponent,
 } from '@/lib/icons'
 
 export type SuggestionKind = 'answer' | 'image' | 'table' | 'chart' | 'gif' | 'action'
 
-export type SuggestionGroupId = 'start' | 'web' | 'labs' | 'auto'
+export type SuggestionGroupId = 'start' | 'email' | 'web' | 'labs' | 'auto'
 
-export const SUGGESTION_GROUP_ORDER: SuggestionGroupId[] = ['start', 'web', 'labs', 'auto']
+export const SUGGESTION_GROUP_ORDER: SuggestionGroupId[] = [
+  'start',
+  'email',
+  'web',
+  'labs',
+  'auto',
+]
 
 export const SUGGESTION_GROUP_META: Record<
   SuggestionGroupId,
@@ -33,6 +42,10 @@ export const SUGGESTION_GROUP_META: Record<
   start: {
     title: 'Getting started',
     subtitle: 'Find your footing in one or two tries',
+  },
+  email: {
+    title: 'Email',
+    subtitle: 'Triage, sort, reply and digest your inbox',
   },
   web: {
     title: 'Web & research',
@@ -233,5 +246,55 @@ export const SUGGESTIONS: Suggestion[] = [
     kind: 'action',
     prompt:
       'Daily plan, weekdays 9:00: top 5 Hacker News stories with one-sentence summaries, sent to me. Save it and tell me the next run time.',
+  },
+  {
+    id: 'inbox-unread-summary',
+    group: 'email',
+    icon: Mail,
+    title: 'What new mail do I have?',
+    gets: 'short digest · grouped by sender',
+    kind: 'answer',
+    prompt:
+      'Look at my email inbox. Summarize all unread messages grouped by sender, with one short line per message (subject + the gist). Skip newsletters and notifications unless something looks important.',
+  },
+  {
+    id: 'find-that-email',
+    group: 'email',
+    icon: Eye,
+    title: 'Find that one email',
+    gets: 'best matches · short list',
+    kind: 'answer',
+    prompt:
+      'Search my mailbox (including Spam) for the most recent invoice from Stripe. Show me the date, subject, sender and the amount, plus the UID so I can open it later.',
+  },
+  {
+    id: 'sort-mail-by-sender',
+    group: 'email',
+    icon: Filter,
+    title: 'Sort newsletters into a folder',
+    gets: 'inbox cleanup · folder + move',
+    kind: 'action',
+    prompt:
+      'In my mailbox, find every message that looks like a newsletter (Substack, GitHub digest, Stripe receipts, Hacker News, etc.). Create a folder called "Newsletters" if it does not exist and move all of those messages into it. Show me a short report: how many were moved and from whom.',
+  },
+  {
+    id: 'draft-reply',
+    group: 'email',
+    icon: MessageSquareText,
+    title: 'Draft a reply for me',
+    gets: 'draft only · I confirm before send',
+    kind: 'answer',
+    prompt:
+      'Find the most recent message in my inbox that I have not replied to yet. Show me the subject + a 2-sentence summary of what they want, then draft a polite reply in my voice. DO NOT send — just show me the draft and the UID, I will say "send it" if I am happy with it.',
+  },
+  {
+    id: 'morning-mail-digest',
+    group: 'email',
+    icon: Bell,
+    title: 'Morning mail digest',
+    gets: 'recurring · mon–fri 08:30',
+    kind: 'action',
+    prompt:
+      'Daily plan, weekdays 8:30: scan my email inbox since yesterday morning, group unread mail by sender, drop newsletters, and send me a short digest with the top 5 things that actually need my attention. Save the plan and tell me the next run time.',
   },
 ]

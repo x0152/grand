@@ -1,11 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { FormField } from '@/components/FormField'
 import { CheckCircle2, Copy, Link2, Loader2, Send } from '@/lib/icons'
 import { api } from '@/api'
 import type { TelegramWizardBot, TelegramWizardUser } from '@/types'
+import { AppleAction } from '../components/apple/AppleAction'
+import { AppleField } from '../components/apple/AppleField'
+import { AppleListGroup } from '../components/apple/AppleListGroup'
+import { AppleNote } from '../components/apple/AppleNote'
+import { AppleSection } from '../components/apple/AppleSection'
+import { BrandLogo } from '../components/brandLogo'
+import { TELEGRAM_BRAND } from '../components/brandSpecs'
+import { StepHero } from '../components/StepHero'
+import { SkipToggle } from '../components/SkipToggle'
 
 interface TelegramStepProps {
   token: string
@@ -90,183 +96,242 @@ export function TelegramStep({
     }
   }, [skip, bot, token, linkedUser, onChangeLinkedUser])
 
-  const copyCode = async (code: string) => {
-    try {
-      await navigator.clipboard.writeText(code)
-      toast.success('Code copied')
-    } catch {
-      toast.error('Copy failed')
-    }
-  }
-
   const inputsDisabled = skip
-  const canVerify = !!token.trim()
+  const canVerify = !!token.trim() && !verifying && !inputsDisabled
 
   return (
-    <div className="space-y-3">
-      <FormField
-        label="Bot token"
-        hint={
+    <div className="space-y-10">
+      <StepHero stepId="telegram" align="left" hero={<BrandLogo spec={TELEGRAM_BRAND} size={68} rounded={20} />} />
+
+      <TokenSection
+        token={token}
+        bot={bot}
+        verifying={verifying}
+        canVerify={canVerify}
+        disabled={inputsDisabled}
+        onChange={value => {
+          onChangeToken(value)
+          reset()
+        }}
+        onVerify={() => void verify(token)}
+        onBlurVerify={value => {
+          if (value.trim() && !bot && !skip) void verify(value)
+        }}
+      />
+
+      {verifyError && !skip && (
+        <AppleNote tone="danger" title="Couldn’t reach the bot">
+          {verifyError}
+        </AppleNote>
+      )}
+
+      {bot && !linkedUser && !skip && (
+        <CodeBlock bot={bot} waiting={waiting} />
+      )}
+
+      {bot && linkedUser && !skip && (
+        <LinkedCard linkedUser={linkedUser} onRelink={() => onChangeLinkedUser(null)} />
+      )}
+
+      <SkipToggle
+        checked={skip}
+        onChange={onChangeSkip}
+        label="I don’t want to connect Telegram"
+        helper="You can add it later in Setup or via the TG_BOT_TOKEN env variable."
+      />
+    </div>
+  )
+}
+
+function TokenSection({
+  token,
+  bot,
+  verifying,
+  canVerify,
+  disabled,
+  onChange,
+  onVerify,
+  onBlurVerify,
+}: {
+  token: string
+  bot: TelegramWizardBot | null
+  verifying: boolean
+  canVerify: boolean
+  disabled: boolean
+  onChange: (v: string) => void
+  onVerify: () => void
+  onBlurVerify: (value: string) => void
+}) {
+  return (
+    <AppleSection title="Bot token">
+      <AppleListGroup
+        caption={
           <>
             Get one from{' '}
             <a
               href="https://t.me/BotFather"
               target="_blank"
               rel="noreferrer"
-              className="text-teal-600 dark:text-teal-400 hover:underline"
+              className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
             >
               @BotFather
             </a>
-            : open the chat, send <code className="font-mono">/newbot</code>, follow the steps. You can connect later via the <code className="font-mono">TG_BOT_TOKEN</code> env variable.
+            : open the chat, send <code className="font-mono text-[12.5px]">/newbot</code>, follow the steps.
           </>
         }
       >
-        <div className="flex gap-2">
-          <Input
-            value={token}
-            onChange={e => {
-              onChangeToken(e.target.value)
-              reset()
-            }}
-            onBlur={e => {
-              if (e.target.value.trim() && !bot && !skip) void verify(e.target.value)
-            }}
-            placeholder="123456:ABC-DEF..."
-            className="flex-1"
-            disabled={inputsDisabled}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!canVerify || verifying || inputsDisabled}
-            onClick={() => void verify(token)}
-            className="h-9 text-[12px] shrink-0"
-          >
-            {verifying ? (
-              <>
-                <Loader2 size={12} className="animate-spin" /> Checking…
-              </>
-            ) : bot ? (
-              'Re-check'
-            ) : (
-              'Verify'
-            )}
-          </Button>
-        </div>
-      </FormField>
-
-      {verifyError && !skip && (
-        <div className="rounded-md border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-[12px] text-rose-500">
-          {verifyError}
-        </div>
-      )}
-
-      {bot && !linkedUser && !skip && (
-        <div className="space-y-2">
-          <div className="rounded-md border border-zinc-200/80 dark:border-zinc-800/70 bg-zinc-50 dark:bg-zinc-900 px-3 py-2.5 text-[12.5px] text-zinc-700 dark:text-zinc-300 space-y-2.5">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 size={13} className="text-teal-500" />
-              <span>
-                Connected to <span className="font-mono">{bot.name || bot.username}</span>
-                {bot.username && (
-                  <>
-                    {' '}—{' '}
-                    <a
-                      href={bot.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-mono text-teal-600 dark:text-teal-400 hover:underline"
-                    >
-                      @{bot.username}
-                    </a>
-                  </>
-                )}
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="text-[11.5px] uppercase tracking-wide text-zinc-500">
-                Send this code to the bot
-              </div>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 rounded-md border border-zinc-200/70 dark:border-zinc-800/70 bg-white dark:bg-zinc-950 px-3 py-2 font-mono text-[18px] tracking-[0.3em] text-zinc-900 dark:text-zinc-50 text-center">
-                  {bot.code}
-                </code>
-                <Button type="button" variant="outline" size="sm" onClick={() => void copyCode(bot.code)} className="h-9 shrink-0">
-                  <Copy size={12} /> copy
-                </Button>
-                {bot.deepLink && (
-                  <a
-                    href={bot.deepLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-teal-500/40 bg-teal-500/10 px-3 text-[12px] text-teal-600 dark:text-teal-400 hover:bg-teal-500/15"
-                  >
-                    <Link2 size={12} /> open bot
-                  </a>
-                )}
-              </div>
-              <p className="text-[11.5px] text-zinc-500 dark:text-zinc-500">
-                Open the bot, paste the code as a message, and send it. GRAND will detect you automatically.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-md border border-zinc-200/70 dark:border-zinc-800/60 px-3 py-2 text-[12px] text-zinc-500 dark:text-zinc-400">
-            {waiting ? (
-              <>
-                <Loader2 size={13} className="animate-spin text-teal-500" />
-                Waiting for the code from your Telegram…
-              </>
-            ) : (
-              <>
-                <Send size={13} className="text-zinc-400" />
-                Verify the bot to start listening for the code.
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {bot && linkedUser && !skip && (
-        <div className="rounded-md border border-teal-500/30 bg-teal-500/5 px-3 py-2.5 text-[12.5px] text-zinc-700 dark:text-zinc-300 space-y-1.5">
-          <div className="flex items-center gap-1.5">
-            <CheckCircle2 size={14} className="text-teal-500" />
-            <span>
-              Linked as <span className="font-mono">{linkedUser.name || linkedUser.username || linkedUser.id}</span>
-              {linkedUser.username && (
-                <span className="font-mono text-zinc-500"> · @{linkedUser.username}</span>
-              )}
-              <span className="font-mono text-zinc-500"> · id {linkedUser.id}</span>
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[11.5px] text-zinc-500 dark:text-zinc-500">
-              Only this account can talk to the bot. You can add more later in Hosts → Channels.
-            </span>
-            <Button type="button" variant="ghost" size="sm" onClick={() => onChangeLinkedUser(null)} className="h-7 text-[11.5px]">
-              re-link
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <label
-        className={`flex items-start gap-2 rounded-md border px-3 py-2 text-[12px] cursor-pointer transition-colors ${
-          skip
-            ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300'
-            : 'border-zinc-200/70 dark:border-zinc-800/60 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
-        }`}
-      >
-        <input
-          type="checkbox"
-          checked={skip}
-          onChange={e => onChangeSkip(e.target.checked)}
-          className="mt-0.5 size-4 accent-teal-600"
+        <AppleField
+          label="Token"
+          value={token}
+          onChange={e => onChange(e.target.value)}
+          onBlur={e => onBlurVerify(e.target.value)}
+          placeholder="123456:ABC-DEF..."
+          monospace
+          disabled={disabled}
+          trailing={
+            <AppleAction
+              variant="secondary"
+              className="h-9 px-3.5 rounded-full text-[13px]"
+              onClick={onVerify}
+              disabled={!canVerify}
+              leading={verifying ? <Loader2 size={13} className="animate-spin" /> : undefined}
+            >
+              {verifying ? 'Checking' : bot ? 'Re-check' : 'Verify'}
+            </AppleAction>
+          }
         />
-        <span>I don’t want to connect Telegram — chat is enough.</span>
-      </label>
+      </AppleListGroup>
+    </AppleSection>
+  )
+}
+
+function CodeBlock({ bot, waiting }: { bot: TelegramWizardBot; waiting: boolean }) {
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(bot.code)
+      toast.success('Code copied')
+    } catch {
+      toast.error('Copy failed')
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-3xl bg-[var(--grand-surface)] ring-1 ring-emerald-500/30 p-6 space-y-5">
+        <div className="flex items-center gap-2.5 text-[14px] text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 size={16} weight="fill" />
+          <span>
+            Connected to <span className="font-mono">{bot.name || bot.username}</span>
+            {bot.username && (
+              <>
+                {' '}—{' '}
+                <a
+                  href={bot.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono hover:underline"
+                >
+                  @{bot.username}
+                </a>
+              </>
+            )}
+          </span>
+        </div>
+
+        <div>
+          <div className="text-[12px] font-mono uppercase tracking-[0.16em] text-[var(--grand-muted-2)]">
+            Send this code to the bot
+          </div>
+          <div className="mt-3 rounded-2xl bg-[var(--grand-bg)] ring-1 ring-[var(--grand-border-2)] py-6 px-5 text-center">
+            <code className="font-mono text-[36px] sm:text-[42px] font-bold tracking-[0.18em] text-[var(--grand-fg)]">
+              {bot.code}
+            </code>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          {bot.deepLink && (
+            <AppleAction
+              variant="primary"
+              fullWidth
+              className="h-12 rounded-2xl text-[14.5px]"
+              leading={<Link2 size={15} weight="bold" />}
+              onClick={() => window.open(bot.deepLink, '_blank', 'noreferrer')}
+            >
+              Open bot in Telegram
+            </AppleAction>
+          )}
+          <AppleAction
+            variant="secondary"
+            fullWidth
+            className="h-12 rounded-2xl text-[14.5px]"
+            leading={<Copy size={15} weight="bold" />}
+            onClick={copyCode}
+          >
+            Copy code
+          </AppleAction>
+        </div>
+      </div>
+
+      <WaitingRow waiting={waiting} />
+    </div>
+  )
+}
+
+function WaitingRow({ waiting }: { waiting: boolean }) {
+  return (
+    <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-[var(--grand-muted)]">
+      {waiting ? (
+        <>
+          <Loader2 size={15} className="animate-spin text-emerald-500" />
+          <span>Waiting for the code from your Telegram…</span>
+        </>
+      ) : (
+        <>
+          <Send size={14} />
+          <span>Verify the bot to start listening for the code.</span>
+        </>
+      )}
+    </div>
+  )
+}
+
+function LinkedCard({
+  linkedUser,
+  onRelink,
+}: {
+  linkedUser: TelegramWizardUser
+  onRelink: () => void
+}) {
+  const friendly = linkedUser.name?.trim() || linkedUser.username?.trim() || ''
+  const title: ReactNode = friendly ? `Linked as ${friendly}` : 'Linked to your Telegram'
+  return (
+    <div className="rounded-3xl bg-emerald-500/[0.07] ring-1 ring-emerald-500/35 p-6 space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="size-12 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+          <CheckCircle2 size={26} weight="fill" />
+        </div>
+        <div>
+          <div className="text-[16px] font-semibold tracking-tight text-[var(--grand-fg)]">
+            {title}
+          </div>
+          <div className="text-[12.5px] text-[var(--grand-muted)] font-mono mt-0.5">
+            {linkedUser.username && <>@{linkedUser.username} · </>}id {linkedUser.id}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[13px] text-[var(--grand-muted)] leading-snug">
+          Only this account can talk to the bot. Add more later in Hosts → Channels.
+        </span>
+        <AppleAction
+          variant="ghost"
+          onClick={onRelink}
+          className="h-9 px-3.5 rounded-full text-[12.5px] shrink-0"
+        >
+          Re-link
+        </AppleAction>
+      </div>
     </div>
   )
 }

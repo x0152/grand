@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mantis — Windows XP edition</title>
+<link rel="stylesheet" href="https://unpkg.com/xp.css@0.5.0/dist/XP.css" />
+<style>
+  /* ---------- desktop ---------- */
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Pixelated MS Sans Serif", Tahoma, sans-serif;
+    /* fake "Bliss" — green hill + blue sky */
+    background:
+      radial-gradient(ellipse 120% 60% at 50% 95%, #6fa84a 0%, #4f8e2f 35%, #2f6b1d 75%, #245217 100%),
+      linear-gradient(180deg, #6dc1ff 0%, #a4d6f0 60%, #d4eaf6 100%);
+    background-size: 100% 70%, 100% 100%;
+    background-position: bottom, top;
+    background-repeat: no-repeat;
+  }
+  body::before {
+    /* puffy clouds */
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(40px 18px at 12% 20%, rgba(255,255,255,.85), transparent 70%),
+      radial-gradient(60px 22px at 22% 14%, rgba(255,255,255,.75), transparent 70%),
+      radial-gradient(70px 26px at 68% 24%, rgba(255,255,255,.8), transparent 70%),
+      radial-gradient(50px 18px at 84% 18%, rgba(255,255,255,.7), transparent 70%);
+    pointer-events: none;
+  }
+  .desktop {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  /* ---------- desktop icons ---------- */
+  .icons {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: grid;
+    grid-template-columns: 78px;
+    gap: 6px;
+    width: 78px;
+  }
+  .icons .ico {
+    text-align: center;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,.85);
+    font-size: 11px;
+    line-height: 1.15;
+    cursor: default;
+    user-select: none;
+    padding: 4px;
+    border-radius: 2px;
+  }
+  .icons .ico.selected {
+    background: rgba(0, 80, 200, 0.45);
+    outline: 1px dotted #fff;
+  }
+  .icons .ico .glyph {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 4px;
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  /* ---------- windows ---------- */
+  .window-shell {
+    position: absolute;
+  }
+  .wizard {
+    top: 60px;
+    left: 130px;
+    width: 540px;
+  }
+  .chat {
+    top: 110px;
+    right: 80px;
+    width: 540px;
+  }
+  .err {
+    top: 280px;
+    left: 380px;
+    width: 360px;
+    z-index: 5;
+  }
+  .window {
+    box-shadow: 2px 2px 0 rgba(0,0,0,.25);
+  }
+  /* keep XP.css buttons feeling chunky in the wizard */
+  .wizard .window-body { padding: 12px 14px; background: #ECE9D8; }
+
+  /* ---------- wizard internals ---------- */
+  .wiz-hero {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 4px 12px;
+    border-bottom: 1px solid #aca899;
+    margin-bottom: 12px;
+  }
+  .wiz-hero .badge {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(180deg, #4d8eff 0%, #1f4fc0 100%);
+    color: #fff;
+    font-weight: 700;
+    border: 1px solid #15347f;
+    border-radius: 4px;
+    font-family: "Trebuchet MS", Tahoma, sans-serif;
+    letter-spacing: 1px;
+  }
+  .wiz-hero h2 {
+    margin: 0 0 2px;
+    font-family: "Trebuchet MS", Tahoma, sans-serif;
+    font-size: 14px;
+    color: #002868;
+  }
+  .wiz-hero p {
+    margin: 0;
+    font-size: 11px;
+    color: #444;
+  }
+  .step-list {
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+    display: flex;
+    gap: 4px;
+    font-size: 11px;
+  }
+  .step-list li {
+    padding: 2px 8px;
+    border: 1px solid #aca899;
+    background: #f5f4ea;
+    color: #555;
+  }
+  .step-list li.done { background: #d4e9c4; color: #1b5a14; border-color: #75a464; }
+  .step-list li.now {
+    background: linear-gradient(180deg, #fffbcf 0%, #f9d76b 100%);
+    border-color: #b58a18;
+    color: #3a2700;
+    font-weight: 700;
+  }
+  .field-block { margin-bottom: 10px; font-size: 11px; }
+  .field-block label { display: block; margin-bottom: 3px; }
+  .field-block input[type="text"],
+  .field-block input[type="password"] {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .help { font-size: 10px; color: #666; margin: 2px 0 0; }
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 14px;
+    border-top: 1px solid #aca899;
+    padding-top: 10px;
+  }
+  .progress-bar {
+    height: 14px;
+    background: #fff;
+    border: 1px solid #919b9c;
+    box-shadow: inset 1px 1px 0 #4e4e4e;
+    margin: 6px 0 4px;
+    overflow: hidden;
+  }
+  .progress-bar > i {
+    display: block;
+    width: 62%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      #1f7c0e 0 10px,
+      #2a8e16 10px 12px
+    );
+  }
+
+  /* ---------- chat ---------- */
+  .chat .window-body {
+    padding: 0;
+    background: #fff;
+    height: 460px;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-toolbar {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: #ECE9D8;
+    border-bottom: 1px solid #aca899;
+    align-items: center;
+    font-size: 11px;
+  }
+  .chat-toolbar .sep { width: 1px; height: 18px; background: #aca899; margin: 0 4px; }
+  .chat-toolbar .pill {
+    background: #fff;
+    border: 1px solid #919b9c;
+    padding: 1px 8px;
+    box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #d4d0c8;
+    font-size: 11px;
+  }
+  .chat-toolbar .ok { color: #157a14; font-weight: 700; }
+  .chat-stream {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 12px 8px;
+    background: #fff;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .msg { margin-bottom: 12px; }
+  .msg .who {
+    font-size: 10px;
+    color: #555;
+    margin-bottom: 2px;
+    font-family: "Trebuchet MS", Tahoma, sans-serif;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .msg.user .bubble {
+    background: #fef9c3;
+    border: 1px solid #d6b900;
+    padding: 6px 8px;
+    display: inline-block;
+    max-width: 90%;
+  }
+  .msg.assistant .bubble {
+    background: #eef4ff;
+    border: 1px solid #6a8ec8;
+    padding: 6px 8px;
+  }
+  .tool {
+    border: 1px solid #aca899;
+    background: #f5f4ea;
+    margin: 6px 0;
+    font-family: "Lucida Console", "Courier New", monospace;
+    font-size: 11px;
+  }
+  .tool .head {
+    background: linear-gradient(180deg, #ece9d8 0%, #c8c4b3 100%);
+    border-bottom: 1px solid #aca899;
+    padding: 2px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #222;
+  }
+  .tool .head b { font-family: "Trebuchet MS", Tahoma, sans-serif; }
+  .tool .body { padding: 4px 8px; white-space: pre-wrap; color: #222; }
+  .tool .body .ok { color: #157a14; }
+  .tool .body .warn { color: #a37100; }
+  .tool .badge-status {
+    font-size: 10px;
+    padding: 0 6px;
+    border: 1px solid;
+    border-radius: 2px;
+  }
+  .tool .badge-status.run {
+    background: #fffbcf;
+    color: #6a4e00;
+    border-color: #b58a18;
+  }
+  .tool .badge-status.done {
+    background: #d4e9c4;
+    color: #1b5a14;
+    border-color: #75a464;
+  }
+  .typing::after {
+    content: "▌";
+    color: #1f4fc0;
+    margin-left: 1px;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .spinner {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border: 2px solid #888;
+    border-top-color: #1f4fc0;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: -2px;
+    margin-right: 4px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .composer {
+    border-top: 1px solid #aca899;
+    background: #ECE9D8;
+    padding: 6px;
+    display: flex;
+    gap: 6px;
+  }
+  .composer textarea {
+    flex: 1;
+    height: 38px;
+    resize: none;
+    font-family: Tahoma, sans-serif;
+    font-size: 12px;
+    border: 1px solid #7f9db9;
+    box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #d4d0c8;
+    padding: 4px;
+  }
+  .chat .status-bar { font-size: 11px; }
+
+  /* ---------- error dialog ---------- */
+  .err .window-body { background: #ECE9D8; padding: 14px; display: flex; gap: 10px; }
+  .err .icon-x {
+    width: 32px; height: 32px;
+    background: radial-gradient(circle at 30% 30%, #ff7878, #c00 70%, #800 100%);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: white;
+    font-weight: 900;
+    font-family: Arial Black, sans-serif;
+    font-size: 22px;
+    flex: 0 0 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+  .err .body-text { font-size: 11px; color: #222; }
+  .err .body-text p { margin: 0 0 8px; }
+  .err .ok-row { display: flex; justify-content: flex-end; margin-top: 4px; }
+
+  /* ---------- taskbar ---------- */
+  .taskbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 30px;
+    background: linear-gradient(180deg, #2068d8 0%, #2461c8 8%, #1f53b6 50%, #1c4aa8 100%);
+    border-top: 1px solid #0c3a96;
+    display: flex;
+    align-items: stretch;
+    z-index: 100;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .start-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 14px 0 8px;
+    background: linear-gradient(180deg, #3aa83a 0%, #2e8e2c 50%, #186e1a 100%);
+    color: white;
+    font-family: "Trebuchet MS", Tahoma, sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    border-right: 1px solid #0a4f0a;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,.4);
+    cursor: default;
+  }
+  .start-btn .flag {
+    display: inline-block;
+    width: 14px; height: 14px;
+    background:
+      conic-gradient(from 90deg at 50% 50%, #d22 0 25%, #2c2 0 50%, #fc2 0 75%, #29c 0 100%);
+    border-radius: 2px;
+    box-shadow: 0 0 1px rgba(255,255,255,.4);
+  }
+  .task {
+    align-self: center;
+    margin-left: 6px;
+    height: 22px;
+    padding: 0 10px;
+    background: linear-gradient(180deg, #4f8ce0, #1d51b6);
+    color: white;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #0c3a96;
+    box-shadow: inset 1px 1px 0 rgba(255,255,255,.25);
+  }
+  .task.active {
+    background: linear-gradient(180deg, #1c46a0, #2e6acb);
+    box-shadow: inset 1px 1px 1px rgba(0,0,0,.4);
+  }
+  .tray {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    background: linear-gradient(180deg, #1f9be0 0%, #1f7bc8 50%, #186aa8 100%);
+    color: white;
+    font-size: 11px;
+    border-left: 1px solid #0c3a96;
+  }
+  .tray .ico { width: 14px; height: 14px; display: inline-block; }
+  .tray .clock { font-family: Tahoma, sans-serif; }
+
+  /* tiny pixel-art glyphs as inline SVG data */
+  .ico-mantis {
+    background: linear-gradient(180deg, #4d8eff 0%, #1f4fc0 100%);
+    border: 1px solid #15347f;
+    color: #fff;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    display: grid;
+    place-items: center;
+    font-family: "Trebuchet MS", Tahoma;
+    font-weight: 700;
+    margin: 0 auto 4px;
+  }
+  .ico-folder {
+    width: 32px; height: 26px;
+    margin: 3px auto 4px;
+    background: linear-gradient(180deg, #ffd57b 0%, #e8a13a 100%);
+    border: 1px solid #8b5a0d;
+    position: relative;
+  }
+  .ico-folder::before {
+    content: ""; position: absolute; top: -5px; left: 0;
+    width: 14px; height: 6px;
+    background: linear-gradient(180deg, #ffd57b 0%, #e8a13a 100%);
+    border: 1px solid #8b5a0d; border-bottom: none;
+  }
+  .ico-bin {
+    width: 26px; height: 30px;
+    margin: 0 auto 4px;
+    background: linear-gradient(180deg, #d8d8d8, #9d9d9d);
+    border: 1px solid #555;
+    position: relative;
+  }
+  .ico-bin::before {
+    content: ""; position: absolute; top: -4px; left: -3px; right: -3px;
+    height: 4px;
+    background: #888;
+    border: 1px solid #555;
+  }
+  .ico-net {
+    width: 28px; height: 28px;
+    margin: 2px auto 4px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, #b8e0ff 0%, #5ca5ee 50%, #2566c8 100%);
+    border: 1px solid #1a3f80;
+  }
+
+  /* mark */
+  .signature {
+    position: fixed;
+    bottom: 36px;
+    right: 8px;
+    color: rgba(255,255,255,.85);
+    font-size: 10px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,.7);
+    font-family: Tahoma, sans-serif;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="desktop">
+
+  <!-- desktop icons -->
+  <div class="icons">
+    <div class="ico selected">
+      <div class="ico-mantis glyph">M</div>
+      Mantis
+    </div>
+    <div class="ico">
+      <div class="ico-folder glyph"></div>
+      My Inbox
+    </div>
+    <div class="ico">
+      <div class="ico-net glyph"></div>
+      Network
+    </div>
+    <div class="ico">
+      <div class="ico-bin glyph"></div>
+      Recycle&nbsp;Bin
+    </div>
+  </div>
+
+  <!-- ============ Setup wizard ============ -->
+  <div class="window-shell wizard">
+    <div class="window">
+      <div class="title-bar">
+        <div class="title-bar-text">Mantis Setup Wizard — Step 6 of 9</div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize"></button>
+          <button aria-label="Maximize"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+
+        <div class="wiz-hero">
+          <div class="badge">M</div>
+          <div>
+            <h2>Welcome to Mantis</h2>
+            <p>Let's wire up your assistant. We'll connect a model, a wallet,
+               and your inbox — about two minutes total.</p>
+          </div>
+        </div>
+
+        <ol class="step-list">
+          <li class="done">Provider</li>
+          <li class="done">Wallet</li>
+          <li class="done">Reveal</li>
+          <li class="done">Balance</li>
+          <li class="done">Models</li>
+          <li class="now">Telegram</li>
+          <li>Email</li>
+          <li>Finish</li>
+        </ol>
+
+        <fieldset>
+          <legend>Telegram bot</legend>
+
+          <div class="field-block">
+            <label for="tg-token">Bot token</label>
+            <input id="tg-token" type="password" value="••••••••••••:AAH-•••••••••••••••••••••" />
+            <p class="help">From <code>@BotFather</code>. We never log this.</p>
+          </div>
+
+          <div class="field-block">
+            <label>Linked Telegram user</label>
+            <div class="field-row" style="display:flex;gap:8px;align-items:center;">
+              <input type="text" value="@egor_dev (id 482919301)" readonly style="flex:1" />
+              <button>Re-link…</button>
+            </div>
+            <p class="help">Send <code>/link</code> to your bot to bind another account.</p>
+          </div>
+
+          <div class="field-row">
+            <input type="checkbox" id="tg-skip" />
+            <label for="tg-skip">Skip Telegram for now (you can add it later)</label>
+          </div>
+        </fieldset>
+
+        <div class="nav-row">
+          <button>&laquo; Back</button>
+          <div style="display:flex; gap:6px;">
+            <button>Cancel</button>
+            <button class="default">Next &raquo;</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="status-bar">
+        <p class="status-bar-field">Step 6 of 9</p>
+        <p class="status-bar-field">Connection: secure (TLS 1.3)</p>
+        <p class="status-bar-field">Provider: Gonka</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Chat window with streaming ============ -->
+  <div class="window-shell chat">
+    <div class="window">
+      <div class="title-bar">
+        <div class="title-bar-text">Mantis — Conversation #14</div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize"></button>
+          <button aria-label="Maximize"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="chat-toolbar">
+          <span class="pill">Model: <b>llama-3.1-70b</b></span>
+          <span class="pill">Provider: <b>Gonka</b></span>
+          <span class="pill ok">● online</span>
+          <span class="sep"></span>
+          <span class="pill">Tools: 14</span>
+          <span class="pill">Sandbox: <b>email-1</b></span>
+        </div>
+
+        <div class="chat-stream" id="stream">
+          <!-- user message -->
+          <div class="msg user">
+            <div class="who">You · 17:19</div>
+            <div class="bubble">
+              Look at my inbox. Summarize all unread mail grouped by sender,
+              one short line per message. Skip newsletters.
+            </div>
+          </div>
+
+          <!-- assistant message (will be filled by JS) -->
+          <div class="msg assistant">
+            <div class="who">Mantis · 17:19</div>
+            <div class="bubble" id="assistant"></div>
+          </div>
+        </div>
+
+        <div class="composer">
+          <textarea readonly placeholder="Send a message…">/sort newsletters into a folder</textarea>
+          <button class="default">Send</button>
+        </div>
+      </div>
+      <div class="status-bar">
+        <p class="status-bar-field" id="status-1">Streaming response…</p>
+        <p class="status-bar-field" id="status-2">3 tool calls</p>
+        <p class="status-bar-field">Tokens: 412 / 8k</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Error dialog ============ -->
+  <div class="window-shell err">
+    <div class="window">
+      <div class="title-bar">
+        <div class="title-bar-text">Mantis — Connection lost</div>
+        <div class="title-bar-controls">
+          <button aria-label="Help"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="icon-x">×</div>
+        <div class="body-text">
+          <p><b>SMTP server timed out.</b></p>
+          <p>Mantis could not reach <code>smtp.gmail.com:587</code> after
+             20 seconds. The wizard will retry automatically — or you can
+             change the server in <i>Email setup</i>.</p>
+          <div class="ok-row">
+            <button class="default" onclick="this.closest('.window-shell').style.display='none'">OK</button>
+            <button style="margin-left:6px"
+              onclick="this.closest('.window-shell').style.display='none'">Retry</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="signature">Mantis on Windows XP · concept mock · Luna theme</div>
+
+<!-- taskbar -->
+<div class="taskbar">
+  <div class="start-btn"><span class="flag"></span>start</div>
+  <div class="task active">M&nbsp;&nbsp;Mantis Setup Wizard</div>
+  <div class="task">M&nbsp;&nbsp;Mantis — Conversation #14</div>
+  <div class="task">!&nbsp;&nbsp;Connection lost</div>
+  <div class="tray">
+    <span>🔊</span>
+    <span class="clock" id="clock">17:20</span>
+  </div>
+</div>
+
+<script>
+  // ---- live clock in tray ----
+  function tickClock() {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    document.getElementById("clock").textContent = hh + ":" + mm;
+  }
+  tickClock();
+  setInterval(tickClock, 30000);
+
+  // ---- streaming script ----
+  // A scripted "agent run" — text and tool calls interleaved, like the real UI.
+  const script = [
+    {type: "text", val: "Connecting to your mailbox now."},
+    {type: "tool", id: "imap_connect", title: "imap.connect",
+      args: 'host="imap.gmail.com" port=993 tls=true',
+      lines: [
+        "→ resolving imap.gmail.com…",
+        "→ TCP connect 142.250.190.109:993",
+        "→ TLS handshake OK (TLS 1.3, ECDHE-RSA)",
+        "✔ logged in as egor@example.com"
+      ]
+    },
+    {type: "text", val: "\n\nFetching unread headers since yesterday."},
+    {type: "tool", id: "imap_search", title: "imap.search",
+      args: 'mailbox="INBOX" criteria="UNSEEN SINCE 10-May-2026"',
+      lines: [
+        "→ SELECT INBOX (1842 messages, 24 unseen)",
+        "→ SEARCH UNSEEN SINCE 10-May-2026",
+        "✔ 24 UIDs returned"
+      ]
+    },
+    {type: "tool", id: "classify", title: "classify.newsletters",
+      args: 'model="llama-3.1-70b" threshold=0.8',
+      lines: [
+        "→ scoring 24 messages…",
+        "→ 11 flagged as newsletter (Substack, GitHub digest, HN)",
+        "✔ 13 personal messages remain"
+      ]
+    },
+    {type: "text", val: "\n\nHere's what's new (newsletters skipped):\n\n"},
+    {type: "text", val: "**Anna Petrova** (3)\n"},
+    {type: "text", val: "  · Re: term sheet — wants the v3 doc by Wed.\n"},
+    {type: "text", val: "  · Calendar — pushing Friday's review to Mon 11:00.\n"},
+    {type: "text", val: "  · Photos from Lisbon — no action needed.\n\n"},
+    {type: "text", val: "**Stripe** (2)\n"},
+    {type: "text", val: "  · Invoice #INV-4421 — €128.40, paid.\n"},
+    {type: "text", val: "  · Card expiring in 30 days on •••• 4242.\n\n"},
+    {type: "text", val: "**Recruiter @ Acme** (1)\n"},
+    {type: "text", val: "  · Phone screen offered for the staff role.\n\n"},
+    {type: "text", val: "**GitHub** (1, security)\n"},
+    {type: "text", val: "  · New SSH key added to mantis-bot. Confirm? (UID 19384)\n\n"},
+    {type: "text", val: "Want me to draft replies to Anna and the recruiter? "},
+    {type: "text", val: "I won't send anything without your OK."}
+  ];
+
+  // Active assistant bubble — runTool() swaps this to a fresh bubble after
+  // it inserts the tool block, so subsequent text streams below the tool.
+  const targetRef = { current: document.getElementById("assistant") };
+  targetRef.current.classList.add("typing");
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function renderMd(s) {
+    let html = s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    html = html.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+    return html.replace(/\n/g, "<br>");
+  }
+
+  async function typeText(text) {
+    const t = targetRef.current;
+    t.classList.add("typing");
+    const stream = document.getElementById("stream");
+    const prev = t.dataset.text || "";
+    let local = "";
+    for (let i = 0; i < text.length; i += 2) {
+      local += text.slice(i, i + 2);
+      t.innerHTML = renderMd(prev + local);
+      stream.scrollTop = stream.scrollHeight;
+      await sleep(14);
+    }
+    t.dataset.text = prev + text;
+    t.innerHTML = renderMd(t.dataset.text);
+  }
+
+  async function runTool(tool) {
+    const stream = document.getElementById("stream");
+    const oldBubble = targetRef.current;
+    oldBubble.classList.remove("typing");
+    const oldMsg = oldBubble.parentElement;
+
+    const wrap = document.createElement("div");
+    wrap.className = "tool";
+    wrap.innerHTML =
+      '<div class="head">' +
+      '<div><b>' + tool.title + '</b> <span style="color:#666">(' + tool.args + ')</span></div>' +
+      '<div class="badge-status run"><span class="spinner"></span>running</div>' +
+      '</div>' +
+      '<div class="body"></div>';
+    stream.insertBefore(wrap, oldMsg.nextSibling);
+
+    const newMsg = document.createElement("div");
+    newMsg.className = "msg assistant";
+    newMsg.innerHTML = '<div class="who">Mantis · 17:19</div><div class="bubble typing"></div>';
+    stream.insertBefore(newMsg, wrap.nextSibling);
+    targetRef.current = newMsg.querySelector(".bubble");
+
+    const body = wrap.querySelector(".body");
+    for (const line of tool.lines) {
+      await sleep(280 + Math.random() * 220);
+      const div = document.createElement("div");
+      div.className = line.startsWith("✔") ? "ok" : line.startsWith("⚠") ? "warn" : "";
+      div.textContent = line;
+      body.appendChild(div);
+      stream.scrollTop = stream.scrollHeight;
+    }
+    await sleep(220);
+    wrap.querySelector(".badge-status").outerHTML =
+      '<div class="badge-status done">✓ done</div>';
+    bumpToolCount();
+  }
+
+  let toolCount = 0;
+  function bumpToolCount() {
+    toolCount += 1;
+    document.getElementById("status-2").textContent = toolCount + " tool calls";
+  }
+  document.getElementById("status-2").textContent = "0 tool calls";
+
+  (async function run() {
+    for (const item of script) {
+      if (item.type === "text") {
+        await typeText(item.val);
+      } else if (item.type === "tool") {
+        await runTool(item);
+      }
+    }
+    targetRef.current.classList.remove("typing");
+    document.getElementById("status-1").textContent = "Idle — done in 6.4s";
+  })();
+</script>
+
+</body>
+</html>

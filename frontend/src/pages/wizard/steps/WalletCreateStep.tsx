@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { FormField } from '@/components/FormField'
 import { Loader2, Sparkles } from '@/lib/icons'
 import type { GonkaConfig } from '@/types'
+import { AppleAction } from '../components/apple/AppleAction'
+import { AppleHero } from '../components/apple/AppleHero'
+import { AppleNote } from '../components/apple/AppleNote'
+import { GonkaServerSetting } from '../components/GonkaServerSetting'
+import { StepHero } from '../components/StepHero'
 
 interface WalletCreateStepProps {
   gonkaConfig: GonkaConfig | null
@@ -20,63 +21,47 @@ export function WalletCreateStep({
   onChangeNodeUrl,
   onCreate,
 }: WalletCreateStepProps) {
-  const [showServer, setShowServer] = useState(false)
   const inferencedReady = gonkaConfig?.inferencedAvailable ?? false
+  const disabled = !inferencedReady || !nodeUrl.trim() || submitting
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 px-5 py-4 flex items-start gap-3">
-        <div className="size-9 rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
-          <Sparkles size={18} />
-        </div>
-        <div className="text-[12.5px] text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          <p className="font-medium text-zinc-900 dark:text-zinc-50">Here’s what happens next</p>
-          <ol className="mt-1.5 space-y-0.5 list-decimal list-inside text-zinc-600 dark:text-zinc-400">
-            <li>We generate a fresh wallet on your server.</li>
-            <li>You see your 24 secret words — save them somewhere safe.</li>
-            <li>You top up the wallet with a small amount of GNK.</li>
-          </ol>
-        </div>
-      </div>
+    <div className="space-y-10">
+      <StepHero stepId="wallet-create" hero={<AppleHero icon={Sparkles} tone="emerald" />} />
 
-      <Button
-        onClick={onCreate}
-        disabled={!inferencedReady || !nodeUrl.trim() || submitting}
-        className="w-full h-10"
+      <ol className="space-y-4">
+        {[
+          'We generate a fresh wallet on your server.',
+          'You see your 24 secret words — save them somewhere safe.',
+          'You top up the wallet with a small amount of GNK.',
+        ].map((step, i) => (
+          <li
+            key={i}
+            className="flex items-start gap-4 rounded-2xl bg-[var(--grand-surface)] ring-1 ring-[var(--grand-border-2)] px-5 py-4"
+          >
+            <span className="size-8 shrink-0 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[14px] font-semibold">
+              {i + 1}
+            </span>
+            <span className="text-[15px] leading-relaxed text-[var(--grand-fg-2)] pt-1">{step}</span>
+          </li>
+        ))}
+      </ol>
+
+      <AppleAction
+        fullWidth
+        onClick={() => void onCreate()}
+        disabled={disabled}
+        leading={submitting ? <Loader2 size={16} className="animate-spin" /> : undefined}
       >
-        {submitting ? (
-          <>
-            <Loader2 size={14} className="animate-spin" /> creating…
-          </>
-        ) : (
-          'Create my wallet'
-        )}
-      </Button>
+        {submitting ? 'Creating your wallet…' : 'Create my wallet'}
+      </AppleAction>
 
       {!inferencedReady && (
-        <p className="text-[11.5px] text-amber-600 dark:text-amber-400 text-center">
-          Wallet creation isn’t available on this server. Use the “I already have a wallet” option instead.
-        </p>
+        <AppleNote tone="warning">
+          Wallet creation isn’t available on this server. Use the “I already have a wallet” option
+          on the previous screen instead.
+        </AppleNote>
       )}
 
-      <div className="pt-1">
-        {!showServer ? (
-          <button
-            type="button"
-            onClick={() => setShowServer(true)}
-            className="text-[11.5px] text-zinc-500 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400"
-          >
-            Server: <span className="font-mono">{nodeUrl || 'default'}</span> · change
-          </button>
-        ) : (
-          <FormField label="Gonka server" hint="Where GRAND sends your AI requests. The default works.">
-            <Input
-              value={nodeUrl}
-              onChange={e => onChangeNodeUrl(e.target.value)}
-              placeholder="https://node4.gonka.ai"
-            />
-          </FormField>
-        )}
-      </div>
+      <GonkaServerSetting nodeUrl={nodeUrl} onChange={onChangeNodeUrl} />
     </div>
   )
 }

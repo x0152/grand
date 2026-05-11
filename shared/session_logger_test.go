@@ -98,7 +98,7 @@ func TestSessionLogger_TextBeforeToolCall(t *testing.T) {
 		{Type: "text", Delta: "Done. The system is Linux."},
 	})
 
-	out := logger.Wrap(context.Background(), "conn-1", "ssh", "uname -a", src)
+	out := logger.Wrap(context.Background(), "conn-1", "ssh", "user@server", "uname -a", src)
 	// Drain output
 	for range out {
 	}
@@ -152,7 +152,7 @@ func TestSessionLogger_ThinkingEventsIgnored(t *testing.T) {
 		{Type: "tool_end", Delta: "file1 file2"},
 	})
 
-	out := logger.Wrap(context.Background(), "conn-1", "ssh", "ls", src)
+	out := logger.Wrap(context.Background(), "conn-1", "ssh", "user@server", "ls", src)
 	for range out {
 	}
 	time.Sleep(50 * time.Millisecond)
@@ -188,7 +188,7 @@ func TestSessionLogger_OnlyThinkingNoTools(t *testing.T) {
 	})
 
 	filtered := ApplyThinkingStream(src, "skip")
-	out := logger.Wrap(context.Background(), "conn-1", "ssh", "uname -a", filtered)
+	out := logger.Wrap(context.Background(), "conn-1", "ssh", "user@server", "uname -a", filtered)
 	for range out {
 	}
 	time.Sleep(50 * time.Millisecond)
@@ -216,7 +216,7 @@ func TestSessionLogger_ThinkingStrippedTextKept(t *testing.T) {
 
 	// Full pipeline: ApplyThinkingStream strips <think>, then session_logger wraps
 	filtered := ApplyThinkingStream(src, "skip")
-	out := logger.Wrap(context.Background(), "conn-1", "ssh", "uname -a", filtered)
+	out := logger.Wrap(context.Background(), "conn-1", "ssh", "user@server", "uname -a", filtered)
 	for range out {
 	}
 	time.Sleep(50 * time.Millisecond)
@@ -242,7 +242,7 @@ func TestSessionLogger_IncrementalSave(t *testing.T) {
 	logger := NewSessionLogger(store)
 
 	events := make(chan types.StreamEvent, 10)
-	out := logger.Wrap(context.Background(), "conn-1", "ssh", "test", events)
+	out := logger.Wrap(context.Background(), "conn-1", "ssh", "user@server", "test", events)
 
 	// Drain output in background
 	go func() {

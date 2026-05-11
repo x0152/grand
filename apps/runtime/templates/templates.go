@@ -112,15 +112,28 @@ if [ -n "${SANDBOX_SSH_PUBLIC_KEY:-}" ]; then
     chmod 600 /home/sandbox/.ssh/authorized_keys
 fi
 : > /home/sandbox/.ssh/environment
-# Per-sandbox secret diversion. Sandboxes that opt in by creating
-# /etc/sandbox/secrets/<name>/ at build time get their SANDBOX_<NAME>_*
-# env vars written to a root/group-only file instead of the agent-readable
-# .ssh/environment, so the agent's shell (and therefore the LLM context)
-# never sees raw credentials.
+# Per-sandbox secret diversion. Sandboxes that opt in by creating an empty
+# marker directory /etc/sandbox/secrets/<name>/ at build time get their
+# SANDBOX_<NAME>_* env vars written to a root/group-only file instead of
+# the agent-readable .ssh/environment, so the agent's shell (and therefore
+# the LLM context) never sees raw credentials.
+#
+# The actual credentials file lives under /run (tmpfs, writable) because
+# the rest of the rootfs is mounted read-only by the runtime. The marker
+# dir under /etc just signals "this sandbox wants email credentials".
 if [ -d /etc/sandbox/secrets/email ]; then
-    cred=/etc/sandbox/secrets/email/credentials.env
+    cred_dir=/run/sandbox-secrets/email
+    cred="$cred_dir/credentials.env"
+    mkdir -p "$cred_dir"
+    chmod 0755 /run/sandbox-secrets
+    if id -u emailsec >/dev/null 2>&1; then
+        chown root:emailsec "$cred_dir"
+        chmod 0750 "$cred_dir"
+    else
+        chmod 0700 "$cred_dir"
+    fi
     : > "$cred"
-    chmod 600 "$cred"
+    chmod 0600 "$cred"
     if id -u emailsec >/dev/null 2>&1; then
         chown emailsec:emailsec "$cred"
     fi

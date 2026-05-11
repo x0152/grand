@@ -29,13 +29,17 @@ from html.parser import HTMLParser
 
 # Where the docker init script writes credentials at container boot.
 # Mode 0600, owned by `emailsec` group; the agent's `sandbox` user is NOT
-# in that group so it cannot open this file directly.
-CREDENTIALS_FILE = "/etc/sandbox/secrets/email/credentials.env"
+# in that group so it cannot open this file directly. We keep the
+# legacy /etc path as a fallback so older images still load — the live
+# location is /run because the runtime mounts the rootfs read-only.
+CREDENTIALS_FILE = "/run/sandbox-secrets/email/credentials.env"
+LEGACY_CREDENTIALS_FILE = "/etc/sandbox/secrets/email/credentials.env"
 
 # Paths the agent must never be able to read/write through user-supplied args.
 # Anything resolving (realpath) into one of these is refused.
 PROTECTED_PATH_PREFIXES = (
     "/etc/sandbox/secrets",
+    "/run/sandbox-secrets",
     "/etc/sudoers",
     "/etc/sudoers.d",
     "/etc/shadow",
@@ -243,7 +247,7 @@ _FALSY = {"0", "false", "no", "off", "disable", "disabled"}
 _credentials_loaded = False
 
 
-def _load_credentials_file(path=CREDENTIALS_FILE):
+def _load_credentials_file(path=None):
     """Read KEY=VALUE lines from the secrets file into os.environ.
 
     The file is written at container boot (see apps/runtime/templates init
@@ -252,34 +256,40 @@ def _load_credentials_file(path=CREDENTIALS_FILE):
     file doesn't exist or we can't read it (PermissionError), we silently
     fall back to whatever env vars are present — that path is taken in
     local dev / unit tests.
+
+    Tries /run/... first (the new writable location), then the legacy
+    /etc/... path so older images still work.
     """
     global _credentials_loaded
     if _credentials_loaded:
         return
     _credentials_loaded = True
-    if not path or not os.path.isfile(path):
-        return
-    try:
-        with open(path, encoding="utf-8") as fh:
-            for raw in fh:
-                line = raw.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, _, value = line.partition("=")
-                key = key.strip()
-                if not key.startswith("SANDBOX_EMAIL_"):
-                    continue
-                value = value.strip()
-                if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
-                    value = value[1:-1]
-                # File wins over env so that an agent who manages to set
-                # SANDBOX_EMAIL_SMTP_HOST=evil.com in their shell still
-                # cannot redirect outbound mail.
-                os.environ[key] = value
-    except PermissionError:
-        return  # not allowed to read it — running as the wrong user
-    except OSError:
-        return
+    candidates = [path] if path else [CREDENTIALS_FILE, LEGACY_CREDENTIALS_FILE]
+    for candidate in candidates:
+        if not candidate or not os.path.isfile(candidate):
+            continue
+        try:
+            with open(candidate, encoding="utf-8") as fh:
+                for raw in fh:
+                    line = raw.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, _, value = line.partition("=")
+                    key = key.strip()
+                    if not key.startswith("SANDBOX_EMAIL_"):
+                        continue
+                    value = value.strip()
+                    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+                        value = value[1:-1]
+                    # File wins over env so that an agent who manages to set
+                    # SANDBOX_EMAIL_SMTP_HOST=evil.com in their shell still
+                    # cannot redirect outbound mail.
+                    os.environ[key] = value
+            return
+        except PermissionError:
+            return  # not allowed to read it — running as the wrong user
+        except OSError:
+            continue
 
 
 def _env(key, default=""):

@@ -457,6 +457,7 @@ export interface SessionLog {
   id: string
   connectionId: string
   agentName: string
+  host?: string
   prompt: string
   status: 'running' | 'finished'
   modelId?: string

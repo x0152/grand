@@ -5,58 +5,58 @@ export function stepMeta(stepId: StepId): StepMeta {
   switch (stepId) {
     case 'provider':
       return {
-        title: 'How do you want to power GRAND?',
-        subtitle: 'Pick where GRAND sends your messages. You can change this later.',
+        title: 'Where should your AI live?',
+        subtitle: 'Two ways to power GRAND. Pick the one that fits — you can switch any time.',
       }
     case 'openai':
       return {
-        title: 'Connect your AI provider',
-        subtitle: 'Paste your provider’s URL and key, then list the models you want to use.',
+        title: 'Connect your AI',
+        subtitle: 'Tell GRAND where to send your messages and which models to use.',
       }
     case 'wallet-choice':
       return {
-        title: 'Set up your Gonka wallet',
-        subtitle: 'Already have a wallet? Use it. Brand new? We’ll create one in a click.',
+        title: 'Get a Gonka wallet',
+        subtitle: 'Pay-per-call needs a wallet. Brand new? We’ll create one. Have one? Plug it in.',
       }
     case 'wallet-import':
       return {
-        title: 'Use your existing wallet',
-        subtitle: 'Paste your recovery phrase — or a private key if that’s all your wallet shows.',
+        title: 'Plug in your wallet',
+        subtitle: 'Paste the recovery phrase from Keplr, Cosmostation or Leap.',
       }
     case 'wallet-create':
       return {
         title: 'Create a new wallet',
-        subtitle: 'One click and you’re done. We’ll show your recovery words right after.',
+        subtitle: 'One tap and you’re done. We’ll show the secret words right after.',
       }
     case 'wallet-reveal':
       return {
-        title: 'Save your secret words',
-        subtitle: 'Write them on paper or save them in a password manager. We won’t show them again.',
+        title: 'Your secret words',
+        subtitle: 'Write them down somewhere safe. They’re the only way to recover this wallet.',
       }
     case 'wallet-balance':
       return {
-        title: 'Top up your wallet',
-        subtitle: `Scan the QR or copy the address. Send at least ${MIN_BALANCE_GNK} GNK and we’ll continue.`,
+        title: 'Add some GNK',
+        subtitle: `Scan the QR or copy the address below. Send at least ${MIN_BALANCE_GNK} GNK — we’ll auto-detect it.`,
       }
     case 'gonka-models':
       return {
-        title: 'Choose your AI models',
-        subtitle: 'Pick one for chat. The others are optional.',
+        title: 'Pick your models',
+        subtitle: 'One chat model is required. Summary and vision are nice-to-haves.',
       }
     case 'telegram':
       return {
-        title: 'Talk to GRAND on Telegram?',
-        subtitle: 'Paste a bot token and send the code to the bot — we’ll detect you. Or tick the box below to stay on chat-only.',
+        title: 'Add Telegram',
+        subtitle: 'Paste your bot token, send a code from your Telegram — we’ll link the account.',
       }
     case 'email':
       return {
         title: 'Connect your mailbox',
-        subtitle: 'Add SMTP/IMAP credentials so GRAND can read and send mail. Skip to add it later.',
+        subtitle: 'Pick your email provider — we’ll guide you through generating an app password.',
       }
     case 'finish':
       return {
-        title: 'Ready to go',
-        subtitle: 'Here’s what we’ll save. Click finish to wrap up.',
+        title: 'You’re all set',
+        subtitle: 'Here’s what we’ll save. Tap Open GRAND to start your first chat.',
       }
   }
 }

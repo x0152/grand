@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Card } from '@/components/ui/card'
 import { Toaster } from '@/components/ui/sonner'
-import { BrandLogo, BRAND_NAME } from '@/components/Brand'
 import { ModeToggle } from '@/components/mode-toggle'
-import { AlertCircle } from '@/lib/icons'
+import { ArrowLeft, AlertCircle, X } from '@/lib/icons'
 import { api } from '@/api'
 import type { GlobalConfig, GlobalConfigDraft, GonkaConfig, ProviderModel } from '@/types'
 import type { ModelRow, Provider, State, StepId, WalletImportMode, WalletMode, WizardMode } from './types'
 import { DEFAULT_GONKA_NODE, MIN_BALANCE_GNK } from './seeds'
 import { buildPath } from './path'
 import { deriveStatus } from './status'
-import { ProgressBar, StepIntro } from './components/StepHeader'
+import { Stepper } from './components/Stepper'
 import { NavBar } from './components/NavBar'
 import { ProviderStep } from './steps/ProviderStep'
 import { OpenAIStep } from './steps/OpenAIStep'
@@ -28,9 +26,10 @@ import { telegramSummary, emailSummary } from './utils'
 interface SetupWizardProps {
   mode?: WizardMode
   onDone: () => void
+  onCancel?: () => void
 }
 
-export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps) {
+export default function SetupWizard({ mode = 'full', onDone, onCancel }: SetupWizardProps) {
   const [state, setState] = useState<State | null>(null)
   const [stepId, setStepId] = useState<StepId>('provider')
   const [direction, setDirection] = useState<'next' | 'back'>('next')
@@ -49,14 +48,22 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
       if (cancelled) return
       setResolved(cfg)
       const fallback = gonka?.defaultNodeUrl || DEFAULT_GONKA_NODE
-      setGonkaConfig(gonka ?? { defaultNodeUrl: fallback, inferencedAvailable: false, minBalanceGnk: String(MIN_BALANCE_GNK) })
+      setGonkaConfig(
+        gonka ?? {
+          defaultNodeUrl: fallback,
+          inferencedAvailable: false,
+          minBalanceGnk: String(MIN_BALANCE_GNK),
+        },
+      )
       setState(initialState(cfg, fallback))
       const status = deriveStatus(cfg)
       if (mode === 'resume' && status.firstMissing) {
         setStepId(status.firstMissing)
       }
     })
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [mode])
 
   const loadModels = useCallback(
@@ -92,6 +99,21 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
     setModelsError('')
   }, [state?.provider])
 
+  const openaiBaseUrl = state?.openaiBaseUrl ?? ''
+  const openaiApiKey = state?.openaiApiKey ?? ''
+  useEffect(() => {
+    if (stepId !== 'openai') return
+    const url = openaiBaseUrl.trim()
+    if (!url) return
+    const handle = setTimeout(() => {
+      void (async () => {
+        const list = await loadModels('openai', url, openaiApiKey)
+        setState(prev => (prev ? autoFillFirstModel(prev, list) : prev))
+      })()
+    }, 700)
+    return () => clearTimeout(handle)
+  }, [stepId, openaiBaseUrl, openaiApiKey, loadModels])
+
   const gonkaAutoLoadedRef = useRef(false)
   useEffect(() => {
     if (!state) return
@@ -102,7 +124,7 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
     gonkaAutoLoadedRef.current = true
     void (async () => {
       const list = await loadModels('gonka', state.gonkaNodeUrl, state.gonkaPrivateKey)
-      setState(prev => prev ? autoFillFirstModel(prev, list) : prev)
+      setState(prev => (prev ? autoFillFirstModel(prev, list) : prev))
     })()
   }, [state, stepId, availableModels, loadingModels, loadModels])
 
@@ -112,19 +134,14 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
 
   const path = useMemo(() => {
     if (!state) return [] as StepId[]
-    return buildPath({
-      state,
-      gonkaConfig,
-      mode,
-      status: deriveStatus(resolved),
-    })
+    return buildPath({ state, gonkaConfig, mode, status: deriveStatus(resolved) })
   }, [state, gonkaConfig, resolved, mode])
 
   const currentIdx = state ? Math.max(0, path.indexOf(stepId)) : 0
 
   if (!state) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-6 text-sm text-zinc-500">
+      <div className="fixed inset-0 z-50 bg-[var(--grand-bg)] flex items-center justify-center p-6 text-sm text-[var(--grand-muted)]">
         Loading setup…
       </div>
     )
@@ -171,13 +188,10 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
       if (prev.provider === p) return prev
       return { ...prev, provider: p, modelRows: [{ name: '', role: 'chat' }] }
     })
-    if (p === 'openai') goTo('openai', 'next')
-    else goTo('wallet-choice', 'next')
   }
 
   const onWalletModeSelect = (walletMode: WalletMode) => {
     update('walletMode', walletMode)
-    goTo(walletMode === 'create' ? 'wallet-create' : 'wallet-import', 'next')
   }
 
   const onCreateWallet = async () => {
@@ -185,14 +199,18 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
     setError('')
     try {
       const wallet = await api.gonka.createWallet()
-      setState(prev => prev ? {
-        ...prev,
-        gonkaPrivateKey: wallet.privateKeyHex,
-        gonkaPrivateKeyKnown: true,
-        gonkaAddress: wallet.address,
-        gonkaMnemonicWords: wallet.words,
-        mnemonicAcknowledged: false,
-      } : prev)
+      setState(prev =>
+        prev
+          ? {
+              ...prev,
+              gonkaPrivateKey: wallet.privateKeyHex,
+              gonkaPrivateKeyKnown: true,
+              gonkaAddress: wallet.address,
+              gonkaMnemonicWords: wallet.words,
+              mnemonicAcknowledged: false,
+            }
+          : prev,
+      )
       goTo('wallet-reveal', 'next')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Wallet creation failed')
@@ -207,16 +225,20 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
     try {
       if (state.walletImportMode === 'mnemonic') {
         const wallet = await api.gonka.importWallet(state.gonkaMnemonicInput)
-        setState(prev => prev ? {
-          ...prev,
-          gonkaPrivateKey: wallet.privateKeyHex,
-          gonkaPrivateKeyKnown: true,
-          gonkaAddress: wallet.address,
-          gonkaMnemonicWords: wallet.words,
-        } : prev)
+        setState(prev =>
+          prev
+            ? {
+                ...prev,
+                gonkaPrivateKey: wallet.privateKeyHex,
+                gonkaPrivateKeyKnown: true,
+                gonkaAddress: wallet.address,
+                gonkaMnemonicWords: wallet.words,
+              }
+            : prev,
+        )
       } else {
         const { address } = await api.gonka.deriveAddress(state.gonkaPrivateKey.trim())
-        setState(prev => prev ? { ...prev, gonkaAddress: address, gonkaPrivateKeyKnown: true } : prev)
+        setState(prev => (prev ? { ...prev, gonkaAddress: address, gonkaPrivateKeyKnown: true } : prev))
       }
       goTo('wallet-balance', 'next')
     } catch (e) {
@@ -226,46 +248,59 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
     }
   }
 
-  const onLoadOpenAIModels = async () => {
-    const list = await loadModels('openai', state.openaiBaseUrl, state.openaiApiKey)
-    setState(prev => prev ? autoFillFirstModel(prev, list) : prev)
-  }
-
   const onReloadGonkaModels = async () => {
     const list = await loadModels('gonka', state.gonkaNodeUrl, state.gonkaPrivateKey)
-    setState(prev => prev ? autoFillFirstModel(prev, list) : prev)
+    setState(prev => (prev ? autoFillFirstModel(prev, list) : prev))
   }
 
+  const canBack = currentIdx > 0 && stepId !== 'wallet-reveal'
+
   return (
-    <div className="min-h-screen bg-[var(--grand-bg)] flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[var(--grand-bg)] text-[var(--grand-fg)] overflow-hidden">
       <Toaster />
-      <div className="w-full max-w-xl">
-        <div className="relative mb-8 flex items-center justify-center gap-3">
-          <BrandLogo size={44} />
-          <div className="leading-tight">
-            <h1 className="text-[24px] font-semibold tracking-tight text-[var(--grand-fg)]">
-              {BRAND_NAME}
-            </h1>
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--grand-muted)] mt-1">
-              {mode === 'resume' ? 'finishing setup' : 'first run'}
-            </p>
-          </div>
-          <div className="absolute right-0 top-0">
+
+      <header className="shrink-0 backdrop-blur bg-[var(--grand-bg)]/85 border-b border-[var(--grand-border-2)]">
+        <div className="max-w-3xl mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={canBack ? goBack : undefined}
+            disabled={!canBack}
+            className="flex items-center gap-1 text-[14px] text-[var(--grand-muted)] hover:text-[var(--grand-fg)] disabled:opacity-30 disabled:hover:text-[var(--grand-muted)] transition-colors -ml-1"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+          <Stepper path={path} stepId={stepId} />
+          <div className="flex items-center gap-1">
+            <span className="text-[12px] font-mono uppercase tracking-[0.16em] text-[var(--grand-muted-2)] mr-2 hidden sm:inline">
+              {mode === 'resume' ? 'finishing' : `step ${currentIdx + 1}/${path.length}`}
+            </span>
             <ModeToggle />
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                aria-label="Close setup"
+                className="ml-1 size-9 rounded-lg inline-flex items-center justify-center text-[var(--grand-muted)] hover:text-[var(--grand-fg)] hover:bg-[var(--grand-surface-2)] transition-colors"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
         </div>
+      </header>
 
-        <Card className="bg-[var(--grand-surface)] p-7 space-y-6 border-0 shadow-none">
-          <ProgressBar path={path} stepId={stepId} />
-
+      <main className="flex-1 overflow-y-auto">
+        <div className={`${contentMaxWidth(stepId)} mx-auto px-6 pt-12 sm:pt-16 pb-12`}>
           <div
             key={stepId}
-            className={`wizard-step space-y-6 ${direction === 'back' ? 'wizard-step-back' : 'wizard-step-next'}`}
+            className={`wizard-step ${direction === 'back' ? 'wizard-step-back' : 'wizard-step-next'}`}
           >
-            <StepIntro path={path} stepId={stepId} />
-
             {stepId === 'provider' && (
-              <ProviderStep provider={state.provider} gonkaConfig={gonkaConfig} onSelect={onProviderSelect} />
+              <ProviderStep
+                provider={state.provider}
+                gonkaConfig={gonkaConfig}
+                onSelect={onProviderSelect}
+              />
             )}
 
             {stepId === 'openai' && (
@@ -279,7 +314,6 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
                 onChangeBaseUrl={v => update('openaiBaseUrl', v)}
                 onChangeApiKey={v => update('openaiApiKey', v)}
                 onChangeModelRows={rows => update('modelRows', rows)}
-                onLoadModels={onLoadOpenAIModels}
               />
             )}
 
@@ -398,23 +432,23 @@ export default function SetupWizard({ mode = 'full', onDone }: SetupWizardProps)
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 rounded-md border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-[12px] text-rose-500">
-              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+            <div className="mt-6 flex items-start gap-3 rounded-2xl ring-1 ring-rose-500/30 bg-rose-500/[0.06] px-5 py-4 text-[13.5px] text-rose-600 dark:text-rose-400">
+              <AlertCircle size={16} weight="fill" className="mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
           )}
+        </div>
+      </main>
 
-          <NavBar
-            stepId={stepId}
-            canBack={currentIdx > 0 && stepId !== 'wallet-reveal'}
-            onBack={goBack}
-            onNext={goNext}
-            onComplete={onCompleteClick}
-            submitting={submitting}
-            state={state}
-          />
-        </Card>
-      </div>
+      <NavBar
+        stepId={stepId}
+        canBack={canBack}
+        onBack={goBack}
+        onNext={goNext}
+        onComplete={onCompleteClick}
+        submitting={submitting}
+        state={state}
+      />
     </div>
   )
 }
@@ -459,6 +493,12 @@ function initialState(cfg: GlobalConfig, defaultGonkaNode: string): State {
   }
 }
 
+const WIDE_STEPS: ReadonlySet<StepId> = new Set<StepId>(['provider', 'wallet-choice'])
+
+function contentMaxWidth(stepId: StepId): string {
+  return WIDE_STEPS.has(stepId) ? 'max-w-3xl' : 'max-w-lg'
+}
+
 function autoFillFirstModel(prev: State, list: ProviderModel[]): State {
   const rows = prev.modelRows
   const isEmpty = rows.length === 0 || (rows.length === 1 && !rows[0].name.trim())
@@ -469,20 +509,16 @@ function autoFillFirstModel(prev: State, list: ProviderModel[]): State {
 }
 
 function buildDraft(state: State): GlobalConfigDraft {
-  const validRows: ModelRow[] = state.modelRows.filter(r => r.name.trim()).map(r => ({ name: r.name.trim(), role: r.role }))
+  const validRows: ModelRow[] = state.modelRows
+    .filter(r => r.name.trim())
+    .map(r => ({ name: r.name.trim(), role: r.role }))
   const allowedFromState = state.tgAllowedUserIds ?? []
   const linkedId = state.tgLinkedUser?.id
   const merged = linkedId ? Array.from(new Set<number>([linkedId, ...allowedFromState])) : allowedFromState
   return {
     provider: state.provider,
-    openai: {
-      baseUrl: state.openaiBaseUrl.trim(),
-      apiKey: state.openaiApiKey.trim(),
-    },
-    gonka: {
-      nodeUrl: state.gonkaNodeUrl.trim(),
-      privateKey: state.gonkaPrivateKey.trim(),
-    },
+    openai: { baseUrl: state.openaiBaseUrl.trim(), apiKey: state.openaiApiKey.trim() },
+    gonka: { nodeUrl: state.gonkaNodeUrl.trim(), privateKey: state.gonkaPrivateKey.trim() },
     models: validRows,
     telegram: {
       token: state.tgToken.trim(),

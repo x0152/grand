@@ -125,7 +125,7 @@ func NewSessionLogger(store protocols.Store[string, types.SessionLog]) *SessionL
 	return &SessionLogger{store: store}
 }
 
-func (l *SessionLogger) Wrap(ctx context.Context, connectionID, agentName, prompt string, src <-chan types.StreamEvent) <-chan types.StreamEvent {
+func (l *SessionLogger) Wrap(ctx context.Context, connectionID, agentName, host, prompt string, src <-chan types.StreamEvent) <-chan types.StreamEvent {
 	stepID, messageID := StepFromContext(ctx)
 
 	now := time.Now().UTC()
@@ -133,6 +133,7 @@ func (l *SessionLogger) Wrap(ctx context.Context, connectionID, agentName, promp
 		ID:           uuid.New().String(),
 		ConnectionID: connectionID,
 		AgentName:    agentName,
+		Host:         host,
 		Prompt:       prompt,
 		MessageID:    messageID,
 		StepID:       stepID,

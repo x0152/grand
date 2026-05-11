@@ -8,15 +8,15 @@ interface QRDisplayProps {
 }
 
 const toneStyles: Record<NonNullable<QRDisplayProps['tone']>, string> = {
-  neutral: 'border-zinc-200/80 dark:border-zinc-800/70 bg-white',
-  amber: 'border-amber-500/40 bg-amber-50',
+  neutral: 'ring-[var(--grand-border-2)] bg-white',
+  amber: 'ring-amber-500/40 bg-amber-50',
 }
 
-export function QRDisplay({ value, size = 168, caption, tone = 'neutral' }: QRDisplayProps) {
+export function QRDisplay({ value, size = 232, caption, tone = 'neutral' }: QRDisplayProps) {
   if (!value) return null
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className={`rounded-lg border p-3 ${toneStyles[tone]}`}>
+    <div className="flex flex-col items-center gap-3">
+      <div className={`rounded-3xl ring-1 p-5 ${toneStyles[tone]}`}>
         <QRCodeSVG
           value={value}
           size={size}
@@ -27,7 +27,7 @@ export function QRDisplay({ value, size = 168, caption, tone = 'neutral' }: QRDi
         />
       </div>
       {caption && (
-        <p className="text-[11.5px] text-zinc-500 dark:text-zinc-500 text-center max-w-[260px] leading-snug">
+        <p className="text-[13px] text-[var(--grand-muted)] text-center max-w-sm leading-relaxed">
           {caption}
         </p>
       )}

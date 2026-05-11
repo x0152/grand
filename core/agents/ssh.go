@@ -103,10 +103,25 @@ func (a *SSHAgent) Execute(ctx context.Context, in SSHInput) (<-chan types.Strea
 	}
 
 	if a.sessionLogger != nil {
-		ch = a.sessionLogger.Wrap(ctx, in.Connection.ID, "ssh", in.Task, ch)
+		ch = a.sessionLogger.Wrap(ctx, in.Connection.ID, "ssh", sshDisplayHost(in.SSHConfig), in.Task, ch)
 	}
 
 	return ch, nil
+}
+
+func sshDisplayHost(cfg SSHConfig) string {
+	host := strings.TrimSpace(cfg.Host)
+	user := strings.TrimSpace(cfg.Username)
+	if host == "" && user == "" {
+		return ""
+	}
+	if user == "" {
+		return host
+	}
+	if host == "" {
+		return user
+	}
+	return user + "@" + host
 }
 
 func (a *SSHAgent) probeHost(cfg SSHConfig) (string, error) {

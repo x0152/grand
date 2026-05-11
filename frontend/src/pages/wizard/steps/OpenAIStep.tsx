@@ -1,9 +1,10 @@
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { FormField } from '@/components/FormField'
 import { Loader2 } from '@/lib/icons'
 import type { ProviderModel } from '@/types'
+import { AppleField } from '../components/apple/AppleField'
+import { AppleListGroup } from '../components/apple/AppleListGroup'
+import { AppleSection } from '../components/apple/AppleSection'
 import { ModelEditor } from '../components/ModelEditor'
+import { StepHero } from '../components/StepHero'
 import type { ModelRow } from '../types'
 
 interface OpenAIStepProps {
@@ -16,7 +17,6 @@ interface OpenAIStepProps {
   onChangeBaseUrl: (v: string) => void
   onChangeApiKey: (v: string) => void
   onChangeModelRows: (rows: ModelRow[]) => void
-  onLoadModels: () => void
 }
 
 export function OpenAIStep({
@@ -29,50 +29,66 @@ export function OpenAIStep({
   onChangeBaseUrl,
   onChangeApiKey,
   onChangeModelRows,
-  onLoadModels,
 }: OpenAIStepProps) {
   return (
-    <div className="space-y-3.5">
-      <FormField label="Server URL" hint="Your provider’s OpenAI-compatible endpoint.">
-        <Input value={baseUrl} onChange={e => onChangeBaseUrl(e.target.value)} placeholder="https://api.openai.com/v1" />
-      </FormField>
-      <FormField label="API key" hint="Anyone with this key can use your account — keep it private.">
-        <Input
-          type="text"
-          value={apiKey}
-          onChange={e => onChangeApiKey(e.target.value)}
-          placeholder="sk-..."
-        />
-      </FormField>
-      <div className="flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onLoadModels}
-          disabled={loadingModels || !baseUrl.trim()}
-          className="h-8 text-[12px]"
-        >
-          {loadingModels ? (
+    <div className="space-y-10">
+      <StepHero stepId="openai" align="left" />
+
+      <AppleSection title="Endpoint">
+        <AppleListGroup
+          caption={
             <>
-              <Loader2 size={12} className="animate-spin" /> Loading…
+              Use <span className="font-mono">https://api.openai.com/v1</span> for OpenAI directly,
+              your provider’s OpenAI-compatible URL, or{' '}
+              <span className="font-mono">http://localhost:11434/v1</span> for Ollama.
             </>
-          ) : (
-            'Load models'
-          )}
-        </Button>
-        {available && (
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-500">
-            {available.length} model{available.length === 1 ? '' : 's'} found
-          </span>
+          }
+        >
+          <AppleField
+            label="Server URL"
+            value={baseUrl}
+            onChange={e => onChangeBaseUrl(e.target.value)}
+            placeholder="https://api.openai.com/v1"
+            monospace
+            autoComplete="off"
+          />
+          <AppleField
+            label="API key"
+            type="password"
+            value={apiKey}
+            onChange={e => onChangeApiKey(e.target.value)}
+            placeholder="sk-... (leave blank for local servers)"
+            autoComplete="new-password"
+          />
+        </AppleListGroup>
+      </AppleSection>
+
+      <AppleSection
+        title="Models"
+        trailing={
+          <div className="flex items-center gap-3 text-[12px] font-mono text-[var(--grand-muted-2)]">
+            {loadingModels && (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 size={12} className="animate-spin" />
+                loading
+              </span>
+            )}
+            {!loadingModels && available && <span>{available.length} found</span>}
+          </div>
+        }
+      >
+        {modelsError && (
+          <div className="mb-3 rounded-2xl ring-1 ring-rose-500/30 bg-rose-500/[0.06] px-4 py-3 text-[13px] text-rose-600 dark:text-rose-400">
+            {modelsError}
+          </div>
         )}
-      </div>
-      {modelsError && (
-        <div className="rounded-md border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-[12px] text-rose-500">
-          {modelsError}
-        </div>
-      )}
-      <ModelEditor rows={modelRows} onChange={onChangeModelRows} available={available} listId="wizard-openai-models" />
+        <ModelEditor
+          rows={modelRows}
+          onChange={onChangeModelRows}
+          available={available}
+          loadingModels={loadingModels}
+        />
+      </AppleSection>
     </div>
   )
 }

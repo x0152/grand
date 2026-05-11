@@ -1,6 +1,7 @@
 import { Sparkles, Wallet } from '@/lib/icons'
 import type { GonkaConfig } from '@/types'
-import { BigChoiceCard } from '../components/BigChoiceCard'
+import { AppleForkCard } from '../components/apple/AppleForkCard'
+import { StepHero } from '../components/StepHero'
 import type { WalletMode } from '../types'
 
 interface WalletChoiceStepProps {
@@ -12,34 +13,40 @@ interface WalletChoiceStepProps {
 export function WalletChoiceStep({ walletMode, gonkaConfig, onSelect }: WalletChoiceStepProps) {
   const inferencedReady = gonkaConfig?.inferencedAvailable ?? false
   return (
-    <div className="space-y-3">
-      <BigChoiceCard
-        icon={Sparkles}
-        title="I don’t have a wallet"
-        description="We’ll create a brand-new Gonka wallet for you. Takes one click."
-        bullets={[
-          'Generates a 24-word recovery phrase',
-          'You write it down once and you’re set',
-          'No crypto experience needed',
-        ]}
-        selected={walletMode === 'create'}
-        disabled={!inferencedReady}
-        badge={!inferencedReady ? 'unavailable here' : undefined}
-        badgeTone="amber"
-        onClick={() => onSelect('create')}
-      />
-      <BigChoiceCard
-        icon={Wallet}
-        title="I already have a wallet"
-        description="Connect by recovery phrase — same one you use in Keplr or Cosmostation."
-        bullets={[
-          '12 or 24 words from your wallet app',
-          'Private key import is available as a fallback',
-          'Switch wallets anytime in settings',
-        ]}
-        selected={walletMode === 'import'}
-        onClick={() => onSelect('import')}
-      />
+    <div className="space-y-10">
+      <StepHero stepId="wallet-choice" />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+        <AppleForkCard
+          icon={Sparkles}
+          title="Create a fresh wallet"
+          tagline="One click · 24 secret words"
+          description="We generate a brand-new Gonka wallet for you. You write down 24 recovery words once and you are done."
+          bullets={[
+            'No crypto experience needed',
+            'You stay in full control of the keys',
+            'Works with Keplr, Cosmostation, Leap on mobile too',
+          ]}
+          selected={walletMode === 'create'}
+          disabled={!inferencedReady}
+          badge={!inferencedReady ? { label: 'unavailable here', tone: 'amber' } : undefined}
+          onClick={() => onSelect('create')}
+        />
+
+        <AppleForkCard
+          icon={Wallet}
+          title="Use a wallet I already have"
+          tagline="Recovery phrase · Private key"
+          description="Plug in the same wallet you use in Keplr, Cosmostation, or Leap — bring its 12 / 24 word recovery phrase."
+          bullets={[
+            '12 or 24 words from your wallet app',
+            'Private key import is available as a fallback',
+            'You can switch wallets any time in settings',
+          ]}
+          selected={walletMode === 'import'}
+          onClick={() => onSelect('import')}
+        />
+      </div>
     </div>
   )
 }

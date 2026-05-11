@@ -63,6 +63,7 @@ export default function SetupPage() {
           void reload()
           toast.success('Setup applied')
         }}
+        onCancel={() => setWizardMode(null)}
       />
     )
   }

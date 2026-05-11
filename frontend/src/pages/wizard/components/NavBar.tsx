@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button'
-import { ArrowLeft, CheckCircle2, Loader2 } from '@/lib/icons'
+import { CheckCircle2 } from '@/lib/icons'
 import type { State, StepId } from '../types'
 import { MIN_BALANCE_GNK } from '../seeds'
+import { PinnedAction } from './PinnedAction'
 
 interface NavBarProps {
   stepId: StepId
@@ -13,60 +13,57 @@ interface NavBarProps {
   state: State
 }
 
-export function NavBar({ stepId, canBack, onBack, onNext, onComplete, submitting, state }: NavBarProps) {
-  const isFinal = stepId === 'finish'
-  const nextDisabled = isNextDisabled(stepId, state)
+const STEPS_WITH_INLINE_ACTION: StepId[] = [
+  'wallet-create',
+  'wallet-import',
+]
 
-  if (stepId === 'wallet-choice' || stepId === 'wallet-create' || stepId === 'wallet-import') {
-    return canBack ? (
-      <div className="flex items-center justify-between pt-2">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft size={12} /> Back
-        </Button>
-        <span />
-      </div>
-    ) : null
+export function NavBar({ stepId, canBack, onBack, onNext, onComplete, submitting, state }: NavBarProps) {
+  const inlineAction = STEPS_WITH_INLINE_ACTION.includes(stepId)
+
+  if (inlineAction) {
+    if (!canBack) return null
+    return <PinnedAction showBack onBack={onBack} />
   }
 
+  if (stepId === 'finish') {
+    return (
+      <PinnedAction
+        showBack={canBack}
+        onBack={onBack}
+        primary={{
+          label: (
+            <>
+              <CheckCircle2 size={16} weight="fill" /> Open GRAND
+            </>
+          ),
+          onClick: onComplete,
+          busy: submitting,
+        }}
+      />
+    )
+  }
+
+  const nextDisabled = isNextDisabled(stepId, state)
   return (
-    <div className="flex items-center justify-between pt-2">
-      <div>
-        {canBack && (
-          <Button variant="ghost" size="sm" onClick={onBack}>
-            <ArrowLeft size={12} /> Back
-          </Button>
-        )}
-      </div>
-      {isFinal ? (
-        <Button onClick={onComplete} disabled={submitting} className="h-9 px-4">
-          {submitting ? (
-            <>
-              <Loader2 size={14} className="animate-spin" /> saving…
-            </>
-          ) : (
-            <>
-              <CheckCircle2 size={14} /> Finish
-            </>
-          )}
-        </Button>
-      ) : (
-        <Button onClick={onNext} disabled={nextDisabled} className="h-9 px-4">
-          Next
-        </Button>
-      )}
-    </div>
+    <PinnedAction
+      showBack={canBack}
+      onBack={onBack}
+      primary={{ label: 'Continue', onClick: onNext, disabled: nextDisabled }}
+    />
   )
 }
 
 function isNextDisabled(stepId: StepId, state: State): boolean {
   switch (stepId) {
     case 'provider':
-      return false
+      return !state.provider
     case 'openai': {
       const hasChat = state.modelRows.some(r => r.role === 'chat' && r.name.trim())
       return !state.openaiBaseUrl.trim() || !hasChat
     }
     case 'wallet-choice':
+      return !state.walletMode
     case 'wallet-create':
     case 'wallet-import':
       return true

@@ -1,10 +1,19 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { FormField } from '@/components/FormField'
-import { CheckCircle2, ExternalLink, Loader2, XCircle } from '@/lib/icons'
+import { Loader2, Mail } from '@/lib/icons'
 import { api } from '@/api'
-import type { EmailProbe, EmailVerifyResult } from '@/types'
+import type { EmailVerifyResult } from '@/types'
+import { AppleAction } from '../components/apple/AppleAction'
+import { AppleField } from '../components/apple/AppleField'
+import { AppleListGroup } from '../components/apple/AppleListGroup'
+import { AppleNote } from '../components/apple/AppleNote'
+import { AppleSection } from '../components/apple/AppleSection'
+import { EmailProviderInstructions } from '../components/EmailProviderInstructions'
+import { EmailProviderPicker } from '../components/EmailProviderPicker'
+import { EmailServerFields } from '../components/EmailServerFields'
+import { EmailTestResult } from '../components/EmailTestResult'
+import { SkipToggle } from '../components/SkipToggle'
+import { StepHero } from '../components/StepHero'
+import { findEmailPreset, type EmailProviderId, type EmailProviderPreset } from '../data/emailPresets'
 
 interface EmailStepProps {
   address: string
@@ -31,28 +40,62 @@ interface EmailStepProps {
   onChangeSkip: (v: boolean) => void
 }
 
-const GOOGLE_HELP_URL = 'https://support.google.com/mail/answer/7126229'
+export function EmailStep(props: EmailStepProps) {
+  const {
+    address,
+    smtpHost,
+    smtpPort,
+    smtpUsername,
+    smtpPassword,
+    smtpPasswordKnown,
+    imapHost,
+    imapPort,
+    imapUsername,
+    imapPassword,
+    imapPasswordKnown,
+    skip,
+    onChangeAddress,
+    onChangeSmtpHost,
+    onChangeSmtpPort,
+    onChangeSmtpUsername,
+    onChangeSmtpPassword,
+    onChangeImapHost,
+    onChangeImapPort,
+    onChangeImapUsername,
+    onChangeImapPassword,
+    onChangeSkip,
+  } = props
 
-export function EmailStep({
-  address,
-  smtpHost, smtpPort, smtpUsername, smtpPassword, smtpPasswordKnown,
-  imapHost, imapPort, imapUsername, imapPassword, imapPasswordKnown,
-  skip,
-  onChangeAddress,
-  onChangeSmtpHost, onChangeSmtpPort, onChangeSmtpUsername, onChangeSmtpPassword,
-  onChangeImapHost, onChangeImapPort, onChangeImapUsername, onChangeImapPassword,
-  onChangeSkip,
-}: EmailStepProps) {
+  const [selectedProvider, setSelectedProvider] = useState<EmailProviderId | null>(null)
   const [testing, setTesting] = useState(false)
-  const [result, setResult] = useState<EmailVerifyResult | null>(null)
   const [testError, setTestError] = useState('')
-
+  const [result, setResult] = useState<EmailVerifyResult | null>(null)
+  const preset = findEmailPreset(selectedProvider)
   const disabled = skip
+
   const canTest =
     !skip &&
     !!address.trim() &&
     ((!!smtpHost.trim() && (smtpPasswordKnown || !!smtpPassword.trim())) ||
       (!!imapHost.trim() && (imapPasswordKnown || !!imapPassword.trim())))
+
+  const onPickPreset = (id: EmailProviderId | null) => {
+    setSelectedProvider(id)
+    if (!id) return
+    const found = findEmailPreset(id)
+    if (found) applyPreset(found)
+  }
+
+  const applyPreset = (p: EmailProviderPreset) => {
+    onChangeSmtpHost(p.smtpHost)
+    onChangeSmtpPort(p.smtpPort)
+    onChangeImapHost(p.imapHost)
+    onChangeImapPort(p.imapPort)
+    if (address.trim()) {
+      if (!smtpUsername.trim()) onChangeSmtpUsername(address.trim())
+      if (!imapUsername.trim()) onChangeImapUsername(address.trim())
+    }
+  }
 
   const onTest = async () => {
     setTesting(true)
@@ -80,168 +123,115 @@ export function EmailStep({
   }
 
   return (
-    <div className="space-y-3.5">
-      <FormField
-        label="Email address"
-        hint={
-          <>
-            For Gmail use an{' '}
-            <a
-              href="https://myaccount.google.com/apppasswords"
-              target="_blank"
-              rel="noreferrer"
-              className="text-teal-600 dark:text-teal-400 hover:underline"
+    <div className="space-y-10">
+      <StepHero
+        stepId="email"
+        align="left"
+        hero={
+          <div className="size-[68px] rounded-[20px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <Mail size={32} weight="duotone" />
+          </div>
+        }
+      />
+
+      <AppleSection
+        title="Pick your provider"
+        trailing={
+          selectedProvider && (
+            <button
+              type="button"
+              onClick={() => setSelectedProvider(null)}
+              className="text-[12.5px] text-emerald-600 dark:text-emerald-400 hover:underline"
             >
-              app password
-            </a>
-            . SMTP/IMAP host, port and SSL settings live in{' '}
-            <a
-              href={GOOGLE_HELP_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-0.5 text-teal-600 dark:text-teal-400 hover:underline"
-            >
-              Google’s guide <ExternalLink size={11} />
-            </a>
-            .
-          </>
+              Reset
+            </button>
+          )
         }
       >
-        <Input
-          type="email"
-          value={address}
-          onChange={e => onChangeAddress(e.target.value)}
-          placeholder="you@example.com"
+        <EmailProviderPicker
+          selected={selectedProvider}
+          onSelect={onPickPreset}
           disabled={disabled}
         />
-      </FormField>
+      </AppleSection>
 
-      <div className="space-y-3 rounded-md border border-zinc-200/70 dark:border-zinc-800/60 px-3 py-3">
-        <div className="kicker"><span>SMTP · outgoing</span></div>
-        <div className="grid grid-cols-[1fr_96px] gap-2">
-          <FormField label="Host">
-            <Input value={smtpHost} onChange={e => onChangeSmtpHost(e.target.value)} placeholder="smtp.gmail.com" disabled={disabled} />
-          </FormField>
-          <FormField label="Port">
-            <Input value={smtpPort} onChange={e => onChangeSmtpPort(e.target.value)} placeholder="465" disabled={disabled} />
-          </FormField>
-        </div>
-        <FormField label="Username">
-          <Input value={smtpUsername} onChange={e => onChangeSmtpUsername(e.target.value)} placeholder={address || 'you@example.com'} disabled={disabled} />
-        </FormField>
-        <FormField label="Password">
-          <Input
-            type="password"
-            value={smtpPassword}
-            onChange={e => onChangeSmtpPassword(e.target.value)}
-            placeholder={smtpPasswordKnown ? '*' : 'app password'}
+      {preset && <EmailProviderInstructions preset={preset} />}
+
+      <AppleSection title="Email address">
+        <AppleListGroup>
+          <AppleField
+            label="Address"
+            type="email"
+            value={address}
+            onChange={e => onChangeAddress(e.target.value)}
+            placeholder="you@example.com"
             disabled={disabled}
+            autoComplete="off"
           />
-        </FormField>
-      </div>
+        </AppleListGroup>
+      </AppleSection>
 
-      <div className="space-y-3 rounded-md border border-zinc-200/70 dark:border-zinc-800/60 px-3 py-3">
-        <div className="kicker"><span>IMAP · incoming</span></div>
-        <div className="grid grid-cols-[1fr_96px] gap-2">
-          <FormField label="Host">
-            <Input value={imapHost} onChange={e => onChangeImapHost(e.target.value)} placeholder="imap.gmail.com" disabled={disabled} />
-          </FormField>
-          <FormField label="Port">
-            <Input value={imapPort} onChange={e => onChangeImapPort(e.target.value)} placeholder="993" disabled={disabled} />
-          </FormField>
-        </div>
-        <FormField label="Username">
-          <Input value={imapUsername} onChange={e => onChangeImapUsername(e.target.value)} placeholder={address || 'you@example.com'} disabled={disabled} />
-        </FormField>
-        <FormField label="Password">
-          <Input
-            type="password"
-            value={imapPassword}
-            onChange={e => onChangeImapPassword(e.target.value)}
-            placeholder={imapPasswordKnown ? '*' : 'app password'}
-            disabled={disabled}
-          />
-        </FormField>
-      </div>
+      <EmailServerFields
+        title="SMTP — outgoing"
+        hint="Used to send replies on your behalf."
+        host={smtpHost}
+        port={smtpPort}
+        username={smtpUsername}
+        password={smtpPassword}
+        passwordKnown={smtpPasswordKnown}
+        hostPlaceholder="smtp.gmail.com"
+        portPlaceholder="465"
+        usernamePlaceholder={address || 'you@example.com'}
+        disabled={disabled}
+        onChangeHost={onChangeSmtpHost}
+        onChangePort={onChangeSmtpPort}
+        onChangeUsername={onChangeSmtpUsername}
+        onChangePassword={onChangeSmtpPassword}
+      />
 
-      <div className="flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
+      <EmailServerFields
+        title="IMAP — incoming"
+        hint="Used to read your mailbox."
+        host={imapHost}
+        port={imapPort}
+        username={imapUsername}
+        password={imapPassword}
+        passwordKnown={imapPasswordKnown}
+        hostPlaceholder="imap.gmail.com"
+        portPlaceholder="993"
+        usernamePlaceholder={address || 'you@example.com'}
+        disabled={disabled}
+        onChangeHost={onChangeImapHost}
+        onChangePort={onChangeImapPort}
+        onChangeUsername={onChangeImapUsername}
+        onChangePassword={onChangeImapPassword}
+      />
+
+      <div className="space-y-3">
+        <AppleAction
+          variant="secondary"
+          fullWidth
           onClick={() => void onTest()}
           disabled={!canTest || testing}
-          className="h-8 text-[12px]"
+          leading={testing ? <Loader2 size={15} className="animate-spin" /> : undefined}
         >
-          {testing ? (
-            <>
-              <Loader2 size={12} className="animate-spin" /> Testing…
-            </>
-          ) : (
-            'Test connection'
-          )}
-        </Button>
-        <span className="text-[11px] text-zinc-500">
+          {testing ? 'Testing connection…' : 'Test connection'}
+        </AppleAction>
+        <p className="text-center text-[12.5px] text-[var(--grand-muted-2)]">
           Sends a login probe to SMTP and IMAP — no mail is sent.
-        </span>
+        </p>
       </div>
 
-      {testError && (
-        <div className="rounded-md border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-[12px] text-rose-500">
-          {testError}
-        </div>
-      )}
+      {testError && <AppleNote tone="danger">{testError}</AppleNote>}
 
-      {result && (
-        <div className="space-y-1.5">
-          <ProbeRow label="SMTP outgoing" probe={result.smtp} />
-          <ProbeRow label="IMAP incoming" probe={result.imap} />
-        </div>
-      )}
+      {result && <EmailTestResult result={result} />}
 
-      <label
-        className={`flex items-start gap-2 rounded-md border px-3 py-2 text-[12px] cursor-pointer transition-colors ${
-          skip
-            ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300'
-            : 'border-zinc-200/70 dark:border-zinc-800/60 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
-        }`}
-      >
-        <input
-          type="checkbox"
-          checked={skip}
-          onChange={e => onChangeSkip(e.target.checked)}
-          className="mt-0.5 size-4 accent-teal-600"
-        />
-        <span>I don’t want to connect a mailbox — chat is enough.</span>
-      </label>
-    </div>
-  )
-}
-
-function ProbeRow({ label, probe }: { label: string; probe: EmailProbe }) {
-  if (probe.skipped) {
-    return (
-      <div className="flex items-center gap-2 rounded-md border border-zinc-200/70 dark:border-zinc-800/60 px-3 py-2 text-[12px] text-zinc-500 dark:text-zinc-400">
-        <span className="size-3 shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-700" aria-hidden />
-        <span className="font-medium">{label}</span>
-        <span>· skipped — fill in to test</span>
-      </div>
-    )
-  }
-  if (probe.ok) {
-    return (
-      <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-[12px] text-emerald-600 dark:text-emerald-400">
-        <CheckCircle2 size={13} />
-        <span className="font-medium">{label}</span>
-        <span>· {probe.detail || 'login succeeded'}</span>
-      </div>
-    )
-  }
-  return (
-    <div className="flex items-center gap-2 rounded-md border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-[12px] text-rose-500">
-      <XCircle size={13} />
-      <span className="font-medium">{label}</span>
-      <span>· {probe.detail || 'failed'}</span>
+      <SkipToggle
+        checked={skip}
+        onChange={onChangeSkip}
+        label="I don’t want to connect a mailbox"
+        helper="Web chat is enough for now. You can add email later in Setup."
+      />
     </div>
   )
 }
