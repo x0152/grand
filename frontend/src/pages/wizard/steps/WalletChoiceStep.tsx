@@ -16,7 +16,7 @@ export function WalletChoiceStep({ walletMode, gonkaConfig, onSelect }: WalletCh
     <div className="space-y-10">
       <StepHero stepId="wallet-choice" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
         <AppleForkCard
           icon={Sparkles}
           title="Create a fresh wallet"

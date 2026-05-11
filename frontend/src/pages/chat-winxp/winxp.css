@@ -1,0 +1,2915 @@
+/* All XP-experiment styles are namespaced under `.xp-root` so removing the
+   import (or the toggle) is enough to take them out of the bundle. */
+
+.xp-root {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  font-family: "Pixelated MS Sans Serif", Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  background:
+    /* dark fallback — the JPEG covers everything but renders before the
+       network is back, this stops a flash of white on theme toggle */
+    #4f8e2f
+    url('/winxp/bliss.jpg') center center / cover no-repeat;
+  user-select: none;
+}
+
+/* ============================================================
+   XP-style scrollbars (Luna). Native XP shipped a chunky 17×17
+   scrollbar with a blue-grey gradient thumb, white-bevel arrows
+   at each end, and a faint dotted track. We emulate that with
+   the `-webkit-scrollbar` family — Firefox falls back to its
+   `scrollbar-color` thin variant which is the closest match.
+   Scoped under `.xp-root` so the theme doesn't leak out of the
+   experiment.
+   ============================================================ */
+.xp-root,
+.xp-root * {
+  scrollbar-color: #aca899 #ECE9D8;
+  scrollbar-width: auto;
+}
+
+.xp-root *::-webkit-scrollbar {
+  width: 17px;
+  height: 17px;
+  background: #ECE9D8;
+}
+
+.xp-root *::-webkit-scrollbar-track {
+  /* hatched grey track — emulated with a 2-stop conic-ish gradient */
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #f7f4e8 0 1px,
+      #ECE9D8 1px 2px
+    );
+  border: 1px solid #aca899;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #d4d0c8;
+}
+
+.xp-root *::-webkit-scrollbar-thumb {
+  /* Luna scroll thumb: blue-grey vertical gradient + 1px raised bevel */
+  background:
+    linear-gradient(180deg,
+      #ddeaf7 0%,
+      #b6cde6 35%,
+      #8aaad4 75%,
+      #6c92c2 100%);
+  border: 1px solid #4d6c95;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #4d6c95;
+  min-height: 24px;
+}
+
+.xp-root *::-webkit-scrollbar-thumb:hover {
+  background:
+    linear-gradient(180deg,
+      #f5f8fb 0%,
+      #c8dbef 35%,
+      #9bbadb 75%,
+      #6f95c4 100%);
+}
+
+.xp-root *::-webkit-scrollbar-thumb:active {
+  background:
+    linear-gradient(180deg,
+      #b6cde6 0%,
+      #8aaad4 50%,
+      #6c92c2 100%);
+}
+
+.xp-root *::-webkit-scrollbar-button {
+  /* End-cap arrow buttons — same raised bevel as the thumb but with the
+     standard 16px chevrons drawn via background-image SVG. */
+  background:
+    linear-gradient(180deg, #f6f4e8 0%, #d4d0c8 100%);
+  border: 1px solid #aca899;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #aca899;
+  width: 17px;
+  height: 17px;
+  display: block;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 7px 7px;
+}
+
+.xp-root *::-webkit-scrollbar-button:hover {
+  background-color: #ffefb1;
+}
+
+.xp-root *::-webkit-scrollbar-button:active {
+  box-shadow:
+    inset 1px 1px 0 #aca899,
+    inset -1px -1px 0 #fff;
+}
+
+.xp-root *::-webkit-scrollbar-button:vertical:decrement {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path d='M1 5 L4 2 L7 5 Z' fill='%23000'/></svg>");
+}
+
+.xp-root *::-webkit-scrollbar-button:vertical:increment {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path d='M1 3 L4 6 L7 3 Z' fill='%23000'/></svg>");
+}
+
+.xp-root *::-webkit-scrollbar-button:horizontal:decrement {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path d='M5 1 L2 4 L5 7 Z' fill='%23000'/></svg>");
+}
+
+.xp-root *::-webkit-scrollbar-button:horizontal:increment {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path d='M3 1 L6 4 L3 7 Z' fill='%23000'/></svg>");
+}
+
+/* Suppress the extra "doubled" buttons WebKit renders on long bars by
+   default — XP shows just one button per end. */
+.xp-root *::-webkit-scrollbar-button:single-button {
+  display: block;
+}
+
+.xp-root *::-webkit-scrollbar-button:start:decrement,
+.xp-root *::-webkit-scrollbar-button:end:increment {
+  display: block;
+}
+
+.xp-root *::-webkit-scrollbar-button:end:decrement,
+.xp-root *::-webkit-scrollbar-button:start:increment {
+  display: none;
+}
+
+.xp-root *::-webkit-scrollbar-corner {
+  background: #ECE9D8;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #aca899;
+}
+
+.xp-root .xp-desktop {
+  position: absolute;
+  inset: 0 0 30px 0; /* leave room for the taskbar */
+  /* No padding — icons are absolutely positioned and the marquee box uses
+     desktop-relative coordinates. */
+}
+
+/* Each icon is absolutely positioned via inline style (left/top) so the
+   user can drag it anywhere on the desktop and we can persist that to
+   localStorage. */
+.xp-icon {
+  position: absolute;
+  width: 80px;
+  text-align: center;
+  padding: 4px 4px 6px;
+  border-radius: 2px;
+  cursor: default;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.85);
+  font-size: 11px;
+  line-height: 1.2;
+  touch-action: none;
+}
+
+.xp-icon:hover {
+  background: rgba(255, 255, 255, 0.08);
+  outline: 1px dotted rgba(255, 255, 255, 0.5);
+}
+
+.xp-icon.selected {
+  background: rgba(0, 80, 200, 0.45);
+  outline: 1px dotted #fff;
+}
+
+.xp-icon-glyph {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 4px;
+  display: block;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  /* The XP icons we ship are anti-aliased PNGs (1024px originals down-
+     sampled to 48px), so we explicitly opt OUT of pixel-art rendering
+     here — pixelated turns the soft alpha edges into noisy stair-steps. */
+  image-rendering: auto;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.xp-icon-glyph[data-kind="newchat"]     { background-image: url('/winxp/new-chat.png'); }
+.xp-icon-glyph[data-kind="folder"]      { background-image: url('/winxp/folder.png'); }
+.xp-icon-glyph[data-kind="bin"]         { background-image: url('/winxp/recyclebin.png'); }
+.xp-icon-glyph[data-kind="bin-full"]    { background-image: url('/winxp/recyclebin-full.png'); }
+.xp-icon-glyph[data-kind="computer"]    { background-image: url('/winxp/mycomputer.png'); }
+.xp-icon-glyph[data-kind="docs"]        { background-image: url('/winxp/mydocs.png'); }
+.xp-icon-glyph[data-kind="network"]     { background-image: url('/winxp/network.png'); }
+/* "New Text Document.txt" on the desktop — small "TXT" Notepad-pad
+   glyph (the one Explorer paints next to .txt files), distinct from
+   the larger blue Notepad app icon we put in the window's title bar. */
+.xp-icon-glyph[data-kind="notepad"]     { background-image: url('/winxp/txt-file.png'); }
+/* Chat sessions — Outlook Express envelope glyph. Reads as
+   "messages/correspondence" out of the box (a chat IS a thread of
+   messages), and the white envelope + blue arrows pop nicely against
+   the Bliss wallpaper. */
+.xp-icon-glyph[data-kind="chat"]        { background-image: url('/winxp/outlook.png'); }
+/* Vibe Coding (2026) shortcut — the Files & Settings Transfer Wizard
+   icon (two monitors, green arrow), reads as "switch to the new env". */
+.xp-icon-glyph[data-kind="vibecoding"]  { background-image: url('/winxp/vibecoding.png'); }
+.xp-icon-glyph[data-kind="messenger"]   { background-image: url('/winxp/msn-messenger.png'); }
+.xp-icon-glyph[data-kind="outlook"]     { background-image: url('/winxp/outlook.png'); }
+.xp-icon-glyph[data-kind="addressbook"] { background-image: url('/winxp/addressbook.png'); }
+.xp-icon-glyph[data-kind="paint"]       { background-image: url('/winxp/paint.png'); }
+.xp-icon-glyph[data-kind="minesweeper"] { background-image: url('/winxp/minesweeper.png'); }
+.xp-icon-glyph[data-kind="solitaire"]   { background-image: url('/winxp/solitaire.png'); }
+/* Accessibility Wizard shortcut — uses the same hardware-wizard glyph
+   the actual XP shell shipped (yellow folder + grey gear stack), the
+   classic "wizard" desktop bitmap. */
+.xp-icon-glyph[data-kind="wizard"]      { background-image: url('/winxp/hardware-wizard.png'); }
+
+/* Session icons are drag-to-bin enabled — give them the same `move`
+   cursor real Explorer uses while dragging items between folders. */
+.xp-icon.draggable {
+  cursor: grab;
+}
+.xp-icon.draggable:active {
+  cursor: grabbing;
+}
+
+/* XP-style drag preview. Real Explorer renders a 50%-translucent ghost
+   stuck to the cursor while the original icon sits in place; we only
+   commit the new position on pointer-up. */
+.xp-icon-ghost {
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 500;
+  /* The original icon already paints behind us, so suppress the focus
+     halo that comes with `.selected` — we never carry that class. */
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+.xp-icon-label {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.xp-icon-label.with-bg {
+  background: rgba(0, 80, 200, 0.45);
+  outline: 1px dotted #fff;
+  display: inline-block;
+  padding: 0 2px;
+}
+
+/* window manager */
+.xp-windows {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.xp-window-wrap {
+  position: absolute;
+  pointer-events: auto;
+  /* xp.css's .window already has its own chrome; we just stack and place */
+}
+
+.xp-window-wrap.minimized {
+  display: none;
+}
+
+/* Force a few XP.css internals to behave inside our flex layout.
+   IMPORTANT: do NOT redeclare box-shadow here — XP.css uses six layered
+   `inset` shadows on `.window` to render the authentic blue 3px gradient
+   border, and overwriting that flattens the chrome. We keep the drop
+   shadow on the wrapper instead. */
+.xp-window-wrap > .window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.xp-window-wrap {
+  /* External drop-shadow (real XP renders one when DropShadow is enabled). */
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.18));
+}
+
+.xp-window-wrap > .window > .window-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.xp-window-wrap .title-bar {
+  cursor: default;
+  /* The real Luna title bar is closer to 30px tall — enough room for the
+     22×22 caption buttons (the genuine PNGs xp.css ships) and the bold
+     Tahoma 9pt label with breathing room above and below. Bump min-height,
+     padding and font-size to match. */
+  min-height: 30px;
+  padding: 5px 4px 4px 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.xp-window-wrap .title-bar .title-bar-text {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  font-size: 13px;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+  padding-left: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.xp-window-wrap .title-bar.inactive .title-bar-text {
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* Slightly larger caption buttons match the taller bar — xp.css's defaults
+   render at 16px which look stranded on a 30px title bar. */
+.xp-window-wrap .title-bar .title-bar-controls button {
+  min-width: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+/* Per-window title-bar icon (real XP shows the program's 16×16 ico in the
+   leading slot of every title bar). We scale the actual asset PNGs down to
+   keep the chrome consistent across chat / cmd / notepad windows. */
+.xp-window-wrap .title-bar .xp-title-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  image-rendering: -webkit-optimize-contrast;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* XP windows use rounded top corners (~7px radius) and square bottom
+   corners; xp.css already does this on the .window itself but explicitly
+   reasserting here keeps the radius from being clipped by our flex
+   layout when the title bar gets taller. */
+.xp-window-wrap > .window {
+  border-radius: 8px 8px 0 0;
+}
+
+.xp-window-wrap.maximized > .window {
+  border-radius: 0;
+}
+
+/* chat window internals */
+.xp-chat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: #ECE9D8;
+  border-bottom: 1px solid #aca899;
+  font-size: 11px;
+}
+
+.xp-chat-toolbar .pill {
+  background: #fff;
+  border: 1px solid #919b9c;
+  padding: 1px 8px;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #d4d0c8;
+}
+
+.xp-chat-toolbar .pill.ok {
+  color: #157a14;
+  font-weight: 700;
+}
+
+.xp-chat-toolbar .sep {
+  width: 1px;
+  height: 18px;
+  background: #aca899;
+  margin: 0 2px;
+}
+
+/* Quick "New Chat" toolbar button — modeled on the Outlook Express
+   toolbar buttons that ship in real XP: 1px raised bevel, 11px Tahoma
+   bold, small icon at the left. Hovers/clicks via xp.css implicitly,
+   but we tighten the padding so the button fits the toolbar height. */
+.xp-chat-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #000;
+  background: #f3f1e9;
+  border: 1px solid #aca899;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #d4d0c8;
+  cursor: default;
+}
+
+.xp-chat-toolbar-btn:hover {
+  background: #ffefb1;
+  border-color: #f8b636;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #d4a04c;
+}
+
+.xp-chat-toolbar-btn:active {
+  background: #ffd771;
+  box-shadow:
+    inset 1px 1px 0 #d4a04c,
+    inset -1px -1px 0 #fff;
+}
+
+.xp-chat-toolbar-btn img {
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.xp-chat-stream {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px;
+  background: #fff;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.xp-chat-empty {
+  margin: auto;
+  text-align: center;
+  color: #555;
+  font-size: 12px;
+  padding: 36px 18px;
+}
+
+.xp-msg {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+
+.xp-msg.user {
+  justify-content: flex-end;
+}
+
+.xp-msg .who {
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 2px;
+  font-family: "Trebuchet MS", Tahoma, sans-serif;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.xp-msg .bubble {
+  padding: 7px 10px;
+  max-width: 85%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  /* Soft 1px raised bevel — same visual weight as an XP "callout" panel
+     used in Help-and-Support topic boxes. */
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.xp-msg.user .bubble {
+  /* Notepad-yellow with a Luna-orange border — picks up XP's "highlight"
+     accent (the same family as the "selected file" hover in Explorer). */
+  background: #fffce0;
+  border: 1px solid #d6b900;
+  color: #1a1a1a;
+}
+
+.xp-msg.assistant .bubble {
+  /* Real XP "info panel" baby-blue gradient with a Luna-blue rule. */
+  background: linear-gradient(180deg, #f4f8ff 0%, #e8eefc 100%);
+  border: 1px solid #6a8ec8;
+}
+
+.xp-msg .body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.xp-msg.user .body {
+  align-items: flex-end;
+}
+
+.xp-typing-cursor::after {
+  content: "▌";
+  color: #1f4fc0;
+  margin-left: 1px;
+  animation: xp-blink 1s steps(1) infinite;
+}
+
+.xp-thinking-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #444;
+  font-style: italic;
+}
+
+@keyframes xp-blink {
+  50% { opacity: 0; }
+}
+
+/* tool-call cards */
+.xp-tool {
+  margin: 6px 0;
+  border: 1px solid #aca899;
+  background: #f5f4ea;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 11px;
+  cursor: default;
+}
+
+.xp-tool button.xp-tool-head {
+  all: unset;
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  background: linear-gradient(180deg, #ece9d8 0%, #c8c4b3 100%);
+  cursor: pointer;
+  color: #222;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.xp-tool button.xp-tool-head:hover {
+  background: linear-gradient(180deg, #fff7d0 0%, #f1d97a 100%);
+}
+
+.xp-tool button.xp-tool-head:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -3px;
+}
+
+.xp-tool .xp-tool-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.xp-tool .xp-tool-title b {
+  font-family: "Trebuchet MS", Tahoma, sans-serif;
+  font-weight: 700;
+}
+
+/* Faux cmd-prompt prefix on each tool call ("C:\>"), so the chat reads
+   like a transcript of commands typed at the prompt — matches the user's
+   "no result block in chat, just the call" requirement. */
+.xp-tool .xp-tool-prompt {
+  color: #1f4fc0;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.xp-tool .xp-tool-args {
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.xp-tool .xp-tool-status {
+  font-size: 10px;
+  padding: 0 6px;
+  border: 1px solid;
+  border-radius: 2px;
+  font-family: "Trebuchet MS", Tahoma, sans-serif;
+  white-space: nowrap;
+}
+
+.xp-tool .xp-tool-status.run {
+  background: #fffbcf;
+  color: #6a4e00;
+  border-color: #b58a18;
+}
+
+.xp-tool .xp-tool-status.done {
+  background: #d4e9c4;
+  color: #1b5a14;
+  border-color: #75a464;
+}
+
+.xp-tool .xp-tool-status.err {
+  background: #ffd6d6;
+  color: #8a0000;
+  border-color: #b00000;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.xp-tool .xp-tool-status-icon {
+  display: inline-block;
+  vertical-align: middle;
+  image-rendering: -webkit-optimize-contrast;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* (Removed) `.xp-tool-result` — the chat now shows only the call line, and
+   the full output lives in the cmd.exe popup window the user opens by
+   clicking the row. Keeps the chat readable as a transcript of commands. */
+
+.xp-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #888;
+  border-top-color: #1f4fc0;
+  border-radius: 50%;
+  animation: xp-spin 0.8s linear infinite;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+
+@keyframes xp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- XP busy spinner (8-dot rotating ring) ----------
+   Eight CSS dots positioned around a circle, each with a staggered
+   `animation-delay`, fading from deep Luna blue down to a pale shade —
+   the same rhythm XP used during Search / Microsoft Update / Logon
+   transitions. Implemented with plain `<span>`s instead of SVG so the
+   animation always plays (some flex parents were collapsing the SVG
+   width to 0 and hiding the previous version). */
+.xp-spin {
+  display: inline-block;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  margin-right: 4px;
+  flex: 0 0 auto;
+}
+
+.xp-spin-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24%;
+  height: 24%;
+  margin: -12% 0 0 -12%;
+  border-radius: 50%;
+  background: #c8d4e8;
+  animation: xp-spin-dots 0.9s linear infinite;
+  /* `transform-origin` defaults to centre, so each dot orbits 38% of
+     the wrapper out from the centre while keeping its own centre. */
+}
+
+.xp-spin-dot-0 { transform: translate(0, -180%);                 animation-delay: -0.000s; }
+.xp-spin-dot-1 { transform: translate(127%, -127%);              animation-delay: -0.112s; }
+.xp-spin-dot-2 { transform: translate(180%, 0);                  animation-delay: -0.225s; }
+.xp-spin-dot-3 { transform: translate(127%, 127%);               animation-delay: -0.337s; }
+.xp-spin-dot-4 { transform: translate(0, 180%);                  animation-delay: -0.450s; }
+.xp-spin-dot-5 { transform: translate(-127%, 127%);              animation-delay: -0.562s; }
+.xp-spin-dot-6 { transform: translate(-180%, 0);                 animation-delay: -0.675s; }
+.xp-spin-dot-7 { transform: translate(-127%, -127%);             animation-delay: -0.787s; }
+
+@keyframes xp-spin-dots {
+  0%, 100% { background: #d6deef; opacity: 0.4; }
+  10%      { background: #1f4fc0; opacity: 1;   }
+  60%      { background: #6a8ec8; opacity: 0.6; }
+}
+
+/* composer */
+.xp-composer {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px 8px;
+  background: #ECE9D8;
+  /* XP's group-box-style 2-tone divider: dark line on top, white shadow
+     on the row below — gives the composer the recessed look of the
+     "Reply" pane in Outlook Express. */
+  border-top: 1px solid #aca899;
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.xp-composer textarea {
+  flex: 1;
+  height: 48px;
+  resize: none;
+  padding: 5px 7px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 12px;
+  color: #000;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  /* Authentic sunken XP textarea: 1px highlights on bottom-right,
+     1px shadow on top-left — matches the editboxes in Internet Options. */
+  box-shadow:
+    inset 1px 1px 0 #aca899,
+    inset -1px -1px 0 #fff;
+}
+
+.xp-composer textarea:focus {
+  outline: 1px solid #1f4fc0;
+}
+
+.xp-composer button {
+  align-self: stretch;
+  min-width: 80px;
+}
+
+/* Clippy — real bitmap from clippy.js sprite, kept at native aspect ratio */
+.xp-clippy {
+  flex: 0 0 auto;
+  margin-top: 6px;
+  height: auto;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  user-select: none;
+  pointer-events: none;
+}
+
+.xp-msg.assistant .xp-clippy {
+  margin-right: 4px;
+  /* The static idle PNG gets a gentle bob — the GIF already animates, so
+     we keep it still to avoid the two motions fighting each other. */
+  animation: xp-clippy-bob 3.6s ease-in-out infinite;
+}
+
+.xp-msg.assistant .xp-clippy.thinking {
+  animation: none;
+}
+
+@keyframes xp-clippy-bob {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50%      { transform: translateY(-3px) rotate(1deg); }
+}
+
+/* taskbar — sits above all chat/cmd windows so even maximized chrome
+   never paints over the start button or the system tray. The previous
+   z-index of 10 collided with the per-window z-index range (10 + zStack
+   index), which meant a maximized window with multiple siblings could
+   bleed behind a transparent tray edge. Bumping past the entire window
+   range fixes that. */
+.xp-taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30px;
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(180deg, #2068d8 0%, #2461c8 8%, #1f53b6 50%, #1c4aa8 100%);
+  border-top: 1px solid #0c3a96;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  z-index: 200;
+}
+
+/* The start button is the actual XP green pill bitmap (the curve, the
+   highlight gradient and the italic "start" wordmark are all baked in).
+   We render it as an <img> child so the asset is pixel-perfect — keeping
+   the surrounding <button> reset clears xp.css's button chrome.
+
+   We have to fight xp.css here. It defines `button:not(:disabled):hover`
+   and `button.focused, button:focus` at specificity (0,2,1) which paints
+   light inset box-shadows on the right edge of our pill — that's what
+   read as the 1px-wide white-ish vertical strip just past the start
+   button in the screenshot. `all: unset` resets the base, but state
+   pseudos win on specificity, so we explicitly override box-shadow,
+   border and outline for every interactive state — and we scope to
+   `.xp-root .xp-taskbar` to reach (0,3,X), enough to beat xp.css. */
+.xp-root .xp-taskbar .xp-start {
+  all: unset;
+  display: inline-flex;
+  align-items: stretch;
+  height: 100%;
+  padding: 0;
+  cursor: default;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.xp-root .xp-taskbar .xp-start:hover,
+.xp-root .xp-taskbar .xp-start:focus,
+.xp-root .xp-taskbar .xp-start:focus-visible,
+.xp-root .xp-taskbar .xp-start:active {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.xp-start img {
+  display: block;
+  /* The PNG ships at 106×34 but the taskbar is only 30px tall, so
+     `height: 100%` was downscaling the pill — it ended up visibly
+     shorter than the 30px system tray on the right. Bumping the
+     bitmap by 2px (rendered at 32px instead of 30px) and lifting it
+     the same 2px keeps the bottom flush with the taskbar bottom while
+     the top of the pill protrudes slightly above — same overhang the
+     real Luna Start button has, and the pill now reads the same
+     height as the tray panel without towering over it. */
+  height: calc(100% + 2px);
+  width: auto;
+  margin-top: -1px;
+  user-select: none;
+  pointer-events: none;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.xp-start:hover img {
+  filter: brightness(1.06);
+}
+
+.xp-start:active img {
+  filter: brightness(0.92);
+  transform: translateY(0.5px);
+}
+
+/* Quick Launch — sits between Start and the running-tasks list, exactly
+   where XP put IE / Outlook / Show-Desktop shortcuts. The vertical
+   sunken bevel on the right is the same divider the real shell drew
+   between Quick Launch and the task list. */
+.xp-quicklaunch {
+  display: flex;
+  align-items: stretch;
+  padding: 3px 4px 3px 3px;
+  margin-right: 1px;
+  border-right: 1px solid rgba(0, 0, 0, 0.35);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.55);
+}
+
+.xp-root .xp-taskbar .xp-quick-btn {
+  /* Reset xp.css's button chrome — Quick Launch buttons are *flat* by
+     default in real XP, only sinking on click and lighting up on hover. */
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  min-width: 22px;
+  align-self: stretch;
+  cursor: pointer;
+  border-radius: 2px;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.xp-root .xp-taskbar .xp-quick-btn:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.18) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85), inset 0 0 0 2px rgba(0, 0, 0, 0.12);
+}
+
+.xp-root .xp-taskbar .xp-quick-btn:active {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.05) 100%);
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.xp-root .xp-taskbar .xp-quick-btn:focus,
+.xp-root .xp-taskbar .xp-quick-btn:focus-visible {
+  outline: none;
+}
+
+.xp-root .xp-taskbar .xp-quick-btn img {
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  user-select: none;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.xp-tasks {
+  display: flex;
+  gap: 3px;
+  padding: 3px 4px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+/* Reset xp.css's <button> defaults (min-width, padding, font) so the
+   taskbar tile takes only the space it needs. The blue raised face is
+   then drawn from scratch with our own gradient + bevel.
+   Stretching to fill the 24px content area between the 3px taskbar pads
+   keeps the tab visually aligned with the start button — same height,
+   same vertical centre.
+
+   Specificity bump: xp.css defines `button:not(:disabled).active`,
+   `button:not(:disabled):hover` and `button.focused, button:focus` at
+   (0,2,1). Without the `.xp-root .xp-tasks` prefix our `.xp-task.active`
+   used to lose, which is exactly the bug the user reported — the focused
+   taskbar tile turned cream/white (xp.css's depressed-button face) and
+   the white label text became unreadable. Scoping under
+   `.xp-root .xp-tasks` lands us at (0,3,X), enough to win every state. */
+.xp-root .xp-tasks .xp-task {
+  all: unset;
+  align-self: stretch;
+  min-width: 0;
+  padding: 0 10px 0 6px;
+  background: linear-gradient(180deg, #4f8ce0 0%, #2766c8 50%, #1d51b6 100%);
+  color: #fff;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #0c3a96;
+  border-radius: 0;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.30),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.18);
+  cursor: default;
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  outline: none;
+}
+
+.xp-root .xp-tasks .xp-task:focus,
+.xp-root .xp-tasks .xp-task:focus-visible {
+  outline: none;
+  /* xp.css' focus rule paints a light-blue inset glow that washes out
+     the blue tile. Re-assert our base bevel so focused-but-not-active
+     tiles look like every other inactive tile. */
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.30),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.xp-root .xp-tasks .xp-task:hover {
+  background: linear-gradient(180deg, #6ba1ff 0%, #2d72d8 50%, #1f5dc4 100%);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.30),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.xp-root .xp-tasks .xp-task.active,
+.xp-root .xp-tasks .xp-task.active:hover,
+.xp-root .xp-tasks .xp-task.active:focus {
+  /* Pressed-in look: darker gradient + reversed bevel — same trick the
+     real Luna taskbar uses to indicate the focused window. */
+  background: linear-gradient(180deg, #1d50ad 0%, #265eba 50%, #2c6cc8 100%);
+  color: #fff;
+  box-shadow:
+    inset 1px 1px 0 rgba(0, 0, 0, 0.45),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.xp-task .xp-task-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  image-rendering: -webkit-optimize-contrast;
+  user-select: none;
+  pointer-events: none;
+}
+
+.xp-task-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* xp text shadow keeps the white legible against the blue gradient */
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* The system tray sits on a slightly bluer panel inset on the right of
+   the taskbar — real XP uses a 2-stop gradient with a subtle inner
+   shadow to suggest the panel is recessed. We pin a fixed height so a
+   tall taskbar (e.g. when a maximized window crowds the chrome) never
+   leaves the tray panel mis-aligned with its neighbours. */
+.xp-tray {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 10px;
+  height: 100%;
+  background: linear-gradient(180deg, #1f9be0 0%, #1f7bc8 50%, #186aa8 100%);
+  color: #fff;
+  font-size: 11px;
+  border-left: 1px solid #0a3a96;
+  box-shadow:
+    inset 1px 0 0 rgba(0, 0, 0, 0.25),
+    inset 2px 0 0 rgba(255, 255, 255, 0.18),
+    inset -1px 0 0 rgba(0, 0, 0, 0.10);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+  flex: 0 0 auto;
+}
+
+/* cmd.exe terminal popup */
+.xp-cmd .window-body {
+  padding: 0;
+  background: #000;
+}
+
+.xp-cmd-screen {
+  flex: 1;
+  min-height: 0;
+  background: #000;
+  color: #c0c0c0;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 6px 8px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.xp-cmd-screen .cmd-prompt { color: #fff; }
+.xp-cmd-screen .cmd-error  { color: #ff8080; }
+.xp-cmd-screen .cmd-ok     { color: #80ff80; }
+.xp-cmd-screen .cmd-meta   { color: #808080; }
+.xp-cmd-screen .cmd-cmd    { color: #fff; }
+.xp-cmd-screen .cmd-out    { color: #c0c0c0; }
+
+.xp-cmd-screen .cmd-run,
+.xp-cmd-screen .cmd-thought,
+.xp-cmd-screen .cmd-out {
+  display: block;
+  margin: 0 0 4px;
+}
+
+.xp-cmd-screen .cmd-thought {
+  /* dim agent-rationale block, inset slightly so it reads like a comment */
+  padding-left: 2px;
+  border-left: 2px solid #404040;
+  margin-left: 1px;
+}
+
+.xp-cmd-cursor::after {
+  content: "_";
+  color: #c0c0c0;
+  animation: xp-blink 1s steps(1) infinite;
+}
+
+/* toggle button (lives in regular sidebar) */
+.xp-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: linear-gradient(180deg, #4d8eff 0%, #1f4fc0 100%);
+  color: #fff;
+  font-family: "Trebuchet MS", Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #15347f;
+  border-radius: 3px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+}
+
+.xp-toggle-btn:hover {
+  background: linear-gradient(180deg, #6ba1ff 0%, #2960d6 100%);
+}
+
+.xp-toggle-btn[data-on="true"] {
+  background: linear-gradient(180deg, #ffd16b 0%, #d68a18 100%);
+  color: #3a2700;
+  border-color: #6e4400;
+}
+
+.xp-toggle-btn .xp-toggle-flag {
+  display: inline-block;
+  width: 18px;
+  height: 14px;
+  background: url('/winxp/winflag.png') center / contain no-repeat;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* (Removed) "experiment" tag overlaid on the wallpaper — kept the class
+   selector empty in case any external code references it. */
+
+/* ============================================================
+   Window resizing — three transparent gutters around the window.
+   The widths intentionally extend a few pixels beyond the visible
+   border so the cursor reliably lands on them.
+   ============================================================ */
+.xp-resize {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.xp-resize-r {
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+}
+
+.xp-resize-b {
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 6px;
+}
+
+/* Authentic XP corner gripper: three rows of two-pixel dots stepping
+   diagonally toward the corner. Win9x used hatched diagonal lines (which
+   is what the previous gradient simulated) — XP uses a discrete grid of
+   highlight + shadow pixel pairs, drawn in pure CSS via a layered
+   radial-gradient stack so it stays crisp at any zoom level. */
+.xp-resize-br {
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background-image:
+    radial-gradient(circle at 13px 13px, #fff 1px, transparent 1.5px),
+    radial-gradient(circle at 12px 12px, #808080 1px, transparent 1.5px),
+    radial-gradient(circle at 13px 9px,  #fff 1px, transparent 1.5px),
+    radial-gradient(circle at 12px 8px,  #808080 1px, transparent 1.5px),
+    radial-gradient(circle at 9px 13px,  #fff 1px, transparent 1.5px),
+    radial-gradient(circle at 8px 12px,  #808080 1px, transparent 1.5px),
+    radial-gradient(circle at 13px 5px,  #fff 1px, transparent 1.5px),
+    radial-gradient(circle at 12px 4px,  #808080 1px, transparent 1.5px),
+    radial-gradient(circle at 9px 9px,   #fff 1px, transparent 1.5px),
+    radial-gradient(circle at 8px 8px,   #808080 1px, transparent 1.5px),
+    radial-gradient(circle at 5px 13px,  #fff 1px, transparent 1.5px),
+    radial-gradient(circle at 4px 12px,  #808080 1px, transparent 1.5px);
+  background-repeat: no-repeat;
+}
+
+.xp-window-wrap.maximized {
+  /* No drop-shadow when filling the screen — same as real XP. */
+  filter: none;
+}
+.xp-window-wrap.maximized > .window {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* ============================================================
+   Marquee selection on desktop drag
+   ============================================================ */
+.xp-marquee {
+  position: absolute;
+  /* Translucent blue with a 1px dotted white outline — same look as XP's
+     real selection box. */
+  background: rgba(50, 100, 220, 0.18);
+  outline: 1px dotted rgba(255, 255, 255, 0.85);
+  outline-offset: -1px;
+  pointer-events: none;
+}
+
+/* ============================================================
+   Right-click context menu — authentic Windows XP gutter pattern.
+
+   The real XP menu has:
+     • outer 1px solid #000 border
+     • inner 1px highlights (white top/left, light gray bottom/right)
+     • a 22px gutter rail down the left side filled with light gray
+     • selection bar that spans the full width including the gutter
+     • 1px black border, white inset shadow on the body
+   ============================================================ */
+.xp-ctx-menu {
+  position: fixed;
+  list-style: none;
+  margin: 0;
+  padding: 2px;
+  background: #fff;
+  border: 1px solid #000;
+  /* Light beige rail on the left, plus a thin highlight on the right */
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #aca899,
+    2px 2px 6px rgba(0, 0, 0, 0.4);
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  min-width: 200px;
+  color: #000;
+  z-index: 1000;
+  user-select: none;
+}
+
+.xp-ctx-gutter {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: 22px;
+  background: #d8d4c0;
+  border-right: 1px solid #fff;
+  pointer-events: none;
+}
+
+.xp-ctx-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 18px 3px 28px;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.xp-ctx-item:hover {
+  /* The hover bar covers the gutter and extends edge-to-edge — exactly
+     like real XP. We use a negative margin trick instead of overriding
+     the gutter so the disabled+hover combo still looks right. */
+  background: #316ac5;
+  color: #fff;
+}
+
+.xp-ctx-item.disabled {
+  color: #888;
+  pointer-events: none;
+}
+
+.xp-ctx-shortcut {
+  margin-left: 24px;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.xp-ctx-divider {
+  position: relative;
+  height: 1px;
+  margin: 3px 2px 3px 28px;
+  background: #aca899;
+  box-shadow: 0 1px 0 #fff;
+}
+
+/* (Removed) Start-menu styles. The button now leads straight back to
+   the regular UI — there's no popup menu to style anymore. */
+
+/* ============================================================
+   Tray icons — real 16×16 XP bitmaps rendered as <img>. We size to
+   16px because that's the native dimension; rendering them larger
+   blurs them, smaller crushes the alpha edges.
+   ============================================================ */
+.xp-tray-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  cursor: default;
+  user-select: none;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.xp-tray-clock {
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  padding-left: 4px;
+  /* Tiny vertical separator before the clock, like real XP */
+  border-left: 1px solid rgba(0, 0, 0, 0.18);
+  margin-left: 2px;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.18);
+}
+
+/* ============================================================
+   Markdown (XP flavour) — inherits the bubble's font but tightens
+   spacing/layout so the message stays compact inside a chat bubble.
+   ============================================================ */
+.xp-md {
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #000;
+}
+
+.xp-md > *:last-child {
+  margin-bottom: 0;
+}
+
+.xp-md-p {
+  margin: 0 0 6px;
+  white-space: pre-wrap;
+}
+
+.xp-md-link {
+  color: #0a52a3;
+  text-decoration: underline;
+}
+
+.xp-md-link:visited {
+  color: #663b8e;
+}
+
+.xp-md-b {
+  font-weight: 700;
+}
+
+.xp-md-i {
+  font-style: italic;
+}
+
+.xp-md-s {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.xp-md-h1, .xp-md-h2, .xp-md-h3, .xp-md-h4 {
+  margin: 8px 0 4px;
+  font-family: "Trebuchet MS", Tahoma, sans-serif;
+  color: #0a3a96;
+}
+
+.xp-md-h1 { font-size: 15px; font-weight: 700; }
+.xp-md-h2 { font-size: 14px; font-weight: 700; }
+.xp-md-h3 { font-size: 13px; font-weight: 700; }
+.xp-md-h4 { font-size: 12px; font-weight: 700; }
+
+.xp-md-ul,
+.xp-md-ol {
+  margin: 4px 0 6px;
+  padding-left: 22px;
+}
+
+.xp-md-li {
+  margin: 2px 0;
+}
+
+.xp-md-quote {
+  margin: 4px 0 6px;
+  padding: 2px 8px;
+  border-left: 3px solid #1f4fc0;
+  background: #f3f6fb;
+  color: #333;
+  font-style: italic;
+}
+
+.xp-md-hr {
+  border: 0;
+  border-top: 1px solid #aca899;
+  border-bottom: 1px solid #fff;
+  margin: 8px 0;
+}
+
+.xp-md-code-inline {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 11.5px;
+  background: #fffce5;
+  border: 1px solid #d6c98a;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.xp-md-pre {
+  /* Code block frame mimics the classic XP "sunken" group look —
+     1px dark outer, 1px white inner, light beige fill. */
+  margin: 6px 0;
+  padding: 6px 8px;
+  background: #f8f8f0;
+  border: 1px solid #aca899;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #d4d0c8;
+  overflow: auto;
+  max-width: 100%;
+}
+
+.xp-md-code-block {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 11.5px;
+  white-space: pre;
+  color: #1a1a1a;
+}
+
+.xp-md-table-wrap {
+  margin: 6px 0;
+  overflow: auto;
+  border: 1px solid #aca899;
+  box-shadow: inset 1px 1px 0 #fff;
+}
+
+.xp-md-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11.5px;
+}
+
+.xp-md-th {
+  background: linear-gradient(180deg, #ece9d8 0%, #c8c4b3 100%);
+  border: 1px solid #aca899;
+  padding: 3px 6px;
+  text-align: left;
+}
+
+.xp-md-td {
+  border: 1px solid #d8d4c0;
+  padding: 3px 6px;
+  vertical-align: top;
+}
+
+.xp-md-img {
+  max-width: 100%;
+  border: 1px solid #aca899;
+  margin: 4px 0;
+}
+
+/* ============================================================
+   Per-message action row (Copy / Regenerate). Buttons are full
+   xp.css buttons — using the actual element, not custom classes —
+   so they pick up the authentic Luna look with one-line styling.
+   ============================================================ */
+.xp-msg-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  align-items: center;
+}
+
+.xp-msg-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 2px 8px;
+  min-height: 22px;
+  cursor: default;
+}
+
+.xp-msg-actions button:disabled {
+  cursor: default;
+  color: #888;
+}
+
+/* Tiny copy / regenerate glyphs drawn purely with CSS so we don't have
+   to ship more PNG assets — they're the conventional 12px monochrome
+   shapes you see in any XP-era toolbar. */
+.xp-action-icon {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  position: relative;
+}
+
+.xp-action-copy::before,
+.xp-action-copy::after {
+  content: "";
+  position: absolute;
+  border: 1px solid #2a2a2a;
+  background: #fff;
+}
+
+.xp-action-copy::before {
+  width: 7px;
+  height: 8px;
+  left: 0;
+  top: 1px;
+}
+
+.xp-action-copy::after {
+  width: 7px;
+  height: 8px;
+  left: 3px;
+  top: 4px;
+}
+
+.xp-action-regen::before {
+  content: "↻";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  line-height: 12px;
+  color: #2a2a2a;
+  font-weight: 700;
+}
+
+/* ============================================================
+   Empty-chat suggestion grid
+
+   Renders the same `SUGGESTIONS` data the regular UI uses, but as a
+   compact XP-style "panel" grid. Tile shape mimics a Quick Launch
+   button: 1px raised bevel (white top/left, gray bottom/right),
+   beige fill, blue selection on hover.
+   ============================================================ */
+.xp-suggest {
+  padding: 10px 4px 16px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #1a1a1a;
+}
+
+.xp-suggest-hero {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 6px 14px;
+  padding: 10px 12px;
+  background:
+    linear-gradient(180deg,
+      rgba(207, 222, 247, 0.95) 0%,
+      rgba(176, 200, 240, 0.95) 100%);
+  border: 1px solid #6a8ec8;
+  box-shadow: inset 1px 1px 0 #fff;
+}
+
+.xp-suggest-hero img {
+  flex: 0 0 auto;
+  image-rendering: pixelated;
+}
+
+.xp-suggest-title {
+  font-weight: 700;
+  color: #003172;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.xp-suggest-sub {
+  margin-top: 2px;
+  color: #21477a;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.xp-suggest-section {
+  margin: 0 4px 14px;
+}
+
+.xp-suggest-section-head {
+  margin: 0 4px 6px;
+  border-bottom: 1px solid #aca899;
+  box-shadow: 0 1px 0 #fff;
+  padding-bottom: 4px;
+}
+
+.xp-suggest-section-head h4 {
+  margin: 0;
+  font-family: "Trebuchet MS", Tahoma, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0a3a96;
+}
+
+.xp-suggest-section-head p {
+  margin: 1px 0 0;
+  font-size: 10.5px;
+  color: #555;
+  letter-spacing: 0.2px;
+}
+
+.xp-suggest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+}
+
+.xp-suggest-tile {
+  /* Reset XP.css's default button styling so we can paint our own
+     panel — those rules force min-width 75px / centered text /
+     specific gradient that don't fit a left-aligned tile. */
+  all: unset;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, #fbfbf6 0%, #ece9d8 100%);
+  border: 1px solid #aca899;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #d4d0c8;
+  cursor: default;
+  text-align: left;
+  min-height: 56px;
+  color: #1a1a1a;
+  user-select: none;
+}
+
+.xp-suggest-tile:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ffefb1 0%, #ffd163 100%);
+  border-color: #b58a18;
+  box-shadow:
+    inset 1px 1px 0 #fff8d0,
+    inset -1px -1px 0 #b58a18;
+}
+
+.xp-suggest-tile:active:not(:disabled) {
+  background: linear-gradient(180deg, #d4d0c8 0%, #ece9d8 100%);
+  box-shadow:
+    inset 1px 1px 0 #aca899,
+    inset -1px -1px 0 #fff;
+}
+
+.xp-suggest-tile:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.xp-suggest-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  /* Old-school sunken icon well — matches XP control panel rows */
+  background: #fff;
+  border: 1px solid #aca899;
+  box-shadow:
+    inset 1px 1px 0 #d4d0c8,
+    inset -1px -1px 0 #fff;
+  color: #0a3a96;
+}
+
+.xp-suggest-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.xp-suggest-tile-title {
+  font-weight: 700;
+  font-size: 12px;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xp-suggest-gets {
+  margin-top: 2px;
+  color: #555;
+  font-size: 10.5px;
+}
+
+.xp-suggest-tile:hover:not(:disabled) .xp-suggest-gets {
+  color: #6a4e00;
+}
+
+/* ============================================================
+   Inline model picker in the chat toolbar.
+   We use a real <select> element so xp.css paints the iconic
+   Luna dropdown chrome (embedded SVG arrow, blue focus, etc.)
+   for free.
+   ============================================================ */
+.xp-model-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  /* Push to the right side of the toolbar — pills stay packed left
+     and the dropdown anchors to the trailing edge. */
+  margin-left: auto;
+}
+
+.xp-model-label {
+  color: #444;
+}
+
+.xp-chat-toolbar select.xp-model-select {
+  /* Hand a sensible default size — xp.css doesn't constrain widths */
+  min-width: 140px;
+  max-width: 220px;
+  height: 21px;
+  font-size: 11px;
+}
+
+.xp-model-flash {
+  color: #157a14;
+  font-weight: 700;
+  white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+   XP Notepad — pixel-faithful clone of notepad.exe (XP build).
+
+   Layout = 30px Luna title bar + 22px menu rail + plain monospace
+   editing surface + 22px status bar. The menu items are decorative
+   (label + mnemonic underline only) so we don't have to ship a real
+   menu manager just for this Easter-egg window.
+   ============================================================ */
+.xp-notepad-wrap > .window {
+  /* Notepad's body is the canonical XP form-grey rather than the chat
+     window's white-on-blue toolbar. Force the parent .window-body to be
+     plain so the menu rail sits flush against the title bar. */
+  background: #ECE9D8;
+}
+
+.xp-notepad .window-body {
+  padding: 0;
+  background: #ECE9D8;
+}
+
+.xp-notepad-menu {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 2px 0;
+  background: #ECE9D8;
+  border-bottom: 1px solid #aca899;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+  user-select: none;
+}
+
+.xp-notepad-menu-item {
+  padding: 2px 8px;
+  cursor: default;
+  border-radius: 0;
+}
+
+.xp-notepad-menu-item:hover {
+  background: #316ac5;
+  color: #fff;
+}
+
+.xp-notepad-menu-item u {
+  text-decoration: underline;
+}
+
+.xp-notepad-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  border: 0;
+  outline: 0;
+  padding: 4px 6px;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #000;
+  background: #fff;
+  /* The real notepad has a 1px sunken inset where its scrollbars meet
+     the canvas — easy to suggest with an inset shadow on the textarea. */
+  box-shadow:
+    inset 1px 1px 0 #aca899,
+    inset -1px -1px 0 #fff;
+  white-space: pre;
+  overflow: auto;
+}
+
+.xp-notepad-area:focus {
+  outline: 0;
+}
+
+.xp-notepad-status {
+  /* Override xp.css's default which gives every status field equal flex.
+     Notepad on XP shows a wide blank field on the left and a narrow
+     "Ln X, Col Y" cell on the right — pin widths to match. */
+  display: flex;
+}
+
+.xp-notepad-status .status-bar-field {
+  text-align: right;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  padding: 1px 6px;
+}
+
+.xp-notepad-status .xp-notepad-status-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ============================================================
+   Per-message header — shows preset · model · fallback flag
+   immediately under the "You / Clippy" label and above the bubble.
+   The visual style matches the regular chat's header (`AssistantBubble`):
+   compact monospace, mid-grey, separated by interpunct dots.
+   ============================================================ */
+.xp-msg-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  margin: 1px 0 4px;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 10.5px;
+  color: #555;
+  letter-spacing: 0.1px;
+}
+
+.xp-msg-header-preset {
+  color: #1f4fc0;
+  font-weight: 700;
+}
+
+.xp-msg-header-model {
+  color: #444;
+}
+
+.xp-msg-header-sep {
+  color: #aaa;
+}
+
+.xp-msg-header-fallback {
+  background: #fff3c4;
+  color: #6a4e00;
+  border: 1px solid #d6b900;
+  padding: 0 4px;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.xp-msg.user .xp-msg-header {
+  justify-content: flex-end;
+}
+
+/* ============================================================
+   Image attachments inside a chat message — laid out as a 1-2 column
+   grid that adapts to how many images there are. Each thumbnail is
+   wrapped in a minimal "raised" XP frame. Click to open the
+   pixel-faithful "Windows Picture and Fax Viewer" lightbox.
+   ============================================================ */
+.xp-msg-images {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 2px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.xp-msg-images.count-1 { grid-template-columns: 1fr; }
+.xp-msg-images.count-2,
+.xp-msg-images.count-3,
+.xp-msg-images.count-4 { grid-template-columns: 1fr 1fr; }
+
+.xp-msg-image {
+  all: unset;
+  position: relative;
+  display: block;
+  cursor: pointer;
+  background: #ECE9D8;
+  border: 1px solid #aca899;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #d4d0c8;
+  padding: 4px 4px 18px;
+}
+
+.xp-msg-image:hover {
+  border-color: #6a8ec8;
+  background: #e8eefc;
+}
+
+.xp-msg-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 240px;
+  object-fit: cover;
+  border: 1px solid #aca899;
+  background: #fff;
+}
+
+.xp-msg-image .xp-msg-image-cap {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 3px;
+  font-size: 10px;
+  color: #444;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xp-msg.user .xp-msg-images { justify-self: end; }
+
+/* Non-image attachments — XP-style file row inside the message. */
+.xp-msg-files {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0 2px;
+}
+
+.xp-msg-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  background: #ECE9D8;
+  border: 1px solid #aca899;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #d4d0c8;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #1f4fc0;
+  text-decoration: none;
+  cursor: default;
+}
+
+.xp-msg-file:hover {
+  background: #fffbcf;
+  border-color: #b58a18;
+}
+
+.xp-msg-file img {
+  flex: 0 0 auto;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.xp-msg-file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.xp-msg-file-size {
+  margin-left: auto;
+  color: #555;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Picture viewer lightbox — emulates "Windows Picture and Fax Viewer".
+   Single .window with a Luna title bar and a Save As / Close action row.
+   ============================================================ */
+.xp-img-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+.xp-img-lightbox-inner {
+  background: #ECE9D8;
+  border: 2px solid #0c3a96;
+  border-radius: 8px 8px 0 0;
+  width: min(92vw, 960px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.xp-img-lightbox-inner > .title-bar {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 4px 4px 6px;
+  background: linear-gradient(180deg,
+    #2068d8 0%, #2461c8 8%,
+    #1f53b6 60%, #1c4aa8 100%);
+  color: #fff;
+}
+
+.xp-img-lightbox-inner > .title-bar .title-bar-text {
+  font-weight: 700;
+  font-size: 13px;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xp-img-lightbox-inner > .title-bar .title-bar-controls button {
+  width: 22px;
+  height: 22px;
+}
+
+.xp-img-lightbox-canvas {
+  flex: 1;
+  min-height: 0;
+  background:
+    /* Hatched grey "transparent" backdrop in the spirit of the real
+       Picture Viewer when it tiles below an image. */
+    repeating-linear-gradient(45deg, #d8d4c4 0 8px, #c8c4b3 8px 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow: auto;
+}
+
+.xp-img-lightbox-canvas img {
+  max-width: 100%;
+  max-height: calc(90vh - 110px);
+  background: #fff;
+  border: 1px solid #aca899;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #d4d0c8,
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.xp-img-lightbox-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 8px;
+  background: #ECE9D8;
+  border-top: 1px solid #aca899;
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.xp-img-lightbox-actions a,
+.xp-img-lightbox-actions button {
+  /* Reuse xp.css's button look for the action row */
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  padding: 2px 14px;
+  min-height: 23px;
+  background: linear-gradient(180deg, #f6f4e8 0%, #d4d0c8 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #aca899;
+  color: #000;
+  cursor: default;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.xp-img-lightbox-actions a:hover,
+.xp-img-lightbox-actions button:hover {
+  background: linear-gradient(180deg, #ffefb1 0%, #ffd163 100%);
+}
+
+/* ============================================================
+   "Confirm File Delete" XP-style modal — used for the drag-to-bin
+   flow. Pixel-faithful reproduction of the real shell32.dll prompt:
+   compact 384px frame, big 32×32 icon on the left, prose on the
+   right, two buttons right-aligned in the footer.
+   ============================================================ */
+.xp-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+}
+
+.xp-confirm-dialog {
+  width: 384px;
+  max-width: calc(100vw - 32px);
+  /* The drop shadow is a soft 4px offset, exactly like Luna draws
+     dialogs over the main window. */
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.45));
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+}
+
+.xp-confirm-dialog > .window {
+  display: flex;
+  flex-direction: column;
+}
+
+.xp-confirm-body {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px 14px !important;
+  background: #ECE9D8;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.xp-confirm-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  image-rendering: -webkit-optimize-contrast;
+  user-select: none;
+  pointer-events: none;
+}
+
+.xp-confirm-text {
+  min-width: 0;
+  word-wrap: break-word;
+  align-self: center;
+}
+
+.xp-confirm-text b {
+  font-weight: 700;
+}
+
+.xp-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  background: #ECE9D8;
+  border-top: 1px solid #aca899;
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.xp-confirm-actions button {
+  /* Pick up xp.css's button styling implicitly — but force a
+     consistent min width so Yes/No are the same size, like real XP. */
+  min-width: 75px;
+  font-size: 11px;
+  padding: 2px 14px;
+  min-height: 23px;
+}
+
+.xp-confirm-actions button:focus,
+.xp-confirm-actions button:focus-visible {
+  /* Restore the dotted focus ring — XP draws it when keyboard
+     focus is on a default button. xp.css strips it by default. */
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+/* ============================================================
+   Accessibility Wizard (and any other shell32-style wizards)
+
+   Real XP wizards are fixed-size dialogs with a 164px dark-navy
+   "watermark" banner on the left. They are NOT resizable and do
+   not show minimize/maximize buttons in the title bar. The body
+   uses Tahoma 13/15 — bigger than the regular XP body text, the
+   same way the real Accessibility Wizard renders.
+   ============================================================ */
+.xp-wizard-wrap {
+  /* Lock the size — wizards never resize. We still drag through the
+     title bar via useDraggable. */
+  pointer-events: auto;
+}
+
+.xp-wizard {
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  color: #000;
+  box-sizing: border-box;
+  background-color: #ECE9D8;
+}
+
+.xp-window-wrap.xp-wizard-wrap > .window {
+  box-sizing: border-box;
+  /* Reserve 3px on the sides + bottom so the body/footer don't paint
+     over the Luna blue inset borders. The title-bar handles the top
+     edge itself via its own 1px border. */
+  padding: 0 3px 3px 3px;
+}
+
+/* Disable any caption-button hover tinting except for close — this is
+   what the real Accessibility Wizard does. */
+.xp-wizard .title-bar-controls button[aria-label="Minimize"],
+.xp-wizard .title-bar-controls button[aria-label="Maximize"],
+.xp-wizard .title-bar-controls button[aria-label="Restore"] {
+  display: none;
+}
+
+.xp-wizard-body {
+  display: flex !important;
+  flex-direction: row !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #fff;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The dark navy banner. Cropped straight out of a real Network Setup
+   Wizard screenshot (150×325, ratio 1:2.17). The sidebar width is sized
+   to that exact ratio for the body height of an 800×600 wizard so the
+   art fits at its natural aspect ratio with no stretching and no cropping. */
+.xp-wizard-sidebar {
+  flex: 0 0 240px;
+  width: 240px;
+  align-self: stretch;
+  background-color: #00006a;
+  background-image: url('/winxp/wizard-sidebar.png');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: cover;
+}
+
+.xp-wizard-content {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 22px 18px 22px;
+  background: #fff;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.xp-wizard-title {
+  /* The classic XP wizard heading: navy, semi-bold Tahoma, ~15-16px,
+     line-height tight, no text-decoration. */
+  margin: 4px 0 14px 0;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #003399;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.xp-wizard-prose {
+  margin: 0 0 12px 0;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #000;
+}
+
+.xp-wizard-trailer {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+/* Footer with the engraved separator + right-aligned action row. The
+   real wizard uses a 2px chiselled rule (grey-then-white) above the
+   buttons. We use border + inset shadow on the footer itself so the
+   line is always pixel-sharp regardless of subpixel rendering. */
+.xp-wizard-footer {
+  flex: 0 0 auto;
+  background: #ECE9D8;
+  padding: 0;
+  border-top: 1px solid #919b9c;
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+/* The classic 2px engraved chisel above the buttons is now drawn by
+   the footer's border-top + inset shadow, so the dedicated rule div
+   is no longer needed. Hide it so we don't get a double line. */
+.xp-wizard-footer-rule {
+  display: none;
+}
+
+.xp-wizard-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0;
+  padding: 12px 14px 14px 12px;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+/* Real XP wizard buttons: 75px min-width, 23px tall, Tahoma 11px,
+   3px gap between Back/Next, 8px gap before Cancel (the visual break
+   the binary uses to separate "navigation" from "abort"). */
+.xp-wizard-btn {
+  /* Reset xp.css button styling so we can pin width/height precisely.
+     We still inherit the raised bevel from xp.css's base .button rules
+     by relying on the standard <button> tag — the xp.css selector wins
+     because it's more specific. */
+  min-width: 75px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  padding: 0 10px;
+  height: 23px;
+  line-height: 19px; /* center text vertically minus borders */
+  margin-left: 3px;
+  box-sizing: border-box;
+}
+
+/* The 8px gap between Next and Cancel that visually groups Back+Next. */
+.xp-wizard-btn-cancel {
+  margin-left: 8px;
+}
+
+.xp-wizard-btn-default {
+  /* Default button — XP draws a slightly thicker dark border, which
+     xp.css already handles when the button has focus. We also pin the
+     dotted inner focus ring so it's visible immediately on open. */
+  font-weight: 700;
+}
+
+.xp-wizard .xp-wizard-btn:focus,
+.xp-wizard .xp-wizard-btn:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+.xp-wizard .xp-wizard-btn:disabled {
+  color: #808080;
+}
+
+.xp-wizard-btn-arrow {
+  /* The real binary uses real "<" / ">" glyphs, not arrows — keep them
+     legible by giving them a touch of weight. */
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-weight: 400;
+  display: inline-block;
+  margin: 0 1px;
+}
+
+.xp-wizard-btn:disabled .xp-wizard-btn-arrow {
+  color: #808080;
+}
+
+/* ============================================================
+   GRAND Setup Wizard — step bodies, fields, tiles and summary.
+   All form widgets live inside .xp-wizard-content so we can rely
+   on its 11px Tahoma baseline and avoid bleeding into the rest
+   of the XP shell.
+   ============================================================ */
+.xp-wizard-step-heading {
+  margin: 0 0 10px 0;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #003399;
+  letter-spacing: 0;
+}
+
+.xp-wizard-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.xp-wizard-content code {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 11px;
+}
+
+.xp-wizard-content a {
+  color: #003399;
+  text-decoration: underline;
+}
+
+.xp-wizard-content a:hover {
+  color: #1f4ec5;
+}
+
+.xp-wizard-content em {
+  font-style: italic;
+}
+
+.xp-wizard-content strong {
+  font-weight: 700;
+}
+
+.xp-wizard-help {
+  display: block;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #555;
+  line-height: 1.4;
+}
+
+.xp-wizard-help-block {
+  margin: 4px 0 0 0;
+}
+
+.xp-wizard-error {
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: #fde9e9;
+  border: 1px solid #d23e3e;
+  color: #7d1c1c;
+  font-size: 11px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+}
+
+/* ---------- Fields ---------- */
+.xp-wizard-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+}
+
+.xp-wizard-field-label {
+  font-weight: 400;
+}
+
+.xp-wizard-input {
+  width: 100%;
+  display: block;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  padding: 3px 5px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  color: #000;
+  outline: none;
+  min-height: 21px;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.xp-wizard-input:focus,
+.xp-wizard-input:focus-visible {
+  border-color: #0a246a;
+  box-shadow: 0 0 0 1px #0a246a;
+}
+
+.xp-wizard-input:disabled {
+  background: #f0f0f0;
+  color: #777;
+}
+
+.xp-wizard-input-mono {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 11px;
+}
+
+.xp-wizard-textarea {
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.35;
+}
+
+.xp-wizard-select {
+  padding-right: 4px;
+  min-height: 21px;
+}
+
+/* ---------- Radio / Check rows ---------- */
+.xp-wizard-radio-row,
+.xp-wizard-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #000;
+  cursor: default;
+  padding: 1px 0;
+}
+
+.xp-wizard-radio-row input,
+.xp-wizard-check-row input {
+  margin: 1px 0 0 0;
+  flex: 0 0 auto;
+}
+
+/* xp.css hides every native checkbox/radio globally
+   (`input[type=checkbox] { opacity:0; position:fixed }`) and re-draws
+   them via an `input + label` sibling selector. Our markup nests the
+   input INSIDE the label, so the custom rendering never matches and
+   the user sees only the text. Re-show the native control here so the
+   row reads as a real check/radio button. */
+.xp-wizard-radio-row input[type=radio],
+.xp-wizard-check-row input[type=checkbox] {
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+  -moz-appearance: auto !important;
+  position: static !important;
+  opacity: 1 !important;
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+}
+
+.xp-wizard-radio-row.is-disabled,
+.xp-wizard-check-row.is-disabled {
+  color: #888;
+}
+
+/* ---------- Section (fieldset) ---------- */
+.xp-wizard-section {
+  border: 1px solid #aca899;
+  padding: 4px 8px 8px 8px;
+  background: #fff;
+  margin: 0;
+}
+
+.xp-wizard-section-title {
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 4px;
+  color: #003399;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xp-wizard-section-actions {
+  font-weight: 400;
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xp-wizard-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+/* ---------- 2-column grid for tiles / compact field pairs ---------- */
+.xp-wizard-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.xp-wizard-grid-compact {
+  gap: 6px;
+}
+
+/* ---------- Selectable tile ---------- */
+.xp-wizard-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 9px 7px 9px;
+  background: #fff;
+  border: 1px solid #aca899;
+  cursor: default;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+  line-height: 1.35;
+  box-shadow: inset 1px 1px 0 #fff;
+}
+
+.xp-wizard-tile.is-selected {
+  border-color: #0a246a;
+  background: #eaf2fb;
+  box-shadow: inset 0 0 0 1px #b6cef0;
+}
+
+.xp-wizard-tile.is-disabled {
+  color: #888;
+  background: #f4f4f4;
+}
+
+.xp-wizard-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.xp-wizard-tile-head input[type='radio'] {
+  margin: 0;
+}
+
+.xp-wizard-tile-title {
+  font-weight: 700;
+  color: #003399;
+}
+
+.xp-wizard-tile.is-disabled .xp-wizard-tile-title {
+  color: #888;
+}
+
+.xp-wizard-tile-badge {
+  margin-left: auto;
+  background: #fde9b1;
+  border: 1px solid #c79a3e;
+  color: #6a4900;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.xp-wizard-tile-tagline {
+  font-style: italic;
+  color: #444;
+  font-size: 10.5px;
+}
+
+.xp-wizard-tile-desc {
+  color: #000;
+}
+
+.xp-wizard-tile-bullets {
+  margin: 2px 0 0 14px;
+  padding: 0;
+  list-style: square;
+  color: #333;
+  font-size: 10.5px;
+}
+
+.xp-wizard-tile-bullets li {
+  margin: 0;
+}
+
+/* ---------- Inline button (XP raised bevel) ---------- */
+.xp-wizard-inline-btn {
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  padding: 2px 12px;
+  min-height: 21px;
+  min-width: 70px;
+  background: linear-gradient(180deg, #f6f4e8 0%, #e3dfd0 100%);
+  border: 1px solid #003c74;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #aca899;
+  color: #000;
+  cursor: default;
+}
+
+.xp-wizard-inline-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ffefb1 0%, #ffd163 100%);
+}
+
+.xp-wizard-inline-btn:active:not(:disabled) {
+  background: linear-gradient(180deg, #d4d0c8 0%, #ece9d8 100%);
+  box-shadow: inset 1px 1px 0 #aca899, inset -1px -1px 0 #fff;
+}
+
+.xp-wizard-inline-btn:disabled {
+  color: #808080;
+  border-color: #aca899;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+.xp-wizard-inline-btn-primary {
+  font-weight: 700;
+}
+
+.xp-wizard-actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Status lines ---------- */
+.xp-wizard-status {
+  margin: 0;
+  padding: 4px 8px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  border: 1px solid;
+}
+
+.xp-wizard-status-info {
+  background: #eaf2fb;
+  border-color: #4b75c2;
+  color: #14336f;
+}
+
+.xp-wizard-status-ok {
+  background: #e6f4d9;
+  border-color: #4e8a1c;
+  color: #2a5510;
+}
+
+.xp-wizard-status-warn {
+  background: #fff4d1;
+  border-color: #b8870c;
+  color: #6a4900;
+}
+
+.xp-wizard-status-error {
+  background: #fde9e9;
+  border-color: #c84141;
+  color: #7d1c1c;
+}
+
+/* ---------- Numbered step list ---------- */
+.xp-wizard-numbered {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+}
+
+.xp-wizard-numbered li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.xp-wizard-numbered-bullet {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #003399;
+  color: #fff;
+  font-weight: 700;
+  font-size: 10.5px;
+  border-radius: 50%;
+}
+
+/* ---------- Wallet reveal: address + word grid ---------- */
+.xp-wizard-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: #f4f3ea;
+  border: 1px solid #aca899;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.xp-wizard-address code {
+  flex: 1;
+  min-width: 0;
+}
+
+.xp-wizard-words {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.xp-wizard-word {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 6px;
+  background: #fff;
+  border: 1px solid #aca899;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 11px;
+}
+
+.xp-wizard-word-idx {
+  color: #888;
+  width: 18px;
+  flex: 0 0 18px;
+}
+
+.xp-wizard-words-hidden .xp-wizard-word-text {
+  letter-spacing: 0.15em;
+}
+
+/* ---------- Wallet balance card ---------- */
+.xp-wizard-balance {
+  border: 1px solid #aca899;
+  padding: 8px 10px;
+  background: #f8f7ee;
+}
+
+.xp-wizard-balance.is-funded {
+  border-color: #4e8a1c;
+  background: #eef7df;
+}
+
+.xp-wizard-balance-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.xp-wizard-balance-label {
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+
+.xp-wizard-balance-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+}
+
+.xp-wizard-balance-amount span {
+  font-size: 22px;
+  font-weight: 700;
+  color: #000;
+}
+
+.xp-wizard-balance-amount em {
+  font-style: normal;
+  font-size: 11px;
+  color: #555;
+  text-transform: uppercase;
+}
+
+/* ---------- Models editor ---------- */
+.xp-wizard-models {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xp-wizard-models-head {
+  display: grid;
+  grid-template-columns: 1fr 110px 80px;
+  gap: 6px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 2px;
+}
+
+.xp-wizard-model-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 80px;
+  gap: 6px;
+  align-items: center;
+}
+
+.xp-wizard-models-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ---------- Telegram code box ---------- */
+.xp-wizard-code {
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #aca899;
+  text-align: center;
+}
+
+.xp-wizard-code code {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+/* ---------- Finish summary table ---------- */
+.xp-wizard-summary {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+.xp-wizard-summary th,
+.xp-wizard-summary td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #d4d0c8;
+  text-align: left;
+  vertical-align: top;
+}
+
+.xp-wizard-summary th {
+  width: 110px;
+  font-weight: 400;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+
+.xp-wizard-summary td {
+  color: #000;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+/* ---------- Welcome / Completing layout ---------- */
+.xp-wizard-welcome {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.xp-wizard-welcome .xp-wizard-prose {
+  font-size: 11.5px;
+  line-height: 1.5;
+}

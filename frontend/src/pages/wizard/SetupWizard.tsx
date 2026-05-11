@@ -27,9 +27,10 @@ interface SetupWizardProps {
   mode?: WizardMode
   onDone: () => void
   onCancel?: () => void
+  onSwitchToXp?: () => void
 }
 
-export default function SetupWizard({ mode = 'full', onDone, onCancel }: SetupWizardProps) {
+export default function SetupWizard({ mode = 'full', onDone, onCancel, onSwitchToXp }: SetupWizardProps) {
   const [state, setState] = useState<State | null>(null)
   const [stepId, setStepId] = useState<StepId>('provider')
   const [direction, setDirection] = useState<'next' | 'back'>('next')
@@ -260,7 +261,7 @@ export default function SetupWizard({ mode = 'full', onDone, onCancel }: SetupWi
       <Toaster />
 
       <header className="shrink-0 backdrop-blur bg-[var(--grand-bg)]/85 border-b border-[var(--grand-border-2)]">
-        <div className="max-w-3xl mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
+        <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
           <button
             type="button"
             onClick={canBack ? goBack : undefined}
@@ -274,6 +275,21 @@ export default function SetupWizard({ mode = 'full', onDone, onCancel }: SetupWi
             <span className="text-[12px] font-mono uppercase tracking-[0.16em] text-[var(--grand-muted-2)] mr-2 hidden sm:inline">
               {mode === 'resume' ? 'finishing' : `step ${currentIdx + 1}/${path.length}`}
             </span>
+            {onSwitchToXp && mode === 'full' && (
+              <button
+                type="button"
+                onClick={onSwitchToXp}
+                title="Open the same setup in a Windows XP–style wizard"
+                className="hidden md:inline-flex items-center gap-1.5 mr-1 px-2 py-1 rounded-md text-[10.5px] font-mono uppercase tracking-[0.14em] text-[var(--grand-muted-2)] hover:text-[var(--grand-fg)] hover:bg-[var(--grand-surface-2)] transition-colors"
+              >
+                <span
+                  className="w-[11px] h-[11px] bg-center bg-contain bg-no-repeat opacity-70"
+                  style={{ backgroundImage: "url('/winxp/winflag.png')", imageRendering: '-webkit-optimize-contrast' }}
+                  aria-hidden
+                />
+                Windows wizard?
+              </button>
+            )}
             <ModeToggle />
             {onCancel && (
               <button
@@ -496,7 +512,7 @@ function initialState(cfg: GlobalConfig, defaultGonkaNode: string): State {
 const WIDE_STEPS: ReadonlySet<StepId> = new Set<StepId>(['provider', 'wallet-choice'])
 
 function contentMaxWidth(stepId: StepId): string {
-  return WIDE_STEPS.has(stepId) ? 'max-w-3xl' : 'max-w-lg'
+  return WIDE_STEPS.has(stepId) ? 'max-w-5xl' : 'max-w-lg'
 }
 
 function autoFillFirstModel(prev: State, list: ProviderModel[]): State {

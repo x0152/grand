@@ -21,6 +21,7 @@ import { ModeToggle } from './components/mode-toggle'
 import { api, setUnauthorizedHandler, UnauthorizedError } from './api'
 import { parseRoute, navigate, type PageId, type Route } from './router'
 import type { ChatSession, User } from './types'
+import { WinXpExperiment, WinXpToggle, useWinXpEnabled } from './pages/chat-winxp'
 
 type NavItem = { id: PageId; label: string; icon: typeof Sparkles }
 type NavSection = { title: string; items: NavItem[] }
@@ -60,6 +61,7 @@ export default function App() {
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0)
   /** Bumped after New chat so the sidebar list scrolls up to the selected session. */
   const [chatListScrollNonce, setChatListScrollNonce] = useState(0)
+  const [winXpEnabled, setWinXpEnabled] = useWinXpEnabled()
 
   useEffect(() => {
     const sync = () => setRoute(parseRoute())
@@ -161,7 +163,15 @@ export default function App() {
   if (!authChecked) return null
   if (!user) return <LoginPage onLogin={setUser} />
   if (needsSetup === null) return null
-  if (needsSetup) return <SetupWizard mode="full" onDone={() => setNeedsSetup(false)} />
+  if (needsSetup && !winXpEnabled) {
+    return (
+      <SetupWizard
+        mode="full"
+        onDone={() => setNeedsSetup(false)}
+        onSwitchToXp={() => setWinXpEnabled(true)}
+      />
+    )
+  }
 
   const renderNav = (items: NavItem[]) => items.map(item => (
     <button
@@ -232,7 +242,7 @@ export default function App() {
                 </div>
               </div>
             ))}
-            <div className="px-3 pb-3 pt-2">
+            <div className="px-3 pb-3 pt-2 flex flex-col gap-2">
               <a
                 href={REPO_URL}
                 target="_blank"
@@ -246,6 +256,7 @@ export default function App() {
                 </span>
                 <ExternalLink size={11} className="shrink-0 opacity-60 group-hover:opacity-100" />
               </a>
+              <WinXpToggle enabled={winXpEnabled} onToggle={setWinXpEnabled} />
             </div>
           </div>
         </div>
@@ -262,6 +273,14 @@ export default function App() {
         {route.page === 'setup' && <SetupPage />}
       </main>
       <Toaster />
+      {winXpEnabled && (
+        <WinXpExperiment
+          onExit={() => setWinXpEnabled(false)}
+          initialSessionId={activeSessionId}
+          inSetupMode={!!needsSetup}
+          onSetupDone={() => setNeedsSetup(false)}
+        />
+      )}
     </div>
     </LogoStateProvider>
   )

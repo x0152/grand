@@ -21,7 +21,7 @@ export function parseCommand(content: string): string {
 const STATUS_EXIT = /^status:\s*exit\s+(-?\d+)\s*(?:\([^)]*\))?\s*\n+output:\n?([\s\S]*)$/
 const STATUS_ERR = /^status:\s*error\s*\(([^)]+)\)\s*\n+output:\n?([\s\S]*)$/
 
-interface ParsedOutput {
+export interface ParsedOutput {
   exitCode: number | null
   body: string
   guardBlocks: GuardBlock[]
@@ -29,7 +29,7 @@ interface ParsedOutput {
   errorText?: string
 }
 
-function parseToolOutput(raw: string): ParsedOutput {
+export function parseToolOutput(raw: string): ParsedOutput {
   const text = raw ?? ''
   const m1 = text.match(STATUS_EXIT)
   if (m1) {
