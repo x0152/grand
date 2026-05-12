@@ -2,225 +2,71 @@
 
 Host for working with the web, images, and audio. The main tool is **Jina** (search + page reading). For complex automation — Playwright + headless Chromium. For recognition — OCR and ASR APIs.
 
+## Decide first — which tool fits the task?
+
+| Task | Tool |
+|---|---|
+| "What is X?" / "Find me a page about Y" | `web-search` |
+| "Read / summarise this page", "extract title / article body" | `jina-read <url>` |
+| "List the top N items from `https://…/trending` (or any listing/feed page)" | `jina-read <url>` |
+| "Get all links / table rows / repo names from a public page" | `jina-read <url>` |
+| "Fill a form, log in, click a button, wait for state" | Playwright |
+| "Screenshot / PDF the page" | `pw-screenshot` or `npx playwright pdf` |
+| "Intercept XHR/JSON the page emits" | Playwright |
+
+Hard rules:
+
+- **For *any* read/extract task on a public URL, START with `jina-read`.** It already renders JavaScript (SPAs, React, Vue, dynamic lists), returns clean Markdown, never needs `npm install`, and skips browser launch overhead.
+- **Do not reach for Playwright "because the page is dynamic" — `jina-read` handles JS.** Use Playwright only when you genuinely need to *interact* with the page.
+- **Do not write Node.js scripts that `require('playwright')` from a non-standard location.** Just use `pw-screenshot` for screenshots, or `node -e "..."` (NODE_PATH is preconfigured).
+
 ## System info
 
 - OS: Ubuntu 24.04 (Noble) — Microsoft Playwright image
-- User: `sandbox`
-- Home directory: `/home/sandbox`
-- Shell: `/bin/bash`
-- Node.js: preinstalled
-- Browser: Chromium (headless, driven via Playwright)
+- User: `sandbox` · Home: `/home/sandbox` · Shell: `/bin/bash`
+- Preinstalled: Node.js 20, Playwright 1.50 + Chromium, `web-search`, `jina-read`, `pw-screenshot`, `curl`, `wget`, `jq`, `cheerio`
 
-## Preinstalled software
-
-| Tool | Version | Description |
-|---|---|---|
-| **web-search** | — | **Web search via DuckDuckGo** (free, no key required) |
-| **jina-read** | — | **Read web pages as Markdown** (free, no key required) |
-| Playwright | 1.50.0 | Browser automation (forms, clicks, navigation) |
-| Chromium | bundled | Headless browser |
-| Node.js | 20.x | JavaScript runtime |
-| npm / npx | bundled | Package manager |
-| curl, wget | system | HTTP utilities |
-
-## Environment variables
+Environment variables:
 
 | Variable | Description |
 |---|---|
-| `OCR_API_URL` | URL of the OCR service (recognize text in images) |
-| `ASR_API_URL` | URL of the ASR service (speech-to-text from audio) |
+| `OCR_API_URL` | URL of the OCR service (recognize text in images), if configured |
+| `ASR_API_URL` | URL of the ASR service (speech-to-text), if configured |
 
-## Web search
+## Examples
 
-To search for information use `web-search` (DuckDuckGo, free, no API key):
-```bash
-web-search <query>
-```
+Pick the smallest tool that does the job — almost always one of the first three.
 
-Example:
+### 1. Search the web
+
 ```bash
 web-search 'how to set up nginx reverse proxy'
 ```
 
-Results are returned as Markdown: title, link, snippet.
+Returns Markdown: title, link, snippet. Pipe to `head -n 30` if you only need the first few hits.
 
-## Reading web pages
-
-To extract page content as clean Markdown use `jina-read`:
-```bash
-jina-read <url>
-```
-
-Example:
-```bash
-jina-read https://docs.python.org/3/tutorial/index.html
-```
-
-Jina Reader renders JavaScript, so it works with SPA sites (React, Vue, etc.).
-
-### When to use what
-
-- `web-search` → `jina-read` — **the main flow**: first find, then read the relevant page.
-- `jina-read` — quickly read text from a page, grab an article or documentation.
-- Playwright — complex automation: filling forms, clicking, navigation, screenshots, request interception.
-
-## Execution rules
-
-Use these rules to avoid unnecessary failures and retries:
-
-1. **Default to text tools first**
-   - For extraction tasks ("get title/url", "read article", "summarize page"), use `jina-read` or `curl` + parser.
-   - Do **not** start with Playwright unless the task needs interaction or visual rendering.
-
-2. **Use Playwright only when required**
-   - Required cases: login flows, clicking, submitting forms, waiting for post-click state, screenshots, JS-only content that text tools cannot read.
-
-3. **Prefer script files over long one-liners**
-   - If the command is longer than a few lines, write it to `/home/sandbox/<name>.js` and run `node /home/sandbox/<name>.js`.
-   - This avoids shell escaping issues and makes debugging easier.
-
-4. **Never put `$$eval` inside double-quoted shell strings**
-   - In `node -e "..."`, shell expands `$$` to PID and breaks Playwright code.
-   - Either:
-     - use a script file (`cat << 'SCRIPT' ...`), or
-     - wrap with single quotes and avoid shell interpolation.
-
-5. **Avoid runtime installs unless explicitly requested**
-   - Core dependencies and Playwright browser binaries are preinstalled in this image.
-   - Do not run `npm install` / `npx playwright install` unless the user asked for extra packages.
-
-## OCR — text recognition in images
-
-If `OCR_API_URL` is set, you can recognize text in an image via curl:
+### 2. Read any page (incl. listings, SPA, trending feeds)
 
 ```bash
-curl -sS "${OCR_API_URL}/ocr" \
-  -F "file=@/home/sandbox/image.png" \
-  | jq -r '.text'
+jina-read https://github.com/trending
 ```
 
-With an image URL (download + OCR):
-```bash
-curl -sS -L -o /tmp/photo.jpg "https://example.com/photo.jpg"
-curl -sS "${OCR_API_URL}/ocr" \
-  -F "file=@/tmp/photo.jpg" \
-  | jq -r '.text'
-```
+Returns the page as clean Markdown — already rendered with JavaScript executed. Use this for "top N repos", "headlines from HackerNews", "extract article body", search result pages, RSS-style feeds, etc.
 
-Supported formats: PNG, JPEG, WebP, BMP, TIFF.
-
-The API returns JSON:
-```json
-{"text": "Recognized text..."}
-```
-
-## ASR — speech-to-text from audio
-
-If `ASR_API_URL` is set, you can transcribe an audio file:
+### 3. Screenshot or PDF a page
 
 ```bash
-curl -sS "${ASR_API_URL}/transcribe" \
-  -F "file=@/home/sandbox/audio.ogg" \
-  | jq -r '.text'
-```
-
-With an audio URL (download + ASR):
-```bash
-curl -sS -L -o /tmp/voice.ogg "https://example.com/voice.ogg"
-curl -sS "${ASR_API_URL}/transcribe" \
-  -F "file=@/tmp/voice.ogg" \
-  | jq -r '.text'
-```
-
-Supported formats: OGG, MP3, WAV, M4A, FLAC.
-
-The API returns JSON:
-```json
-{"text": "Recognized text from audio..."}
-```
-
-## Page screenshot
-
-To take a screenshot use `pw-screenshot`:
-```bash
-pw-screenshot <url> <output.png>
-```
-
-Example:
-```bash
-pw-screenshot https://example.com screenshot.png
-```
-
-The command waits for the page to fully load (`networkidle` — no network requests for 500ms) before taking the screenshot.
-
-### Extra options
-
-With a specific viewport size:
-```bash
-pw-screenshot --viewport=1920x1080 https://example.com full.png
-```
-
-Full-page screenshot (including scroll):
-```bash
-pw-screenshot --full-page https://example.com fullpage.png
-```
-
-### Save page as PDF
-```bash
+pw-screenshot https://example.com out.png            # default 1280×720
+pw-screenshot --full-page https://example.com out.png # full scroll
 npx playwright pdf https://example.com page.pdf
 ```
 
-### Open a page and get its title
+### 4. Playwright — only when you need to interact
+
+Canonical pattern (run from a file, not a one-liner):
+
 ```bash
-node -e "
-const { chromium } = require('playwright');
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.goto('https://example.com');
-  console.log(await page.title());
-  await browser.close();
-})();
-"
-```
-
-## Playwright: working with pages (Node.js scripts)
-
-`playwright` and Chromium are preinstalled and available without extra setup.
-
-### Extract text from a page
-```bash
-node -e "
-const { chromium } = require('playwright');
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.goto('https://example.com');
-  const text = await page.textContent('body');
-  console.log(text);
-  await browser.close();
-})();
-"
-```
-
-### Extract all links from a page
-```bash
-node -e "
-const { chromium } = require('playwright');
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.goto('https://example.com');
-  const links = await page.\$\$eval('a[href]', els => els.map(a => ({ text: a.textContent.trim(), href: a.href })));
-  console.log(JSON.stringify(links, null, 2));
-  await browser.close();
-})();
-"
-```
-
-### Fill a form and click a button
-```bash
-node -e "
+cat > /home/sandbox/login.js << 'SCRIPT'
 const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch();
@@ -230,110 +76,36 @@ const { chromium } = require('playwright');
   await page.fill('input[name=password]', 'pass');
   await page.click('button[type=submit]');
   await page.waitForLoadState('networkidle');
-  console.log('URL after login:', page.url());
-  await browser.close();
-})();
-"
-```
-
-### Wait for an element and read its content
-```bash
-node -e "
-const { chromium } = require('playwright');
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.goto('https://example.com');
-  await page.waitForSelector('.result');
-  const content = await page.textContent('.result');
-  console.log(content);
-  await browser.close();
-})();
-"
-```
-
-### Intercept network requests (API monitoring)
-```bash
-node -e "
-const { chromium } = require('playwright');
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  page.on('response', resp => {
-    if (resp.url().includes('/api/')) {
-      console.log(resp.status(), resp.url());
-    }
-  });
-  await page.goto('https://example.com');
-  await page.waitForTimeout(3000);
-  await browser.close();
-})();
-"
-```
-
-## Reusable scripts
-
-Instead of long one-liners you can store scripts in files:
-
-```bash
-cat > /home/sandbox/scrape.js << 'SCRIPT'
-const { chromium } = require('playwright');
-
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  const url = process.argv[2] || 'https://example.com';
-  await page.goto(url);
-  console.log(JSON.stringify({
-    title: await page.title(),
-    url: page.url(),
-    text: await page.textContent('body')
-  }, null, 2));
+  console.log(page.url());
   await browser.close();
 })();
 SCRIPT
-
-node /home/sandbox/scrape.js https://example.com
+node /home/sandbox/login.js
 ```
 
-## Installing additional npm packages
+Notes:
+
+- Prefer a script file over `node -e "..."` — the shell escaping (`$$eval`, quotes) frequently corrupts inline JS.
+- Do **not** run `npm install playwright` or `npx playwright install`. The module and Chromium are preinstalled.
+
+### 5. OCR — read text from an image
 
 ```bash
-npm install -g cheerio    # HTML parser
-npm install -g puppeteer  # alternative to Playwright
+curl -sS "${OCR_API_URL}/ocr" -F "file=@/home/sandbox/image.png" | jq -r '.text'
 ```
 
-In most cases, this step is unnecessary because `playwright` and `cheerio` are already installed in the image.
+Supports PNG, JPEG, WebP, BMP, TIFF. Skip if `OCR_API_URL` is unset.
+
+### 6. ASR — transcribe audio
+
+```bash
+curl -sS "${ASR_API_URL}/transcribe" -F "file=@/home/sandbox/audio.ogg" | jq -r '.text'
+```
+
+Supports OGG, MP3, WAV, M4A, FLAC. Skip if `ASR_API_URL` is unset.
 
 ## Troubleshooting
 
-### `Cannot find module 'playwright'`
-
-`NODE_PATH` is preconfigured in this sandbox. If you still see this error, run:
-
-```bash
-node -e "console.log(require.resolve('playwright'))"
-```
-
-If resolution fails, the image is likely outdated and should be rebuilt.
-
-### `Executable doesn't exist ... chromium ...`
-
-Chromium is preinstalled in `/ms-playwright`. If this appears, verify env:
-
-```bash
-echo "$PLAYWRIGHT_BROWSERS_PATH"
-```
-
-If empty, set it for the current shell:
-
-```bash
-export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-```
-
-## Limitations
-
-- Headless mode only (no graphical display).
-- Only Chromium is available. Firefox and WebKit can be installed: `npx playwright install firefox`.
-- For heavy tasks (video rendering, large PDFs) mind the container's memory limits.
-- Data is not persistent — screenshots and files are deleted when the container restarts.
+- `Cannot find module 'playwright'` — env var was not inherited. Add `process.env.NODE_PATH = '/opt/sandbox-node/node_modules'; require('module')._initPaths();` at the top of the script, or just use `pw-screenshot` / one of the helper binaries instead.
+- `Executable doesn't exist ... chromium ...` — set `export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright` before running.
+- Headless mode only. Data is not persistent — files in `/home/sandbox` are wiped on container restart.

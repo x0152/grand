@@ -33,12 +33,14 @@ export function TelegramStep({
   const [bot, setBot] = useState<TelegramWizardBot | null>(null)
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState('')
+  const [statusError, setStatusError] = useState('')
   const [waiting, setWaiting] = useState(false)
   const initialTokenRef = useRef(token)
 
   const reset = useCallback(() => {
     setBot(null)
     setVerifyError('')
+    setStatusError('')
     setWaiting(false)
     onChangeLinkedUser(null)
   }, [onChangeLinkedUser])
@@ -52,6 +54,7 @@ export function TelegramStep({
       }
       setVerifying(true)
       setVerifyError('')
+      setStatusError('')
       try {
         const result = await api.telegram.verify(trimmed)
         setBot(result)
@@ -74,6 +77,7 @@ export function TelegramStep({
   useEffect(() => {
     if (skip || !bot || !token.trim() || linkedUser) {
       setWaiting(false)
+      setStatusError('')
       return
     }
     setWaiting(true)
@@ -82,11 +86,15 @@ export function TelegramStep({
       try {
         const res = await api.telegram.status(token.trim())
         if (cancelled) return
+        setStatusError('')
         if (res.user) {
           onChangeLinkedUser(res.user)
           setWaiting(false)
         }
-      } catch {}
+      } catch (e) {
+        if (cancelled) return
+        setStatusError(e instanceof Error ? e.message : 'Could not check Telegram status')
+      }
     }
     void tick()
     const id = setInterval(tick, 2500)
@@ -122,6 +130,12 @@ export function TelegramStep({
       {verifyError && !skip && (
         <AppleNote tone="danger" title="Couldn’t reach the bot">
           {verifyError}
+        </AppleNote>
+      )}
+
+      {statusError && bot && !linkedUser && !skip && (
+        <AppleNote tone="danger" title="Couldn’t check Telegram status">
+          {statusError}
         </AppleNote>
       )}
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../api'
 import type { ChatSession } from '../../types'
 import { useIconPositions, type IconPosition } from './useIconPositions'
+import { WinXpHourglass } from './WinXpHourglass'
 
 type IconKind =
   | 'newchat'
@@ -28,6 +29,10 @@ interface DesktopIcon {
   onOpen?: () => void
   /** When true the icon shows the chat-icon glyph and label */
   isSession?: boolean
+  /** When true, paints the XP "busy" spinner badge in the lower-right
+   *  corner of the icon glyph (used for chat sessions that are currently
+   *  streaming a response). */
+  busy?: boolean
 }
 
 interface Props {
@@ -35,6 +40,7 @@ interface Props {
   onOpenSession: (session: ChatSession) => void
   onNewChat: () => void
   onOpenNotepad: () => void
+  onOpenGonkaTxt: () => void
   onOpenWizard: () => void
   onExit: () => void
   onContextMenu: (e: React.MouseEvent) => void
@@ -73,6 +79,7 @@ export function WinXpDesktop({
   onOpenSession,
   onNewChat,
   onOpenNotepad,
+  onOpenGonkaTxt,
   onOpenWizard,
   onExit,
   onContextMenu,
@@ -111,6 +118,7 @@ export function WinXpDesktop({
       // "New ▸ Text Document". Uses the .txt file glyph (small Notepad
       // pad icon), distinct from the Notepad app glyph in the title bar.
       { id: '__notepad', kind: 'notepad', label: 'New Text Document.txt', onOpen: onOpenNotepad },
+      { id: '__gonka_txt', kind: 'notepad', label: 'gonka.txt', onOpen: onOpenGonkaTxt },
       wizardIcon,
       { id: BIN_ID, kind: 'bin', label: 'Recycle Bin' },
     ]
@@ -124,9 +132,19 @@ export function WinXpDesktop({
       label: s.title?.trim() || 'Untitled chat',
       onOpen: () => onOpenSession(s),
       isSession: true,
+      busy: !!s.active,
     }))
     return [...fixed, ...sessionIcons]
-  }, [sessions, onOpenSession, onNewChat, onOpenNotepad, onOpenWizard, onExit, hideAllIcons])
+  }, [
+    sessions,
+    onOpenSession,
+    onNewChat,
+    onOpenNotepad,
+    onOpenGonkaTxt,
+    onOpenWizard,
+    onExit,
+    hideAllIcons,
+  ])
 
   const allIds = useMemo(() => icons.map(i => i.id), [icons])
   const { positions, setIconPosition, resetPositions } = useIconPositions(allIds)
@@ -159,6 +177,7 @@ export function WinXpDesktop({
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return
     if (e.target !== e.currentTarget) return
+    e.preventDefault()
     setSelectedId(null)
     const rect = e.currentTarget.getBoundingClientRect()
     setMarquee({
@@ -212,6 +231,7 @@ export function WinXpDesktop({
             // Explorer ships.
             kindOverride={isBin && binHover ? 'bin-full' : undefined}
             cellRef={isBin ? binCellRef : undefined}
+            busy={ico.busy}
             onSelect={() => setSelectedId(ico.id)}
             onMove={p => setIconPosition(ico.id, p)}
             // Drag wiring — only session icons can be dropped onto the
@@ -271,6 +291,7 @@ function DesktopIconCell({
   kindOverride,
   cellRef,
   isSession,
+  busy,
   onSelect,
   onMove,
   onDragMove,
@@ -285,6 +306,8 @@ function DesktopIconCell({
    *  it during a drag (used for the drag-to-bin drop target). */
   cellRef?: React.RefObject<HTMLDivElement | null>
   isSession?: boolean
+  /** Paint the XP "busy" spinner over the icon glyph. */
+  busy?: boolean
   onSelect: () => void
   /** Commit a new committed position. Only fires on pointer-up — the
    *  XP shell never moves the real icon while you drag, only on drop. */
@@ -303,6 +326,7 @@ function DesktopIconCell({
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return
+    e.preventDefault()
     e.stopPropagation()
     onSelect()
     dragRef.current = {
@@ -363,7 +387,14 @@ function DesktopIconCell({
           icon.onOpen?.()
         }}
       >
-        <div className="xp-icon-glyph" data-kind={glyphKind} aria-hidden />
+        <div className="xp-icon-glyph-wrap">
+          <div className="xp-icon-glyph" data-kind={glyphKind} aria-hidden />
+          {busy && (
+            <span className="xp-icon-busy" aria-label="Generating" title="Generating">
+              <WinXpHourglass size={14} title="Generating" />
+            </span>
+          )}
+        </div>
         <div className="xp-icon-label">{icon.label}</div>
       </div>
       {ghost && (
@@ -376,7 +407,14 @@ function DesktopIconCell({
           style={{ left: position.left + ghost.dx, top: position.top + ghost.dy }}
           aria-hidden
         >
-          <div className="xp-icon-glyph" data-kind={glyphKind} aria-hidden />
+          <div className="xp-icon-glyph-wrap">
+            <div className="xp-icon-glyph" data-kind={glyphKind} aria-hidden />
+            {busy && (
+              <span className="xp-icon-busy" aria-hidden>
+                <WinXpHourglass size={14} title="" />
+              </span>
+            )}
+          </div>
           <div className="xp-icon-label">{icon.label}</div>
         </div>
       )}

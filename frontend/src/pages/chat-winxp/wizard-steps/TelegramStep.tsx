@@ -15,6 +15,7 @@ export function TelegramStep({ ctrl }: Props) {
   const [bot, setBot] = useState<TelegramWizardBot | null>(null)
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState('')
+  const [statusError, setStatusError] = useState('')
   const [waiting, setWaiting] = useState(false)
   const initialTokenRef = useRef(tgToken)
   // After a Re-link, the backend still remembers the previous user
@@ -34,6 +35,7 @@ export function TelegramStep({ ctrl }: Props) {
   const reset = useCallback(() => {
     setBot(null)
     setVerifyError('')
+    setStatusError('')
     setWaiting(false)
     setIgnoredUserId(null)
     ctrlRef.current.update('tgLinkedUser', null)
@@ -53,6 +55,7 @@ export function TelegramStep({ ctrl }: Props) {
       }
       setVerifying(true)
       setVerifyError('')
+      setStatusError('')
       try {
         const result = await api.telegram.verify(trimmed)
         setBot(result)
@@ -82,6 +85,7 @@ export function TelegramStep({ ctrl }: Props) {
   useEffect(() => {
     if (tgSkip || !bot || !tgToken.trim() || tgLinkedUser) {
       setWaiting(false)
+      setStatusError('')
       return
     }
     setWaiting(true)
@@ -90,6 +94,7 @@ export function TelegramStep({ ctrl }: Props) {
       try {
         const res = await api.telegram.status(tgToken.trim())
         if (cancelled) return
+        setStatusError('')
         if (res.user) {
           // After a Re-link the backend still echoes the previous
           // user — ignore that id until a different account sends
@@ -100,7 +105,10 @@ export function TelegramStep({ ctrl }: Props) {
           ctrlRef.current.update('tgLinkedUser', res.user)
           setWaiting(false)
         }
-      } catch {}
+      } catch (e) {
+        if (cancelled) return
+        setStatusError(e instanceof Error ? e.message : 'Could not check Telegram status')
+      }
     }
     void tick()
     const id = setInterval(tick, 2500)
@@ -156,6 +164,10 @@ export function TelegramStep({ ctrl }: Props) {
 
       {bot && !tgLinkedUser && !tgSkip && (
         <BotCodeBlock bot={bot} waiting={waiting} />
+      )}
+
+      {statusError && bot && !tgLinkedUser && !tgSkip && (
+        <XpStatusLine tone="error">{statusError}</XpStatusLine>
       )}
 
       {bot && tgLinkedUser && !tgSkip && (

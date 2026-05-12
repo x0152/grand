@@ -74,5 +74,40 @@ fi
 
 NMAP_ARGS=(-Pn -n -T4 --open --max-retries 2 --min-rate 300 --host-timeout "${HOST_TIMEOUT}s" "${EXTRA[@]}")
 
+detect_interception() {
+    local probe succeeded=()
+    for probe in "1.1.1.1 49999" "8.8.8.8 49998"; do
+        # shellcheck disable=SC2086
+        if timeout 1 nc -z -w 1 $probe 2>/dev/null; then
+            succeeded+=("$(printf '%s' "$probe" | tr ' ' ':')")
+        fi
+    done
+    if [ "${#succeeded[@]}" -ge 2 ]; then
+        printf '%s, %s' "${succeeded[0]}" "${succeeded[1]}"
+        return 0
+    fi
+    return 1
+}
+
+if INTERCEPT_TARGETS=$(detect_interception); then
+    cat <<EOF >&2
+============================================================
+WARNING: outbound TCP appears intercepted by a local proxy/VPN.
+
+Canary probes to ${INTERCEPT_TARGETS} both completed a TCP handshake.
+Those services do NOT listen on those ports — a middlebox between this
+sandbox and the internet is answering SYN-ACK on arbitrary ports.
+
+The nmap output below is NOT trustworthy: ports shown as 'open' may be the
+proxy responding, not the real target.
+
+Likely cause: host VPN, transparent proxy, or DPI gateway. Fix on the host
+(disable VPN, add a direct route for the target IP, or use a network that
+doesn't route through the middlebox). Do NOT present these scan results to
+the user as real — surface the warning instead.
+============================================================
+EOF
+fi
+
 exec timeout --foreground --kill-after 10 "$TOTAL_TIMEOUT" \
     nmap "${NMAP_ARGS[@]}" "${PORT_ARGS[@]}" "$HOST"

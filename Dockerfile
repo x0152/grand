@@ -1,6 +1,6 @@
 FROM golang:1.25-alpine
 
-ARG INFERENCED_VERSION=v0.2.11
+ARG INFERENCED_VERSION=v0.2.12
 ARG TARGETARCH
 
 RUN apk add --no-cache git ca-certificates curl unzip libc6-compat

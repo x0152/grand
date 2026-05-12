@@ -1,9 +1,21 @@
 import { useEffect, useRef } from 'react'
+import type { StepId } from '../wizard/types'
+import { openExternal } from '../wizard/utils'
 import { useDraggable, type Position } from './useDraggable'
 import type { Size } from './useResizable'
 import { useWizardController } from './wizard-steps/useWizardController'
 import { STEP_REGISTRY } from './wizard-steps'
 import { WizardFooter } from './wizard-steps/WizardFooter'
+
+const GONKA_LINK_STEPS: ReadonlySet<StepId> = new Set<StepId>([
+  'provider',
+  'wallet-choice',
+  'wallet-create',
+  'wallet-import',
+  'wallet-reveal',
+  'wallet-balance',
+  'gonka-models',
+])
 
 interface Props {
   position: Position
@@ -40,6 +52,7 @@ export function WinXpWizard({
   const stepDef = STEP_REGISTRY[ctrl.stepId]
   const StepComponent = stepDef.Component
   const showNext = !stepDef.hideNext
+  const showGonkaLink = GONKA_LINK_STEPS.has(ctrl.stepId)
 
   return (
     <div
@@ -61,7 +74,23 @@ export function WinXpWizard({
           </div>
         </div>
         <div className="window-body xp-wizard-body">
-          <div className="xp-wizard-sidebar" role="presentation" aria-hidden />
+          <div className="xp-wizard-sidebar" role="presentation">
+            {showGonkaLink && (
+              <a
+                className="xp-wizard-sidebar-link"
+                href="https://gonka.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Learn about the Gonka decentralized inference network"
+                onMouseDown={e => e.stopPropagation()}
+                onClick={openExternal('https://gonka.ai')}
+              >
+                <span className="xp-wizard-sidebar-link-eyebrow">Need a primer?</span>
+                <span className="xp-wizard-sidebar-link-title">What is Gonka?</span>
+                <span className="xp-wizard-sidebar-link-host">gonka.ai &rsaquo;</span>
+              </a>
+            )}
+          </div>
           <div className="xp-wizard-content">
             {stepDef.heading && (
               <h2 className="xp-wizard-step-heading">{stepDef.heading}</h2>

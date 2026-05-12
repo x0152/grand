@@ -58,6 +58,10 @@ export function WinXpCmdTerminal({
 }: Props) {
   const [log, setLog] = useState<SessionLog | null>(null)
   const screenRef = useRef<HTMLDivElement>(null)
+  // Auto-scroll only when the user is already pinned to the bottom.
+  // Once they scroll up to read earlier output, we stop yanking the
+  // viewport back to the tail on every poll/update.
+  const stickToBottomRef = useRef(true)
   const dragHandle = useDraggable(position, onMove, onActivate)
   const resizeRight = useResizable(size, onResize, { edge: 'right' }, onActivate)
   const resizeBottom = useResizable(size, onResize, { edge: 'bottom' }, onActivate)
@@ -98,8 +102,16 @@ export function WinXpCmdTerminal({
 
   useEffect(() => {
     const el = screenRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    if (!el) return
+    if (stickToBottomRef.current) el.scrollTop = el.scrollHeight
   }, [log])
+
+  const handleScreenScroll = () => {
+    const el = screenRef.current
+    if (!el) return
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+    stickToBottomRef.current = distance < 24
+  }
 
   return (
     <div
@@ -138,7 +150,11 @@ export function WinXpCmdTerminal({
           </div>
         </div>
         <div className="window-body">
-          <div ref={screenRef} className="xp-cmd-screen">
+          <div
+            ref={screenRef}
+            className="xp-cmd-screen"
+            onScroll={handleScreenScroll}
+          >
             <span className="cmd-meta">
 {`Microsoft Windows XP [Version 5.1.2600]
 (C) Copyright 1985-2001 Microsoft Corp.
@@ -359,9 +375,11 @@ function RunBlock({ group, sshLike }: { group: { kind: 'run'; command: LogEntry;
 
   return (
     <div className="cmd-run">
-      <span className="cmd-meta">[{fmtTime(group.command.timestamp)}]</span>{' '}
-      <span className="cmd-prompt">{promptMark}</span>{' '}
-      <span className="cmd-cmd">{command}</span>
+      <span className="cmd-run-head">
+        <span className="cmd-meta">[{fmtTime(group.command.timestamp)}]</span>{' '}
+        <span className="cmd-prompt">{promptMark}</span>{' '}
+        <span className="cmd-cmd">{command}</span>
+      </span>
       {'\n'}
       {parsed && parsed.body && (
         <span className={isError || exitFail ? 'cmd-error' : 'cmd-out'}>
@@ -373,7 +391,7 @@ function RunBlock({ group, sshLike }: { group: { kind: 'run'; command: LogEntry;
         <span className="cmd-error">{parsed.errorText}{'\n'}</span>
       )}
       {output && (
-        <span className={exitFail || isError ? 'cmd-error' : 'cmd-ok'}>
+        <span className={`cmd-run-foot ${exitFail || isError ? 'cmd-error' : 'cmd-ok'}`}>
           [
           {parsed?.exitCode != null
             ? `exit ${parsed.exitCode}`
@@ -402,7 +420,7 @@ function ThoughtBlock({ entry }: { entry: LogEntry }) {
     <div className="cmd-thought">
       <span className="cmd-meta">[{fmtTime(entry.timestamp)}] REM agent:</span>
       {'\n'}
-      <span className="cmd-meta">{entry.content.split('\n').map(l => `:: ${l}`).join('\n')}{'\n'}</span>
+      <span className="cmd-thought-body">{entry.content.split('\n').map(l => `:: ${l}`).join('\n')}{'\n'}</span>
     </div>
   )
 }

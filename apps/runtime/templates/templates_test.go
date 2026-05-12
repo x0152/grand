@@ -66,6 +66,28 @@ func TestLookupReturnsKnownBuiltin(t *testing.T) {
 	}
 }
 
+func TestEmailTemplateAllowsPrivilegeEscalation(t *testing.T) {
+	m, ok := Lookup("email")
+	if !ok {
+		t.Fatal("email must be in builtinMeta")
+	}
+	if !m.AllowPrivilegeEscalation {
+		t.Error("email metadata must declare AllowPrivilegeEscalation so sudo -> emailsec works under no-new-privileges")
+	}
+	out, err := Builtin()
+	if err != nil {
+		t.Fatalf("Builtin: %v", err)
+	}
+	for _, tpl := range out {
+		if tpl.Name == "email" && !tpl.AllowPrivilegeEscalation {
+			t.Error("email Template must propagate AllowPrivilegeEscalation from metadata")
+		}
+		if tpl.Name != "email" && tpl.AllowPrivilegeEscalation {
+			t.Errorf("%s template must keep AllowPrivilegeEscalation=false", tpl.Name)
+		}
+	}
+}
+
 func TestBuiltinRendersAllConfigured(t *testing.T) {
 	out, err := Builtin()
 	if err != nil {

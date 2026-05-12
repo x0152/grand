@@ -5,8 +5,9 @@ import { WinXpDesktop, useChatSessions } from './WinXpDesktop'
 import { WinXpChatWindow } from './WinXpChatWindow'
 import { WinXpCmdTerminal } from './WinXpCmdTerminal'
 import { WinXpContextMenu, type MenuItem } from './WinXpContextMenu'
-import { WinXpNotepad, UNTITLED1_INITIAL_TEXT } from './WinXpNotepad'
+import { WinXpNotepad, UNTITLED1_INITIAL_TEXT, GONKA_TXT_INITIAL_TEXT } from './WinXpNotepad'
 import { WinXpConfirmDialog } from './WinXpConfirmDialog'
+import { WinXpHourglass } from './WinXpHourglass'
 import { WinXpWizard } from './WinXpWizard'
 import './winxp.css'
 
@@ -48,6 +49,7 @@ interface OpenCmd {
 interface OpenNotepad {
   kind: 'notepad'
   id: string
+  doc: 'untitled' | 'gonka'
   title: string
   content: string
   position: Position
@@ -83,6 +85,12 @@ const WIZARD_BASE_SIZE: Size = { width: 800, height: 600 }
 const TASKBAR_H = 30
 const NOTEPAD_ID = '__notepad'
 const WIZARD_ID = '__wizard'
+
+type NotepadDoc = 'untitled' | 'gonka'
+const NOTEPAD_DOCS: Record<NotepadDoc, { title: string; content: string }> = {
+  untitled: { title: 'New Text Document', content: UNTITLED1_INITIAL_TEXT },
+  gonka: { title: 'gonka.txt', content: GONKA_TXT_INITIAL_TEXT },
+}
 
 /**
  * Self-contained Windows-XP-themed shell for the chat experience. Mounts
@@ -160,6 +168,17 @@ export function WinXpExperiment({ onExit, initialSessionId, inSetupMode = false,
   }, [])
 
   const focused = zStack.length ? zStack[zStack.length - 1] : null
+
+  useEffect(() => {
+    const focusedChat = focused
+      ? windows.find(w => w.id === focused && !w.minimized)
+      : undefined
+    if (!focusedChat) return
+    const path = `/chat/${focusedChat.session.id}`
+    if (window.location.pathname === path) return
+    window.history.replaceState(null, '', path)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, [focused, windows])
 
   const bringToFront = useCallback((id: string) => {
     setZStack(prev => {
@@ -301,22 +320,30 @@ export function WinXpExperiment({ onExit, initialSessionId, inSetupMode = false,
     )
   }, [])
 
-  const openNotepad = useCallback(() => {
-    setNotepad(prev => {
-      if (prev) return { ...prev, minimized: false }
-      return {
-        kind: 'notepad',
-        id: NOTEPAD_ID,
-        title: 'New Text Document',
-        content: UNTITLED1_INITIAL_TEXT,
-        position: { left: 140, top: 90 },
-        size: clampToViewport(DEFAULT_NOTEPAD_SIZE),
-        minimized: false,
-        maximized: false,
-      }
-    })
-    bringToFront(NOTEPAD_ID)
-  }, [bringToFront])
+  const openNotepad = useCallback(
+    (doc: NotepadDoc = 'untitled') => {
+      const preset = NOTEPAD_DOCS[doc]
+      setNotepad(prev => {
+        if (prev) {
+          if (prev.doc === doc) return { ...prev, minimized: false }
+          return { ...prev, doc, title: preset.title, content: preset.content, minimized: false }
+        }
+        return {
+          kind: 'notepad',
+          id: NOTEPAD_ID,
+          doc,
+          title: preset.title,
+          content: preset.content,
+          position: { left: 140, top: 90 },
+          size: clampToViewport(DEFAULT_NOTEPAD_SIZE),
+          minimized: false,
+          maximized: false,
+        }
+      })
+      bringToFront(NOTEPAD_ID)
+    },
+    [bringToFront],
+  )
 
   const closeNotepad = useCallback(() => {
     setNotepad(null)
@@ -459,7 +486,8 @@ export function WinXpExperiment({ onExit, initialSessionId, inSetupMode = false,
         sessions={sessions}
         onOpenSession={openChat}
         onNewChat={handleNewChat}
-        onOpenNotepad={openNotepad}
+        onOpenNotepad={() => openNotepad('untitled')}
+        onOpenGonkaTxt={() => openNotepad('gonka')}
         onOpenWizard={openWizard}
         onExit={onExit}
         onContextMenu={showDesktopMenu}
@@ -610,29 +638,43 @@ export function WinXpExperiment({ onExit, initialSessionId, inSetupMode = false,
         </div>
 
         <div className="xp-tasks">
-          {windows.map(w => (
-            <button
-              key={w.id}
-              className={`xp-task ${focused === w.id && !w.minimized ? 'active' : ''}`}
-              onClick={() => {
-                if (w.minimized) {
-                  setWindows(prev =>
-                    prev.map(x => (x.id === w.id ? { ...x, minimized: false } : x)),
-                  )
-                  bringToFront(w.id)
-                } else if (focused === w.id) {
-                  minimizeWindow(w.id)
-                } else {
-                  bringToFront(w.id)
-                }
-              }}
-            >
-              <img className="xp-task-icon" src="/winxp/outlook.png" alt="" draggable={false} />
-              <span className="xp-task-label">
-                {w.session.title || 'Untitled chat'}
-              </span>
-            </button>
-          ))}
+          {windows.map(w => {
+            // Read the *current* session.active flag from the freshly
+            // polled session list — `w.session` is a frozen copy from
+            // the moment the window opened, so it never refreshes on its
+            // own. This is what drives the busy spinner on the taskbar
+            // button while a minimized chat is streaming a response.
+            const live = sessions.find(s => s.id === w.session.id)
+            const busy = !!live?.active
+            return (
+              <button
+                key={w.id}
+                className={`xp-task ${focused === w.id && !w.minimized ? 'active' : ''} ${busy ? 'busy' : ''}`}
+                onClick={() => {
+                  if (w.minimized) {
+                    setWindows(prev =>
+                      prev.map(x => (x.id === w.id ? { ...x, minimized: false } : x)),
+                    )
+                    bringToFront(w.id)
+                  } else if (focused === w.id) {
+                    minimizeWindow(w.id)
+                  } else {
+                    bringToFront(w.id)
+                  }
+                }}
+              >
+                <img className="xp-task-icon" src="/winxp/outlook.png" alt="" draggable={false} />
+                <span className="xp-task-label">
+                  {w.session.title || 'Untitled chat'}
+                </span>
+                {busy && (
+                  <span className="xp-task-busy" aria-label="Generating">
+                    <WinXpHourglass size={14} title="Generating" />
+                  </span>
+                )}
+              </button>
+            )
+          })}
           {notepad && (
             <button
               className={`xp-task ${focused === notepad.id && !notepad.minimized ? 'active' : ''}`}

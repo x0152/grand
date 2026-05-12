@@ -53,6 +53,60 @@ All wrappers enforce hard timeouts so nothing hangs.
 
 Running any command with no arguments prints its usage.
 
+## Wrappers first, raw tools second
+
+For any check covered by a `net-*` wrapper — **use the wrapper**. The wrappers
+enforce hard timeouts so the command can never hang. Reach for raw `nmap`,
+`curl`, `openssl`, `ffuf`, etc. only when the wrapper doesn't cover what you
+need, and always wrap the raw call in `timeout` yourself.
+
+## Interception-canary contract (net-port)
+
+Before each scan, `net-port` quickly probes two well-known public anycast
+resolvers — Cloudflare `1.1.1.1` and Google `8.8.8.8` — on random high ports
+that neither service actually listens on. If BOTH handshakes succeed, a
+host-side middlebox (VPN, transparent proxy, DPI) is answering SYN-ACK on
+every port and the upcoming nmap output is *not* trustworthy.
+
+(Reserved RFC 5737 docs IPs would feel cleaner, but in practice many VPN
+routing tables drop them entirely — the probe just times out and we miss
+the interception. Using routable public IPs forces any host-side proxy to
+engage with the SYN.)
+
+When the canary trips, `net-port` prints a `WARNING: outbound TCP appears
+intercepted by a local proxy/VPN ...` block to **stderr** before the nmap
+header. Treat that warning as authoritative:
+
+- Do NOT show the port table as a real result to the user.
+- Acknowledge the network problem in your final answer (e.g. `Status:
+  network-intercepted — scan unreliable, see warning above`).
+- Suggest the user disable the VPN / add a direct route for the target.
+
+## Quick-scan recipe (with retry + partial-result protocol)
+
+For "quick" port checks follow this pattern — it keeps the whole interaction
+predictable instead of dragging into 2+ minute `nmap -sV` retries:
+
+1. **Primary attempt** — `net-port <host> top100` (≤ 60s). For service names,
+   prefer 1–3 follow-up `net-banner <host> <port>` calls over a second nmap
+   pass.
+2. **At most one retry** — if step 1 times out, retry once with a narrower
+   scope (`common` or a custom port list), and prefix the retry on its own
+   line as:
+
+   ```text
+   REM [retry 1/1 after timeout] dropping to common ports
+   ```
+
+   so the cmd log clearly shows what changed.
+3. **Partial result** — if both attempts time out, return whatever you have
+   and prefix the final answer with `Status: partial — scan timed out`.
+   **Never** fall through into raw `nmap -sV --top-ports 1000`; that's the
+   path that gets killed at 120s and produces nothing useful.
+
+For thorough audits use the deep recipe: `net-port <host> top1000 --service`
+(≤ 4 min) followed by targeted `net-banner` confirmations.
+
 ## Typical scenarios
 
 ### Check which ports are open

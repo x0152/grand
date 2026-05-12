@@ -150,7 +150,7 @@ inside the app and via `/api/runtime/sandboxes`.
 
 Same as before — production image bundles the official `inferenced` binary
 (`Dockerfile.prod`, pinned via `INFERENCED_VERSION` build arg, default
-`v0.2.11`). Wallet creation runs the binary in an isolated keyring; only
+`v0.2.12`). Wallet creation runs the binary in an isolated keyring; only
 address, raw hex private key, and BIP-39 mnemonic are returned to the
 browser. The mnemonic is shown once and never persisted.
 

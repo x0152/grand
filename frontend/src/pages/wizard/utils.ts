@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { State } from './types'
 
 export function formatGnk(v: number): string {
@@ -33,6 +34,16 @@ export function telegramSummary(state: State): string {
   }
   if (state.tgToken.trim() || state.tgTokenKnown) return 'token saved · pending link'
   return 'off — connect later via env'
+}
+
+export function openExternal(url: string) {
+  return (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.defaultPrevented) return
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+    if (e.button !== 0) return
+    e.preventDefault()
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 }
 
 export function emailSummary(state: State): string {

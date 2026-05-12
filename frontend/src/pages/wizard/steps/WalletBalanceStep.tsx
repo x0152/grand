@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { CheckCircle2, Loader2, RotateCw } from '@/lib/icons'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { CheckCircle2, ExternalLink, Loader2, RotateCw } from '@/lib/icons'
 import { api } from '@/api'
 import type { GonkaBalance } from '@/types'
 import { AddressDisplay } from '../components/AddressDisplay'
 import { AppleAction } from '../components/apple/AppleAction'
+import { AppleSection } from '../components/apple/AppleSection'
 import { QRDisplay } from '../components/QRDisplay'
 import { StepHero } from '../components/StepHero'
-import { formatGnk } from '../utils'
+import { formatGnk, openExternal } from '../utils'
 
 interface WalletBalanceStepProps {
   address: string
@@ -73,6 +74,8 @@ export function WalletBalanceStep({
 
       <AddressDisplay label="Send GNK to this address" address={address} copyMessage="Address copied" />
 
+      <FundingOptions />
+
       <BalanceCard
         balance={balance}
         sufficient={sufficient}
@@ -84,6 +87,71 @@ export function WalletBalanceStep({
 
       <BypassToggle bypass={bypass} onChange={onBypassChange} />
     </div>
+  )
+}
+
+function FundingOptions() {
+  return (
+    <AppleSection title="No GNK yet?">
+      <div className="rounded-2xl bg-[var(--grand-surface)] ring-1 ring-[var(--grand-border-2)] overflow-hidden divide-y divide-[var(--grand-border)]">
+        <FundingRow
+          label="Faucet"
+          href="https://gonka.gg/faucet"
+          desc={
+            <>
+              <span className="font-mono text-[12.5px]">gonka.gg/faucet</span> drips a small amount
+              of GNK every 24h. Free, but needs the{' '}
+              <span className="font-medium text-[var(--grand-fg-2)]">GG Wallet</span> Chrome
+              extension and a Google sign-in — and you’ll have to come back a few times to hit the
+              0.1 GNK minimum.
+            </>
+          }
+        />
+        <FundingRow
+          label="Community swap"
+          href="https://discord.com/invite/RADwCT2U6R"
+          desc="The official Gonka Discord is the fastest path to a meaningful balance — community members regularly OTC-swap GNK in the help/faucet channels."
+        />
+        <FundingRow
+          label="Mine as a Host"
+          href="https://gonka.ai/host/quickstart/"
+          desc="Contribute GPU compute and earn GNK on-chain. Worth it if you’ve got a serious GPU sitting idle; overkill for a single chat wallet."
+        />
+      </div>
+      <p className="mt-2.5 px-2 text-[12.5px] leading-relaxed text-[var(--grand-muted)]">
+        GNK isn’t listed on any exchange yet — ignore third-party “GNK” tokens on CEXes or other
+        chains.
+      </p>
+    </AppleSection>
+  )
+}
+
+function FundingRow({
+  label,
+  desc,
+  href,
+}: {
+  label: string
+  desc: ReactNode
+  href: string
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={openExternal(href)}
+      className="group flex items-start gap-4 px-5 py-3.5 hover:bg-[var(--grand-bg)] transition-colors"
+    >
+      <span className="mt-0.5 w-[7.5rem] shrink-0 text-[13.5px] font-semibold tracking-tight text-[var(--grand-fg)] group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+        {label}
+      </span>
+      <span className="flex-1 text-[13px] leading-relaxed text-[var(--grand-fg-2)]">{desc}</span>
+      <ExternalLink
+        size={14}
+        className="mt-1 shrink-0 text-[var(--grand-muted)] group-hover:text-emerald-500 transition-colors"
+      />
+    </a>
   )
 }
 

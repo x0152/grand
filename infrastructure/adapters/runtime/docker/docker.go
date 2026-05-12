@@ -292,7 +292,6 @@ func (r *Runtime) Run(ctx context.Context, spec types.RuntimeRunSpec) (types.Run
 		"RestartPolicy":  map[string]any{"Name": "no"},
 		"ReadonlyRootfs": true,
 		"CapDrop":        []string{"ALL"},
-		"SecurityOpt":    []string{"no-new-privileges"},
 		"Memory":         defaultMemoryBytes,
 		"MemorySwap":     defaultMemoryBytes,
 		"NanoCpus":       defaultNanoCPUs,
@@ -317,9 +316,11 @@ func (r *Runtime) Run(ctx context.Context, spec types.RuntimeRunSpec) (types.Run
 	if r.privileged {
 		hostConfig["Privileged"] = true
 		delete(hostConfig, "CapDrop")
-		delete(hostConfig, "SecurityOpt")
 	} else {
 		hostConfig["CapAdd"] = mergeCaps(infrastructureCaps, r.defaultCaps, spec.CapAdd)
+		if !spec.AllowPrivilegeEscalation {
+			hostConfig["SecurityOpt"] = []string{"no-new-privileges"}
+		}
 	}
 
 	_ = r.removeIfExists(ctx, spec.Name)

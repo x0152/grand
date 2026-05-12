@@ -25,6 +25,7 @@ func (b *Builder) Build(ctx context.Context, sandboxName string, conn types.Conn
 	}
 	if t, ok := templates.Lookup(sandboxName); ok {
 		spec.CapAdd = t.CapAdd
+		spec.AllowPrivilegeEscalation = t.AllowPrivilegeEscalation
 	}
 	if sandboxName == "runtimectl" {
 		spec.NoHomeVolume = true

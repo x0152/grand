@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /mantis ./cm
  && CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /egress-gateway ./cmd/egress-gateway
 
 FROM alpine:3.21 AS inferenced
-ARG INFERENCED_VERSION=v0.2.11
+ARG INFERENCED_VERSION=v0.2.12
 ARG TARGETARCH
 RUN apk add --no-cache curl unzip ca-certificates \
  && ARCH="${TARGETARCH:-$(uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')}" \

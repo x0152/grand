@@ -156,6 +156,24 @@ func TestBuilderUnknownTemplateHasNoCapAdd(t *testing.T) {
 	}
 }
 
+func TestBuilderEmailAllowsPrivilegeEscalation(t *testing.T) {
+	b := NewBuilder(newStore(), "")
+	spec := b.Build(context.Background(), "email", types.Connection{}, nil, nil)
+	if !spec.AllowPrivilegeEscalation {
+		t.Error("email sandbox must opt out of no-new-privileges so sudo -> emailsec works")
+	}
+}
+
+func TestBuilderOtherTemplatesKeepNoNewPrivileges(t *testing.T) {
+	b := NewBuilder(newStore(), "")
+	for _, name := range []string{"base", "browser", "netsec", "ffmpeg", "runtimectl"} {
+		spec := b.Build(context.Background(), name, types.Connection{}, nil, nil)
+		if spec.AllowPrivilegeEscalation {
+			t.Errorf("%s sandbox must keep AllowPrivilegeEscalation=false", name)
+		}
+	}
+}
+
 func TestBuilderPropagatesEnvAndLabels(t *testing.T) {
 	b := NewBuilder(newStore(), "")
 	env := map[string]string{"K": "V"}

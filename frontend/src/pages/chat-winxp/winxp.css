@@ -16,114 +16,218 @@
   user-select: none;
 }
 
+.xp-root ::selection {
+  background: #316AC5;
+  color: #ffffff;
+}
+.xp-root ::-moz-selection {
+  background: #316AC5;
+  color: #ffffff;
+}
+
 /* ============================================================
-   XP-style scrollbars (Luna). Native XP shipped a chunky 17×17
-   scrollbar with a blue-grey gradient thumb, white-bevel arrows
-   at each end, and a faint dotted track. We emulate that with
-   the `-webkit-scrollbar` family — Firefox falls back to its
-   `scrollbar-color` thin variant which is the closest match.
+   XP-style scrollbars (Royale/Luna Blue). Soft pill-shaped buttons
+   and thumb in a glossy blue gradient, white track, central grip
+   notches on the thumb — matches the "Luna Blue" reference asset.
    Scoped under `.xp-root` so the theme doesn't leak out of the
-   experiment.
+   experiment. Firefox falls back to its `scrollbar-color` thin
+   variant which is the closest match.
    ============================================================ */
 .xp-root,
 .xp-root * {
-  scrollbar-color: #aca899 #ECE9D8;
+  scrollbar-color: #6c87cf #f1eee5;
   scrollbar-width: auto;
 }
 
 .xp-root *::-webkit-scrollbar {
   width: 17px;
   height: 17px;
-  background: #ECE9D8;
+  background: #f1eee5;
 }
 
 .xp-root *::-webkit-scrollbar-track {
-  /* hatched grey track — emulated with a 2-stop conic-ish gradient */
-  background:
-    repeating-linear-gradient(
-      45deg,
-      #f7f4e8 0 1px,
-      #ECE9D8 1px 2px
-    );
-  border: 1px solid #aca899;
+  background: #f1eee5;
+  border: 1px solid #c8c2b3;
   box-shadow:
-    inset 1px 1px 0 #fff,
-    inset -1px -1px 0 #d4d0c8;
+    inset 1px 1px 0 #d8d2c2,
+    inset -1px -1px 0 #fff;
 }
 
 .xp-root *::-webkit-scrollbar-thumb {
-  /* Luna scroll thumb: blue-grey vertical gradient + 1px raised bevel */
   background:
+    linear-gradient(180deg, transparent calc(50% - 6px),
+      #ffffff calc(50% - 6px) calc(50% - 4px),
+      transparent calc(50% - 4px) calc(50% - 2px),
+      #ffffff calc(50% - 2px) calc(50% - 0px),
+      transparent calc(50% - 0px) calc(50% + 2px),
+      #ffffff calc(50% + 2px) calc(50% + 4px),
+      transparent calc(50% + 4px) calc(50% + 6px),
+      #ffffff calc(50% + 6px) calc(50% + 8px),
+      transparent calc(50% + 8px)),
     linear-gradient(180deg,
-      #ddeaf7 0%,
-      #b6cde6 35%,
-      #8aaad4 75%,
-      #6c92c2 100%);
-  border: 1px solid #4d6c95;
+      #e1e9fb 0%,
+      #b8c8ef 25%,
+      #8aa1de 60%,
+      #6c87cf 100%);
+  background-clip: padding-box;
+  border: 1px solid #3a5793;
+  border-radius: 2px;
   box-shadow:
-    inset 1px 1px 0 #fff,
-    inset -1px -1px 0 #4d6c95;
-  min-height: 24px;
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 1px rgba(80, 100, 150, 0.25);
+  min-height: 28px;
+  min-width: 28px;
+}
+
+.xp-root *::-webkit-scrollbar-thumb:horizontal {
+  background:
+    linear-gradient(90deg, transparent calc(50% - 6px),
+      #ffffff calc(50% - 6px) calc(50% - 4px),
+      transparent calc(50% - 4px) calc(50% - 2px),
+      #ffffff calc(50% - 2px) calc(50% - 0px),
+      transparent calc(50% - 0px) calc(50% + 2px),
+      #ffffff calc(50% + 2px) calc(50% + 4px),
+      transparent calc(50% + 4px) calc(50% + 6px),
+      #ffffff calc(50% + 6px) calc(50% + 8px),
+      transparent calc(50% + 8px)),
+    linear-gradient(180deg,
+      #e1e9fb 0%,
+      #b8c8ef 25%,
+      #8aa1de 60%,
+      #6c87cf 100%);
 }
 
 .xp-root *::-webkit-scrollbar-thumb:hover {
   background:
+    linear-gradient(180deg, transparent calc(50% - 6px),
+      #ffffff calc(50% - 6px) calc(50% - 4px),
+      transparent calc(50% - 4px) calc(50% - 2px),
+      #ffffff calc(50% - 2px) calc(50% - 0px),
+      transparent calc(50% - 0px) calc(50% + 2px),
+      #ffffff calc(50% + 2px) calc(50% + 4px),
+      transparent calc(50% + 4px) calc(50% + 6px),
+      #ffffff calc(50% + 6px) calc(50% + 8px),
+      transparent calc(50% + 8px)),
     linear-gradient(180deg,
-      #f5f8fb 0%,
-      #c8dbef 35%,
-      #9bbadb 75%,
-      #6f95c4 100%);
+      #eef3fd 0%,
+      #c8d4f3 25%,
+      #97abe3 60%,
+      #758fd3 100%);
+}
+
+.xp-root *::-webkit-scrollbar-thumb:horizontal:hover {
+  background:
+    linear-gradient(90deg, transparent calc(50% - 6px),
+      #ffffff calc(50% - 6px) calc(50% - 4px),
+      transparent calc(50% - 4px) calc(50% - 2px),
+      #ffffff calc(50% - 2px) calc(50% - 0px),
+      transparent calc(50% - 0px) calc(50% + 2px),
+      #ffffff calc(50% + 2px) calc(50% + 4px),
+      transparent calc(50% + 4px) calc(50% + 6px),
+      #ffffff calc(50% + 6px) calc(50% + 8px),
+      transparent calc(50% + 8px)),
+    linear-gradient(180deg,
+      #eef3fd 0%,
+      #c8d4f3 25%,
+      #97abe3 60%,
+      #758fd3 100%);
 }
 
 .xp-root *::-webkit-scrollbar-thumb:active {
   background:
+    linear-gradient(180deg, transparent calc(50% - 6px),
+      #ffffff calc(50% - 6px) calc(50% - 4px),
+      transparent calc(50% - 4px) calc(50% - 2px),
+      #ffffff calc(50% - 2px) calc(50% - 0px),
+      transparent calc(50% - 0px) calc(50% + 2px),
+      #ffffff calc(50% + 2px) calc(50% + 4px),
+      transparent calc(50% + 4px) calc(50% + 6px),
+      #ffffff calc(50% + 6px) calc(50% + 8px),
+      transparent calc(50% + 8px)),
     linear-gradient(180deg,
-      #b6cde6 0%,
-      #8aaad4 50%,
-      #6c92c2 100%);
+      #b8c8ef 0%,
+      #8aa1de 50%,
+      #5773b9 100%);
+}
+
+.xp-root *::-webkit-scrollbar-thumb:horizontal:active {
+  background:
+    linear-gradient(90deg, transparent calc(50% - 6px),
+      #ffffff calc(50% - 6px) calc(50% - 4px),
+      transparent calc(50% - 4px) calc(50% - 2px),
+      #ffffff calc(50% - 2px) calc(50% - 0px),
+      transparent calc(50% - 0px) calc(50% + 2px),
+      #ffffff calc(50% + 2px) calc(50% + 4px),
+      transparent calc(50% + 4px) calc(50% + 6px),
+      #ffffff calc(50% + 6px) calc(50% + 8px),
+      transparent calc(50% + 8px)),
+    linear-gradient(180deg,
+      #b8c8ef 0%,
+      #8aa1de 50%,
+      #5773b9 100%);
 }
 
 .xp-root *::-webkit-scrollbar-button {
-  /* End-cap arrow buttons — same raised bevel as the thumb but with the
-     standard 16px chevrons drawn via background-image SVG. */
   background:
-    linear-gradient(180deg, #f6f4e8 0%, #d4d0c8 100%);
-  border: 1px solid #aca899;
+    linear-gradient(180deg,
+      #e1e9fb 0%,
+      #b8c8ef 25%,
+      #8aa1de 60%,
+      #6c87cf 100%);
+  border: 1px solid #3a5793;
+  border-radius: 2px;
   box-shadow:
-    inset 1px 1px 0 #fff,
-    inset -1px -1px 0 #aca899;
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 1px rgba(80, 100, 150, 0.25);
   width: 17px;
   height: 17px;
   display: block;
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 7px 7px;
 }
 
 .xp-root *::-webkit-scrollbar-button:hover {
-  background-color: #ffefb1;
+  background:
+    linear-gradient(180deg,
+      #eef3fd 0%,
+      #c8d4f3 25%,
+      #97abe3 60%,
+      #758fd3 100%);
 }
 
 .xp-root *::-webkit-scrollbar-button:active {
+  background:
+    linear-gradient(180deg,
+      #b8c8ef 0%,
+      #8aa1de 50%,
+      #5773b9 100%);
   box-shadow:
-    inset 1px 1px 0 #aca899,
-    inset -1px -1px 0 #fff;
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  background-position: calc(50% + 1px) calc(50% + 1px);
+}
+
+.xp-root *::-webkit-scrollbar-button:disabled {
+  background:
+    linear-gradient(180deg, #e7ecf4 0%, #cad3e0 100%);
+  border-color: #a8b4c8;
+  opacity: 0.7;
 }
 
 .xp-root *::-webkit-scrollbar-button:vertical:decrement {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path d='M1 5 L4 2 L7 5 Z' fill='%23000'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'><path d='M2 6 L4.5 3 L7 6 Z' fill='%23ffffff' stroke='%23253c66' stroke-width='0.6' stroke-linejoin='round'/></svg>");
 }
 
 .xp-root *::-webkit-scrollbar-button:vertical:increment {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path d='M1 3 L4 6 L7 3 Z' fill='%23000'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'><path d='M2 3 L4.5 6 L7 3 Z' fill='%23ffffff' stroke='%23253c66' stroke-width='0.6' stroke-linejoin='round'/></svg>");
 }
 
 .xp-root *::-webkit-scrollbar-button:horizontal:decrement {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path d='M5 1 L2 4 L5 7 Z' fill='%23000'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'><path d='M6 2 L3 4.5 L6 7 Z' fill='%23ffffff' stroke='%23253c66' stroke-width='0.6' stroke-linejoin='round'/></svg>");
 }
 
 .xp-root *::-webkit-scrollbar-button:horizontal:increment {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path d='M3 1 L6 4 L3 7 Z' fill='%23000'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'><path d='M3 2 L6 4.5 L3 7 Z' fill='%23ffffff' stroke='%23253c66' stroke-width='0.6' stroke-linejoin='round'/></svg>");
 }
 
 /* Suppress the extra "doubled" buttons WebKit renders on long bars by
@@ -143,10 +247,8 @@
 }
 
 .xp-root *::-webkit-scrollbar-corner {
-  background: #ECE9D8;
-  box-shadow:
-    inset 1px 1px 0 #fff,
-    inset -1px -1px 0 #aca899;
+  background: #f1eee5;
+  border: 1px solid #c8c2b3;
 }
 
 .xp-root .xp-desktop {
@@ -183,10 +285,16 @@
   outline: 1px dotted #fff;
 }
 
-.xp-icon-glyph {
+.xp-icon-glyph-wrap {
+  position: relative;
   width: 32px;
   height: 32px;
   margin: 0 auto 4px;
+}
+
+.xp-icon-glyph {
+  width: 32px;
+  height: 32px;
   display: block;
   background-position: center;
   background-repeat: no-repeat;
@@ -196,6 +304,31 @@
      here — pixelated turns the soft alpha edges into noisy stair-steps. */
   image-rendering: auto;
   image-rendering: -webkit-optimize-contrast;
+}
+
+.xp-icon-busy {
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f1f6fc 60%, #d8e4f5 100%);
+  border: 1.5px solid #2a5bb8;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.95),
+    0 2px 4px rgba(0, 30, 90, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  pointer-events: none;
+}
+
+.xp-icon-busy .xp-spin {
+  --xp-spin-dim: #c4d3ec;
+  --xp-spin-mid: #4d7ccf;
+  --xp-spin-on:  #0a3aa8;
 }
 
 .xp-icon-glyph[data-kind="newchat"]     { background-image: url('/winxp/new-chat.png'); }
@@ -228,13 +361,11 @@
    classic "wizard" desktop bitmap. */
 .xp-icon-glyph[data-kind="wizard"]      { background-image: url('/winxp/hardware-wizard.png'); }
 
-/* Session icons are drag-to-bin enabled — give them the same `move`
-   cursor real Explorer uses while dragging items between folders. */
 .xp-icon.draggable {
-  cursor: grab;
+  cursor: default;
 }
 .xp-icon.draggable:active {
-  cursor: grabbing;
+  cursor: default;
 }
 
 /* XP-style drag preview. Real Explorer renders a 50%-translucent ghost
@@ -673,35 +804,50 @@
   vertical-align: -3px;
   margin-right: 4px;
   flex: 0 0 auto;
+  --xp-spin-dim: #d6deef;
+  --xp-spin-mid: #6a8ec8;
+  --xp-spin-on:  #1f4fc0;
 }
 
 .xp-spin-dot {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 24%;
-  height: 24%;
-  margin: -12% 0 0 -12%;
+  width: 30%;
+  height: 30%;
+  margin: -15% 0 0 -15%;
   border-radius: 50%;
-  background: #c8d4e8;
-  animation: xp-spin-dots 0.9s linear infinite;
+  background: var(--xp-spin-mid);
+  animation: xp-spin-dots 0.7s linear infinite;
   /* `transform-origin` defaults to centre, so each dot orbits 38% of
      the wrapper out from the centre while keeping its own centre. */
 }
 
-.xp-spin-dot-0 { transform: translate(0, -180%);                 animation-delay: -0.000s; }
-.xp-spin-dot-1 { transform: translate(127%, -127%);              animation-delay: -0.112s; }
-.xp-spin-dot-2 { transform: translate(180%, 0);                  animation-delay: -0.225s; }
-.xp-spin-dot-3 { transform: translate(127%, 127%);               animation-delay: -0.337s; }
-.xp-spin-dot-4 { transform: translate(0, 180%);                  animation-delay: -0.450s; }
-.xp-spin-dot-5 { transform: translate(-127%, 127%);              animation-delay: -0.562s; }
-.xp-spin-dot-6 { transform: translate(-180%, 0);                 animation-delay: -0.675s; }
-.xp-spin-dot-7 { transform: translate(-127%, -127%);             animation-delay: -0.787s; }
+.xp-spin-dot-0 { transform: translate(0, -160%);                 animation-delay: -0.0000s; }
+.xp-spin-dot-1 { transform: translate(113%, -113%);              animation-delay: -0.0875s; }
+.xp-spin-dot-2 { transform: translate(160%, 0);                  animation-delay: -0.1750s; }
+.xp-spin-dot-3 { transform: translate(113%, 113%);               animation-delay: -0.2625s; }
+.xp-spin-dot-4 { transform: translate(0, 160%);                  animation-delay: -0.3500s; }
+.xp-spin-dot-5 { transform: translate(-113%, 113%);              animation-delay: -0.4375s; }
+.xp-spin-dot-6 { transform: translate(-160%, 0);                 animation-delay: -0.5250s; }
+.xp-spin-dot-7 { transform: translate(-113%, -113%);             animation-delay: -0.6125s; }
 
 @keyframes xp-spin-dots {
-  0%, 100% { background: #d6deef; opacity: 0.4; }
-  10%      { background: #1f4fc0; opacity: 1;   }
-  60%      { background: #6a8ec8; opacity: 0.6; }
+  0%, 100% { background: var(--xp-spin-dim); opacity: 0.35; transform-origin: center; }
+  12%      { background: var(--xp-spin-on);  opacity: 1;    }
+  55%      { background: var(--xp-spin-mid); opacity: 0.7;  }
+}
+
+.xp-icon-busy .xp-spin,
+.xp-task-busy .xp-spin {
+  margin: 0;
+  vertical-align: baseline;
+}
+
+.xp-root .xp-tasks .xp-task .xp-task-busy .xp-spin {
+  --xp-spin-dim: rgba(255, 255, 255, 0.35);
+  --xp-spin-mid: rgba(255, 255, 255, 0.75);
+  --xp-spin-on:  #ffffff;
 }
 
 /* composer */
@@ -1002,6 +1148,18 @@
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
 }
 
+.xp-root .xp-tasks .xp-task .xp-task-busy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin-left: 2px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 2px rgba(255, 230, 130, 0.9));
+}
+
 /* The system tray sits on a slightly bluer panel inset on the right of
    the taskbar — real XP uses a 2-stop gradient with a subtle inner
    shadow to suggest the panel is recessed. We pin a fixed height so a
@@ -1035,7 +1193,9 @@
   flex: 1;
   min-height: 0;
   background: #000;
-  color: #c0c0c0;
+  /* Body text — slightly brighter than the canonical #c0c0c0 so the
+     small monospace font stays legible on the black background. */
+  color: #dcdcdc;
   font-family: "Lucida Console", "Courier New", monospace;
   font-size: 12px;
   line-height: 1.35;
@@ -1045,12 +1205,19 @@
   word-break: break-word;
 }
 
-.xp-cmd-screen .cmd-prompt { color: #fff; }
-.xp-cmd-screen .cmd-error  { color: #ff8080; }
-.xp-cmd-screen .cmd-ok     { color: #80ff80; }
-.xp-cmd-screen .cmd-meta   { color: #808080; }
-.xp-cmd-screen .cmd-cmd    { color: #fff; }
-.xp-cmd-screen .cmd-out    { color: #c0c0c0; }
+/* XP cmd palette — keep within the classic 16-colour DOS family so
+   the window still reads as a Windows shell, but bump anything that
+   used to be "dim grey on black" into a colour that actually reads.
+   Timestamps and meta lines move to amber (the cmd convention for
+   info text); agent rationale stays cyan; default output is a
+   slightly brighter neutral. */
+.xp-cmd-screen .cmd-prompt       { color: #9dff9d; }
+.xp-cmd-screen .cmd-error        { color: #ff8080; }
+.xp-cmd-screen .cmd-ok           { color: #80ff80; }
+.xp-cmd-screen .cmd-meta         { color: #f0c674; }
+.xp-cmd-screen .cmd-cmd          { color: #fdfdfd; }
+.xp-cmd-screen .cmd-out          { color: #dcdcdc; }
+.xp-cmd-screen .cmd-thought-body { color: #9ed8ff; }
 
 .xp-cmd-screen .cmd-run,
 .xp-cmd-screen .cmd-thought,
@@ -1059,16 +1226,42 @@
   margin: 0 0 4px;
 }
 
+.xp-cmd-screen .cmd-run-head .cmd-meta,
+.xp-cmd-screen .cmd-run-head .cmd-prompt {
+  font-weight: 700;
+}
+
+.xp-cmd-screen .cmd-run-foot {
+  display: inline-block;
+  padding-left: 4px;
+}
+
+.xp-cmd-screen .cmd-run::before,
+.xp-cmd-screen .cmd-run::after {
+  content: '────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────';
+  display: block;
+  color: #3d4d5c;
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 1;
+  margin: 2px 0;
+}
+.xp-cmd-screen .cmd-run + .cmd-run::before {
+  display: none;
+}
+
 .xp-cmd-screen .cmd-thought {
-  /* dim agent-rationale block, inset slightly so it reads like a comment */
-  padding-left: 2px;
-  border-left: 2px solid #404040;
+  /* Inset agent-rationale block so it reads like a comment, with a
+     visible (not dim) accent rail in the same cyan family as the body
+     text — the old #404040 rail was nearly invisible on black. */
+  padding-left: 4px;
+  border-left: 2px solid #5d7e94;
   margin-left: 1px;
 }
 
 .xp-cmd-cursor::after {
   content: "_";
-  color: #c0c0c0;
+  color: #ffffff;
   animation: xp-blink 1s steps(1) infinite;
 }
 
@@ -1135,31 +1328,34 @@
   height: 6px;
 }
 
-/* Authentic XP corner gripper: three rows of two-pixel dots stepping
-   diagonally toward the corner. Win9x used hatched diagonal lines (which
-   is what the previous gradient simulated) — XP uses a discrete grid of
-   highlight + shadow pixel pairs, drawn in pure CSS via a layered
-   radial-gradient stack so it stays crisp at any zoom level. */
+/* Classic Win9x/XP corner gripper: not black ink lines but engraved
+   ridges — each "groove" is a 1px white highlight (catches light
+   from bottom-right) immediately followed by a 1px warm-grey shadow
+   #aca899 (the canonical XP sunken-edge tone), separated by a few
+   pixels of the underlying surface so they read as recessed bumps,
+   not as a hatched fill. The clip-path keeps the pattern inside an
+   inset triangle so the grip doesn't bleed onto the window frame,
+   while the full 22×22 box still catches the nwse resize cursor. */
 .xp-resize-br {
   right: 0;
   bottom: 0;
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   cursor: nwse-resize;
-  background-image:
-    radial-gradient(circle at 13px 13px, #fff 1px, transparent 1.5px),
-    radial-gradient(circle at 12px 12px, #808080 1px, transparent 1.5px),
-    radial-gradient(circle at 13px 9px,  #fff 1px, transparent 1.5px),
-    radial-gradient(circle at 12px 8px,  #808080 1px, transparent 1.5px),
-    radial-gradient(circle at 9px 13px,  #fff 1px, transparent 1.5px),
-    radial-gradient(circle at 8px 12px,  #808080 1px, transparent 1.5px),
-    radial-gradient(circle at 13px 5px,  #fff 1px, transparent 1.5px),
-    radial-gradient(circle at 12px 4px,  #808080 1px, transparent 1.5px),
-    radial-gradient(circle at 9px 9px,   #fff 1px, transparent 1.5px),
-    radial-gradient(circle at 8px 8px,   #808080 1px, transparent 1.5px),
-    radial-gradient(circle at 5px 13px,  #fff 1px, transparent 1.5px),
-    radial-gradient(circle at 4px 12px,  #808080 1px, transparent 1.5px);
-  background-repeat: no-repeat;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0,
+    transparent 3px,
+    #ffffff 3px,
+    #ffffff 4px,
+    #aca899 4px,
+    #aca899 5px
+  );
+  clip-path: polygon(
+    calc(100% - 4px) 10%,
+    calc(100% - 4px) calc(100% - 4px),
+    10% calc(100% - 4px)
+  );
 }
 
 .xp-window-wrap.maximized {
@@ -2205,6 +2401,7 @@
    to that exact ratio for the body height of an 800×600 wizard so the
    art fits at its natural aspect ratio with no stretching and no cropping. */
 .xp-wizard-sidebar {
+  position: relative;
   flex: 0 0 240px;
   width: 240px;
   align-self: stretch;
@@ -2213,6 +2410,55 @@
   background-repeat: no-repeat;
   background-position: top center;
   background-size: cover;
+}
+
+.xp-wizard-sidebar-link {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 9px 10px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  text-decoration: none;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.xp-wizard-sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+}
+
+.xp-wizard-sidebar-link-eyebrow {
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.xp-wizard-sidebar-link-title {
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.15;
+}
+
+.xp-wizard-sidebar-link-host {
+  margin-top: 2px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #cfd8ff;
+  text-decoration: underline;
 }
 
 .xp-wizard-content {
@@ -2774,6 +3020,80 @@
   letter-spacing: 0.15em;
 }
 
+.xp-wizard-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.xp-wizard-qr-frame {
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #aca899;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #d6d3c4;
+  line-height: 0;
+}
+
+.xp-wizard-qr-caption {
+  margin: 0;
+  max-width: 260px;
+  text-align: center;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #333;
+  line-height: 1.35;
+}
+
+.xp-wizard-funding {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #aca899;
+  background: #fff;
+}
+
+.xp-wizard-funding li {
+  display: block;
+  padding: 6px 8px;
+  border-bottom: 1px solid #d6d3c4;
+}
+
+.xp-wizard-funding li:last-child {
+  border-bottom: none;
+}
+
+.xp-wizard-funding li a {
+  display: block;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #14336f;
+  text-decoration: none;
+}
+
+.xp-wizard-funding li a:hover {
+  text-decoration: underline;
+}
+
+.xp-wizard-funding li a code {
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 10.5px;
+  background: #f4f3ea;
+  padding: 0 3px;
+}
+
+.xp-wizard-funding li > span {
+  display: block;
+  margin-top: 3px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #333;
+  line-height: 1.4;
+}
+
 /* ---------- Wallet balance card ---------- */
 .xp-wizard-balance {
   border: 1px solid #aca899;
@@ -2825,25 +3145,90 @@
 .xp-wizard-models {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
-.xp-wizard-models-head {
-  display: grid;
-  grid-template-columns: 1fr 110px 80px;
+.xp-wizard-model-list {
+  border: 1px solid #aca899;
+  background: #fff;
+  max-height: 250px;
+  overflow: auto;
+}
+
+.xp-wizard-model-list-item {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
-  font-family: Tahoma, "MS Sans Serif", sans-serif;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #555;
+  padding: 6px 8px;
+  border-bottom: 1px solid #d4d0c8;
+}
+
+.xp-wizard-model-list-item:last-child {
+  border-bottom: none;
+}
+
+/* Use xp.css native checkbox styling: input + label sibling pair.
+   xp.css hides the raw <input> and re-draws a pixel-perfect XP
+   checkbox via `input[type=checkbox] + label::before`. So we keep
+   the input as a sibling of the label and DO NOT override
+   appearance like the .xp-wizard-check-row helper does. */
+.xp-wizard-model-check {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  color: #000;
+}
+
+.xp-wizard-model-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.xp-wizard-model-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 11px;
+}
+
+.xp-wizard-model-badge {
+  border: 1px solid #aca899;
+  background: #f2f2f2;
+  color: #333;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0 2px;
+  padding: 1px 4px;
 }
 
-.xp-wizard-model-row {
+/* Role radios: native xp.css `input[type=radio] + label` pairs. We
+   only need a flex wrapper that keeps every input glued to its
+   following label so xp.css can position the round indicator
+   correctly. */
+.xp-wizard-model-roles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-left: 20px;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  color: #000;
+}
+
+.xp-wizard-model-roles label {
+  cursor: pointer;
+}
+
+.xp-wizard-model-add {
   display: grid;
-  grid-template-columns: 1fr 110px 80px;
+  grid-template-columns: 1fr auto;
   gap: 6px;
   align-items: center;
 }

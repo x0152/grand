@@ -22,5 +22,6 @@ type RuntimeRunSpec struct {
 	Labels   map[string]string `json:"labels,omitempty"`
 	Env      map[string]string `json:"env,omitempty"`
 	Cmd      []string          `json:"cmd,omitempty"`
-	NoHomeVolume bool `json:"noHomeVolume,omitempty"`
+	NoHomeVolume             bool `json:"noHomeVolume,omitempty"`
+	AllowPrivilegeEscalation bool `json:"allowPrivilegeEscalation,omitempty"`
 }

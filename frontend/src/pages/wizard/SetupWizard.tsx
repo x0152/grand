@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Toaster } from '@/components/ui/sonner'
 import { ModeToggle } from '@/components/mode-toggle'
-import { ArrowLeft, AlertCircle, X } from '@/lib/icons'
+import { ArrowLeft, AlertCircle, ExternalLink, Wallet, X } from '@/lib/icons'
 import { api } from '@/api'
 import type { GlobalConfig, GlobalConfigDraft, GonkaConfig, ProviderModel } from '@/types'
 import type { ModelRow, Provider, State, StepId, WalletImportMode, WalletMode, WizardMode } from './types'
@@ -21,7 +21,7 @@ import { GonkaModelsStep } from './steps/GonkaModelsStep'
 import { TelegramStep } from './steps/TelegramStep'
 import { EmailStep } from './steps/EmailStep'
 import { FinishStep } from './steps/FinishStep'
-import { telegramSummary, emailSummary } from './utils'
+import { telegramSummary, emailSummary, openExternal } from './utils'
 
 interface SetupWizardProps {
   mode?: WizardMode
@@ -275,6 +275,20 @@ export default function SetupWizard({ mode = 'full', onDone, onCancel, onSwitchT
             <span className="text-[12px] font-mono uppercase tracking-[0.16em] text-[var(--grand-muted-2)] mr-2 hidden sm:inline">
               {mode === 'resume' ? 'finishing' : `step ${currentIdx + 1}/${path.length}`}
             </span>
+            {showsGonkaLink(stepId) && (
+              <a
+                href="https://gonka.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Learn about the Gonka decentralized inference network"
+                onClick={openExternal('https://gonka.ai')}
+                className="hidden sm:inline-flex items-center gap-2 mr-2 px-3.5 py-2 rounded-full text-[13px] font-semibold tracking-tight bg-emerald-500/[0.1] ring-1 ring-emerald-500/35 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/[0.18] hover:ring-emerald-500/55 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
+              >
+                <Wallet size={15} weight="bold" />
+                What is Gonka?
+                <ExternalLink size={12} className="opacity-75" />
+              </a>
+            )}
             {onSwitchToXp && mode === 'full' && (
               <button
                 type="button"
@@ -513,6 +527,20 @@ const WIDE_STEPS: ReadonlySet<StepId> = new Set<StepId>(['provider', 'wallet-cho
 
 function contentMaxWidth(stepId: StepId): string {
   return WIDE_STEPS.has(stepId) ? 'max-w-5xl' : 'max-w-lg'
+}
+
+const GONKA_LINK_STEPS: ReadonlySet<StepId> = new Set<StepId>([
+  'provider',
+  'wallet-choice',
+  'wallet-create',
+  'wallet-import',
+  'wallet-reveal',
+  'wallet-balance',
+  'gonka-models',
+])
+
+function showsGonkaLink(stepId: StepId): boolean {
+  return GONKA_LINK_STEPS.has(stepId)
 }
 
 function autoFillFirstModel(prev: State, list: ProviderModel[]): State {

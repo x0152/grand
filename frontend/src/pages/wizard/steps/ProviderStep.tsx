@@ -35,14 +35,14 @@ export function ProviderStep({ provider, gonkaConfig, onSelect }: ProviderStepPr
         <AppleForkCard
           icon={Wallet}
           title="Gonka network"
-          tagline="Pay-per-call · No subscription · Crypto"
-          description="Decentralized marketplace of AI providers. Top up your wallet once and chat — no monthly bill."
+          tagline="Decentralized · Pay-per-token · Crypto"
+          description="Decentralized AI inference network — independent GPU hosts serve open models, and you pay a tiny fee per request straight from your wallet. No company in the middle, no subscription."
           bullets={[
-            'One wallet routes to many providers automatically',
-            'No subscription, no credit card',
-            'Top up with a small amount of GNK and you are set',
+            'Under $0.001 per 1M tokens on Kimi K2.6 — and other open models',
+            'No subscription, no credit card — pay per request',
+            'You’ll need a crypto wallet with a small GNK balance on it',
           ]}
-          hint="Best if you’re not already paying for AI and don’t mind a one-minute wallet setup."
+          hint="Best if you’re comfortable with a one-minute crypto setup and want the cheapest open-model inference around."
           selected={provider === 'gonka'}
           disabled={gonkaUnavailable}
           badge={gonkaUnavailable ? { label: 'unavailable here', tone: 'amber' } : undefined}

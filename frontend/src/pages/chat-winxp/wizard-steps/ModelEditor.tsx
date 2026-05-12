@@ -1,3 +1,4 @@
+import { Fragment, useId, useMemo, useState } from 'react'
 import type { ProviderModel } from '@/types'
 import type { ModelRow } from '../../wizard/types'
 import { XpButton } from './shared'
@@ -9,89 +10,157 @@ interface Props {
   loadingModels: boolean
 }
 
-const ROLES: Array<{ value: ModelRow['role']; label: string }> = [
-  { value: 'chat', label: 'chat' },
+type Role = ModelRow['role']
+
+interface ListItem {
+  id: string
+  custom: boolean
+}
+
+const ROLES: Array<{ value: Role; label: string }> = [
+  { value: 'chat', label: 'main' },
   { value: 'summary', label: 'summary' },
   { value: 'vision', label: 'vision' },
-  { value: '', label: '— other —' },
 ]
 
 export function ModelEditor({ rows, onChange, available, loadingModels }: Props) {
-  const usedRoles = new Set(rows.map(r => r.role).filter(Boolean))
+  const [draft, setDraft] = useState('')
+  const reactId = useId()
 
-  const setRow = (i: number, next: Partial<ModelRow>) => {
-    onChange(rows.map((r, idx) => (idx === i ? { ...r, ...next } : r)))
+  const items = useMemo<ListItem[]>(() => {
+    const fromServer = (available ?? []).map(m => ({ id: m.id, custom: false }))
+    const customRows = rows
+      .filter(r => r.name.trim() && !fromServer.some(s => s.id === r.name))
+      .map(r => ({ id: r.name, custom: true }))
+    return [...customRows, ...fromServer]
+  }, [available, rows])
+
+  const cleanRows = (input: ModelRow[]) => input.filter(r => r.name.trim())
+  const findRow = (name: string) => rows.find(r => r.name === name && r.name.trim())
+
+  const toggleSelect = (name: string) => {
+    if (findRow(name)) {
+      onChange(cleanRows(rows).filter(r => r.name !== name))
+      return
+    }
+    const next = cleanRows(rows)
+    const hasChat = next.some(r => r.role === 'chat')
+    onChange([...next, { name, role: hasChat ? '' : 'chat' }])
   }
 
-  const removeRow = (i: number) => {
-    onChange(rows.filter((_, idx) => idx !== i))
+  const setRowRole = (name: string, role: Role) => {
+    const next: ModelRow[] = cleanRows(rows).map(r => {
+      if (r.name === name) return { ...r, role }
+      if (role && r.role === role) return { ...r, role: '' }
+      return r
+    })
+    onChange(next)
   }
 
-  const addRow = () => {
-    const nextRole: ModelRow['role'] = !usedRoles.has('chat')
-      ? 'chat'
-      : !usedRoles.has('summary')
-        ? 'summary'
-        : !usedRoles.has('vision')
-          ? 'vision'
-          : ''
-    onChange([...rows, { name: '', role: nextRole }])
+  const addCustom = () => {
+    const name = draft.trim()
+    if (!name) return
+    setDraft('')
+    if (findRow(name)) return
+    const next = cleanRows(rows)
+    const hasChat = next.some(r => r.role === 'chat')
+    onChange([...next, { name, role: hasChat ? '' : 'chat' }])
   }
 
   return (
     <div className="xp-wizard-models">
-      <div className="xp-wizard-models-head">
-        <span>Model</span>
-        <span>Role</span>
-        <span />
-      </div>
-      {rows.length === 0 && (
+      {items.length === 0 && loadingModels && (
+        <p className="xp-wizard-help xp-wizard-help-block">Loading models from your server…</p>
+      )}
+
+      {items.length === 0 && !loadingModels && (
         <p className="xp-wizard-help xp-wizard-help-block">
-          No models yet. Click <em>Add</em> to wire one up.
+          No models loaded yet. Fill in URL/API key above or add a model manually below.
         </p>
       )}
-      {rows.map((row, i) => (
-        <div key={i} className="xp-wizard-model-row">
-          <input
-            type="text"
-            list={available ? `xp-models-${i}` : undefined}
-            value={row.name}
-            onChange={e => setRow(i, { name: e.target.value })}
-            placeholder={loadingModels ? 'loading…' : 'gpt-4o, llama3.1:8b, …'}
-            className="xp-wizard-input xp-wizard-input-mono"
-            spellCheck={false}
-            autoCapitalize="off"
-            autoCorrect="off"
-          />
-          {available && (
-            <datalist id={`xp-models-${i}`}>
-              {available.map(m => (
-                <option key={m.id} value={m.id} />
-              ))}
-            </datalist>
-          )}
-          <select
-            value={row.role}
-            onChange={e => setRow(i, { role: e.target.value as ModelRow['role'] })}
-            className="xp-wizard-input xp-wizard-select"
-          >
-            {ROLES.map(r => (
-              <option key={r.value || 'none'} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-          <XpButton onClick={() => removeRow(i)} disabled={rows.length <= 1}>
-            Remove
-          </XpButton>
+
+      {items.length > 0 && (
+        <div className="xp-wizard-model-list">
+          {items.map((item, idx) => {
+            const row = findRow(item.id)
+            const selected = !!row
+            const inputId = `${reactId}-model-${idx}`
+            return (
+              <div key={item.id} className="xp-wizard-model-list-item">
+                <div className="xp-wizard-model-check field-row">
+                  <input
+                    id={inputId}
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() => toggleSelect(item.id)}
+                  />
+                  <label htmlFor={inputId} className="xp-wizard-model-check-label">
+                    <span className="xp-wizard-model-name">{item.id}</span>
+                    {item.custom && <span className="xp-wizard-model-badge">custom</span>}
+                  </label>
+                </div>
+
+                {selected && (
+                  <div className="xp-wizard-model-roles">
+                    {ROLES.map(role => {
+                      const active = row?.role === role.value
+                      const rid = `${inputId}-role-${role.value}`
+                      return (
+                        <Fragment key={role.value}>
+                          <input
+                            id={rid}
+                            type="radio"
+                            name={`${inputId}-role`}
+                            checked={active}
+                            onChange={() => setRowRole(item.id, role.value)}
+                          />
+                          <label
+                            htmlFor={rid}
+                            onClick={e => {
+                              if (active) {
+                                e.preventDefault()
+                                setRowRole(item.id, '')
+                              }
+                            }}
+                          >
+                            {role.label}
+                          </label>
+                        </Fragment>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
-      ))}
-      <div className="xp-wizard-models-actions">
-        <XpButton onClick={addRow}>Add model</XpButton>
-        {available && (
-          <span className="xp-wizard-help">{available.length} available on this server</span>
-        )}
+      )}
+
+      <div className="xp-wizard-model-add">
+        <input
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              addCustom()
+            }
+          }}
+          placeholder="Add a model the server did not list…"
+          className="xp-wizard-input xp-wizard-input-mono"
+          spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
+        />
+        <XpButton onClick={addCustom} disabled={!draft.trim()}>
+          Add model
+        </XpButton>
       </div>
+
+      <p className="xp-wizard-help xp-wizard-help-block">
+        Select models by checkbox. Choose one <em>main</em> model (required). Optional:{' '}
+        <em>summary</em> for chat titles and <em>vision</em> for image input.
+      </p>
     </div>
   )
 }

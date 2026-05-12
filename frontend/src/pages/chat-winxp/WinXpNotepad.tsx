@@ -150,20 +150,71 @@ export function WinXpNotepad({
 }
 
 /**
- * Placeholder copy for `New Text Document.txt`. Reads like a quiet note
- * the author left on the desktop — a nod to the XP shell experiment, a
- * wink at the Start-button easter egg, and a short list of wallet
- * addresses jotted down without any explicit "tip me" framing. Keep
- * the formatting plain so the authentic Notepad monospace look is
- * preserved.
+ * Placeholder copy for `New Text Document.txt`. Pretends to be a leaked
+ * export from the old Windows XP "Address Book" (wab.exe) — a single
+ * contact card for the author themselves. The "Reachable at" wording
+ * carries the joke: address book entries list how to reach a person,
+ * and for this person you reach them on-chain. No explicit tip framing.
  */
-export const UNTITLED1_INITIAL_TEXT = `...here are some addresses...
+export const UNTITLED1_INITIAL_TEXT = `==========================================
+ Windows Address Book — exported contact
+==========================================
 
-   Ξ  EVM       0xf7b9369aeae7a3ed9a5f782a9793fb378e4d9aa6
-   ◎  Solana    DGSbfoBtzMZ6ozGkSvTfwLK1DUetX3wsk3Rib5mDhBux
-   ◆  TON       UQB_SNoUeMg-BHYjk5lmVSUWqPEORmUM4fV-o9QvIrPDiVeZ
-   ₿  Bitcoin   bc1qxnh22fkp22g9cyu0qrzaq74wuj3kuyftu6lj8q
-   ⚛  Gonka     gonka1mwscga703ek9f7zspkkmnn8f2cvtmyatxkfgpd
+  Display name : self
+  Nickname     : author
+  Group        : Personal
+  Updated      : 2026-05-12
 
-                                  -- author@localhost
+  Reachable at:
+
+     Ξ  EVM       0xf7b9369aeae7a3ed9a5f782a9793fb378e4d9aa6
+     ◎  Solana    DGSbfoBtzMZ6ozGkSvTfwLK1DUetX3wsk3Rib5mDhBux
+     ◆  TON       UQB_SNoUeMg-BHYjk5lmVSUWqPEORmUM4fV-o9QvIrPDiVeZ
+     ₿  Bitcoin   bc1qxnh22fkp22g9cyu0qrzaq74wuj3kuyftu6lj8q
+     ⚛  Gonka     gonka1mwscga703ek9f7zspkkmnn8f2cvtmyatxkfgpd
+
+  Notes        : verified on mainnet. all five answer.
+`
+
+export const GONKA_TXT_INITIAL_TEXT = `==========================================
+ gonka.txt — what is Gonka?
+==========================================
+
+  Gonka is a decentralized AI inference
+  network. Not a marketplace. Not a
+  company. A protocol.
+
+  How it works
+  ------------
+    - Independent GPU hosts run open
+      models (Kimi K2.6, Qwen3-235B, ...)
+    - Your inference request is signed
+      from your wallet and routed across
+      the network — no middleman
+    - You pay a tiny per-token fee from
+      your GNK balance, settled on-chain
+
+  Why it is cheap
+  ---------------
+    - Under $0.001 per 1M tokens on
+      Kimi K2.6 — less than a tenth of
+      a cent per million
+    - No subscription, no credit card
+
+  What you need
+  -------------
+    - A Gonka-compatible wallet
+      (Keplr / Cosmostation / Leap /
+       GG Wallet Chrome extension)
+    - A small GNK balance — see the
+      "Add some GNK" step of the wizard
+      for ways to get it
+
+  Where to learn more
+  -------------------
+    Website : https://gonka.ai
+    Docs    : https://gonka.ai/docs/
+    Faucet  : https://gonka.gg/faucet
+    GitHub  : https://github.com/gonka-ai/gonka
+    Discord : https://discord.gg/RADwCT2U6R
 `
