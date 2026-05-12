@@ -31,7 +31,7 @@ export function PinnedAction({ primary, secondary, hint, showBack, onBack }: Pin
             disabled={primary.disabled || primary.busy}
             onClick={primary.onClick}
           >
-            {primary.busy ? 'Working…' : primary.label}
+            {primary.busy ? 'Initializing…' : primary.label}
           </AppleAction>
         )}
         {secondary && (

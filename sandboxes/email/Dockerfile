@@ -12,7 +12,7 @@ RUN apk add --no-cache \
     && addgroup -S emailsec \
     && adduser -S -D -H -G emailsec -s /sbin/nologin emailsec
 
-RUN pip install --no-cache-dir --root-user-action=ignore \
+RUN pip install --no-cache-dir --root-user-action=ignore --only-binary :all: \
         'imap-tools>=1.5,<2.0'
 
 # Helpers live under /usr/local/libexec/email so /usr/local/bin/ contains

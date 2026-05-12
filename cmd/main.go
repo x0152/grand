@@ -309,12 +309,19 @@ func main() {
 
 	if mode := env("RUNTIME_MODE", ""); mode == "docker" && isEnabled(enabled, "runtime") {
 		caps, privileged := parseSandboxCaps(env("RUNTIME_SANDBOX_CAPS", "NET_RAW,NET_ADMIN"))
+		appContainer := env("MANTIS_APP_CONTAINER", "")
+		if appContainer == "" {
+			if h, err := os.Hostname(); err == nil {
+				appContainer = h
+			}
+		}
 		rt := dockerruntime.New(dockerruntime.Options{
 			SocketPath:       env("DOCKER_SOCKET", ""),
 			Network:          env("RUNTIME_NETWORK", ""),
 			DefaultCaps:      caps,
 			Privileged:       privileged,
 			GatewayContainer: env("EGRESS_GATEWAY_CONTAINER", ""),
+			AppContainer:     appContainer,
 		})
 		sandboxKeyStore := store.NewPostgres[string, types.SandboxKey, models.SandboxKeyRow](
 			db,

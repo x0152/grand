@@ -52,7 +52,7 @@ export function WizardFooter({
             onClick={onComplete}
             disabled={submitting}
           >
-            {submitting ? 'Saving…' : 'Finish'}
+            {submitting ? 'Initializing…' : 'Finish'}
           </button>
         )}
         <button className="xp-wizard-btn xp-wizard-btn-cancel" onClick={onCancel}>

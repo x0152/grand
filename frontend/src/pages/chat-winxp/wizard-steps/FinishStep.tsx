@@ -39,6 +39,12 @@ export function FinishStep({ ctrl }: Props) {
           ))}
         </tbody>
       </table>
+      {ctrl.submitting && (
+        <p className="xp-wizard-prose xp-wizard-initializing">
+          Initializing GRAND — provisioning sandboxes and applying your configuration. This can
+          take up to a minute on the first run, please don't close this window.
+        </p>
+      )}
     </div>
   )
 }

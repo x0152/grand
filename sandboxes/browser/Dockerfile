@@ -4,9 +4,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV NODE_PATH=/opt/sandbox-node/node_modules
 ENV PATH=/opt/sandbox-node/node_modules/.bin:$PATH
 
-RUN npm install -g playwright@1.50.0 && \
-    npx playwright install chromium && \
-    useradd -m -s /bin/bash sandbox && \
+RUN useradd -m -s /bin/bash sandbox && \
     mkdir -p /opt/sandbox-node && \
     npm install --prefix /opt/sandbox-node playwright@1.50.0 cheerio && \
     mkdir -p /home/sandbox/.cache && \

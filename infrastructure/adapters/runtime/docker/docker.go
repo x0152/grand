@@ -46,6 +46,7 @@ type Options struct {
 	DefaultCaps      []string
 	Privileged       bool
 	GatewayContainer string
+	AppContainer     string
 }
 
 type Runtime struct {
@@ -54,6 +55,7 @@ type Runtime struct {
 	defaultCaps      []string
 	privileged       bool
 	gatewayContainer string
+	appContainer     string
 	client           *http.Client
 }
 
@@ -72,6 +74,7 @@ func New(opts Options) *Runtime {
 		defaultCaps:      normalizeCaps(opts.DefaultCaps),
 		privileged:       opts.Privileged,
 		gatewayContainer: strings.TrimSpace(opts.GatewayContainer),
+		appContainer:     strings.TrimSpace(opts.AppContainer),
 		client: &http.Client{
 			Transport: &http.Transport{
 				DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
@@ -402,9 +405,6 @@ func (r *Runtime) removeIfExists(ctx context.Context, name string) error {
 	return nil
 }
 
-// EnsureGatewayAttached makes sure the egress gateway container is connected
-// to the given sandbox's per-container network. Safe to call repeatedly; the
-// underlying docker connect call treats "already exists" as a no-op.
 func (r *Runtime) EnsureGatewayAttached(ctx context.Context, sandboxName string) error {
 	if r.gatewayContainer == "" || sandboxName == "" {
 		return nil
@@ -413,14 +413,26 @@ func (r *Runtime) EnsureGatewayAttached(ctx context.Context, sandboxName string)
 	return err
 }
 
+func (r *Runtime) EnsureAppAttached(ctx context.Context, sandboxName string) error {
+	if r.appContainer == "" || sandboxName == "" {
+		return nil
+	}
+	_, err := r.attachContainer(ctx, r.appContainer, sandboxNetwork(sandboxName))
+	return err
+}
+
 func (r *Runtime) attachGateway(ctx context.Context, network string) (string, error) {
-	if r.gatewayContainer == "" {
+	return r.attachContainer(ctx, r.gatewayContainer, network)
+}
+
+func (r *Runtime) attachContainer(ctx context.Context, container, network string) (string, error) {
+	if container == "" {
 		return "", nil
 	}
-	if ip, _ := r.inspectContainerNetwork(ctx, r.gatewayContainer, network); ip != "" {
+	if ip, _ := r.inspectContainerNetwork(ctx, container, network); ip != "" {
 		return ip, nil
 	}
-	body, _ := json.Marshal(map[string]any{"Container": r.gatewayContainer})
+	body, _ := json.Marshal(map[string]any{"Container": container})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.url("/networks/"+network+"/connect", nil), bytes.NewReader(body))
 	if err != nil {
 		return "", err
@@ -435,10 +447,10 @@ func (r *Runtime) attachGateway(ctx context.Context, network string) (string, er
 		raw, _ := io.ReadAll(resp.Body)
 		msg := strings.TrimSpace(string(raw))
 		if !strings.Contains(strings.ToLower(msg), "already exists") {
-			return "", fmt.Errorf("connect %s -> %s: %d %s", r.gatewayContainer, network, resp.StatusCode, msg)
+			return "", fmt.Errorf("connect %s -> %s: %d %s", container, network, resp.StatusCode, msg)
 		}
 	}
-	return r.inspectContainerNetwork(ctx, r.gatewayContainer, network)
+	return r.inspectContainerNetwork(ctx, container, network)
 }
 
 func (r *Runtime) inspectContainerNetwork(ctx context.Context, name, network string) (string, error) {

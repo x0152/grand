@@ -457,6 +457,7 @@ export default function SetupWizard({ mode = 'full', onDone, onCancel, onSwitchT
                 endpoint={state.provider === 'openai' ? state.openaiBaseUrl : state.gonkaNodeUrl}
                 telegramLabel={telegramSummary(state)}
                 emailLabel={emailSummary(state)}
+                submitting={submitting}
               />
             )}
           </div>

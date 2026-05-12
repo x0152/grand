@@ -87,6 +87,9 @@ func (b *Bootstrapper) Run(ctx context.Context) error {
 		if err := b.rt.EnsureGatewayAttached(ctx, sandboxName); err != nil {
 			log.Printf("runtime bootstrap: gateway attach %s: %v", sandboxName, err)
 		}
+		if err := b.rt.EnsureAppAttached(ctx, sandboxName); err != nil {
+			log.Printf("runtime bootstrap: app attach %s: %v", sandboxName, err)
+		}
 	}
 	return nil
 }
@@ -249,6 +252,9 @@ func (b *Bootstrapper) ensureSandbox(ctx context.Context, conn types.Connection,
 	started, err := b.rt.Run(ctx, spec)
 	if err != nil {
 		return fmt.Errorf("run: %w", err)
+	}
+	if err := b.rt.EnsureAppAttached(ctx, sandboxName); err != nil {
+		log.Printf("runtime bootstrap: app attach %s: %v", sandboxName, err)
 	}
 	ready, waitErr := health.WaitForReady(ctx, b.rt, sandboxName, 60*time.Second)
 	if waitErr != nil {

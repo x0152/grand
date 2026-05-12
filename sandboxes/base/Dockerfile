@@ -1,18 +1,20 @@
-FROM python:3.12-alpine
+FROM python:3.12-slim-bookworm
 
-RUN apk add --no-cache \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
         bash openssh-server openssh-client ca-certificates \
         curl wget jq \
         coreutils findutils grep sed gawk less \
         file tree htop procps \
-        iputils iproute2 traceroute bind-tools whois \
-        git unzip tar gzip xz \
-        postgresql-client mariadb-client redis sqlite \
-        libgomp libstdc++ \
-        build-base libffi-dev openssl-dev \
-    && adduser -D -s /bin/bash sandbox
+        iputils-ping iproute2 traceroute dnsutils whois \
+        git unzip tar gzip xz-utils \
+        postgresql-client default-mysql-client redis-tools sqlite3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -s /bin/bash sandbox
 
-RUN pip install --no-cache-dir --root-user-action=ignore \
+RUN pip install --no-cache-dir --root-user-action=ignore --only-binary :all: \
         ipython \
         numpy \
         pandas \
@@ -31,8 +33,7 @@ RUN pip install --no-cache-dir --root-user-action=ignore \
         openpyxl \
         python-dateutil \
         tqdm \
-        rich \
-    && apk del build-base libffi-dev openssl-dev
+        rich
 
 COPY README.md /etc/sandbox/README.md
 

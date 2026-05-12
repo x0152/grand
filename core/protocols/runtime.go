@@ -18,4 +18,5 @@ type Runtime interface {
 	ImageLabels(ctx context.Context, name string) (map[string]string, error)
 	Logs(ctx context.Context, name string, tail int, follow bool) (io.ReadCloser, error)
 	EnsureGatewayAttached(ctx context.Context, sandboxNetwork string) error
+	EnsureAppAttached(ctx context.Context, sandboxNetwork string) error
 }

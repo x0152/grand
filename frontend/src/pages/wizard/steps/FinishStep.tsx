@@ -1,4 +1,4 @@
-import { Bell, Check, Mail, Plug, Sparkles, Wallet, type IconComponent } from '@/lib/icons'
+import { Bell, Check, Loader2, Mail, Plug, Sparkles, Wallet, type IconComponent } from '@/lib/icons'
 import { AppleHero } from '../components/apple/AppleHero'
 import { AppleListGroup } from '../components/apple/AppleListGroup'
 import { StepHero } from '../components/StepHero'
@@ -10,9 +10,10 @@ interface FinishStepProps {
   endpoint: string
   telegramLabel: string
   emailLabel: string
+  submitting?: boolean
 }
 
-export function FinishStep({ provider, chatModel, endpoint, telegramLabel, emailLabel }: FinishStepProps) {
+export function FinishStep({ provider, chatModel, endpoint, telegramLabel, emailLabel, submitting }: FinishStepProps) {
   const rows: Array<{ icon: IconComponent; label: string; value: string }> = [
     {
       icon: provider === 'openai' ? Plug : Wallet,
@@ -52,6 +53,16 @@ export function FinishStep({ provider, chatModel, endpoint, telegramLabel, email
           )
         })}
       </AppleListGroup>
+
+      {submitting && (
+        <div className="flex items-start gap-3 rounded-2xl ring-1 ring-blue-500/30 bg-blue-500/[0.06] px-5 py-4 text-[13.5px] text-blue-700 dark:text-blue-400">
+          <Loader2 size={16} className="mt-0.5 shrink-0 animate-spin" />
+          <span>
+            Initializing GRAND — provisioning sandboxes and applying your configuration. This can
+            take up to a minute on the first run, please don't close this window.
+          </span>
+        </div>
+      )}
     </div>
   )
 }

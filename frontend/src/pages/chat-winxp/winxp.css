@@ -3298,3 +3298,12 @@
   font-size: 11.5px;
   line-height: 1.5;
 }
+
+.xp-wizard-initializing {
+  margin-top: 14px;
+  padding: 8px 10px;
+  border: 1px solid #7da2ce;
+  background: #ecf3fa;
+  color: #15396b;
+  font-style: italic;
+}

@@ -44,6 +44,9 @@ func (f *fakeRuntime) Logs(ctx context.Context, name string, tail int, follow bo
 func (f *fakeRuntime) EnsureGatewayAttached(ctx context.Context, sandboxName string) error {
 	return nil
 }
+func (f *fakeRuntime) EnsureAppAttached(ctx context.Context, sandboxName string) error {
+	return nil
+}
 
 func TestCheckSandboxRunning_SkipsRemote(t *testing.T) {
 	a := &MantisAgent{runtime: &fakeRuntime{status: "exited"}}
