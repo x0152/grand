@@ -23,7 +23,14 @@ func main() {
 	verbose := flag.Bool("verbose", false, "stream Docker build output to stderr")
 	timeout := flag.Duration("timeout", 30*time.Minute, "overall timeout for prebuild")
 	socketWait := flag.Duration("socket-wait", 30*time.Second, "how long to wait for the docker socket to appear")
+	mode := flag.String("mode", envOr("SANDBOX_PREBUILD_MODE", "build"), "prebuild mode: build or verify")
 	flag.Parse()
+
+	switch *mode {
+	case "build", "verify":
+	default:
+		log.Fatalf("sandbox-prebuild: unsupported mode %q (expected build or verify)", *mode)
+	}
 
 	socket := envOr("DOCKER_SOCKET", "/var/run/docker.sock")
 	if err := waitForSocket(socket, *socketWait); err != nil {
@@ -55,6 +62,11 @@ func main() {
 			log.Printf("sandbox-prebuild: %-12s up-to-date (sha=%s)", t.Name, hash)
 			continue
 		}
+		if *mode == "verify" {
+			log.Printf("sandbox-prebuild: %-12s missing or stale (sha=%s)", t.Name, hash)
+			failures++
+			continue
+		}
 		log.Printf("sandbox-prebuild: %-12s building (sha=%s)", t.Name, hash)
 		started := time.Now()
 		if err := build(ctx, rt, t.Name, t.Dockerfile, hash, *verbose); err != nil {
@@ -66,7 +78,14 @@ func main() {
 	}
 
 	if failures > 0 {
+		if *mode == "verify" {
+			log.Fatalf("sandbox-prebuild: %d/%d sandbox images are not prebuilt", failures, len(all))
+		}
 		log.Fatalf("sandbox-prebuild: %d/%d sandbox images failed to build", failures, len(all))
+	}
+	if *mode == "verify" {
+		log.Printf("sandbox-prebuild: all %d sandbox images are prebuilt", len(all))
+		return
 	}
 	log.Printf("sandbox-prebuild: all %d sandbox images ready", len(all))
 }

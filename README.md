@@ -11,7 +11,7 @@ Multi-agent system where an LLM orchestrates a pool of isolated agents, each run
 
 > Early development — works end-to-end but expect rough edges.
 
-![demo](docs/demo.gif)
+![Chat interface showing the agent browsing Hacker News and summarizing the top stories](docs/screenshot-chat.png)
 
 ![Modern web UI — single chat on Kimi K2.6 producing two artifacts back-to-back: a Hacker News homepage screenshot from the `browser` sandbox (Playwright + Chromium) and a 30-day Bitcoin price chart from the `base` sandbox (Python + matplotlib), each attached back to the conversation as a PNG](docs/screenshot-modern.png)
 
@@ -95,17 +95,20 @@ cd grand
 
 That's it. `quickstart.sh` checks Docker, creates `.env` from
 `.env.example`, generates a random `AUTH_TOKEN` / `RUNTIME_API_TOKEN`,
-runs `docker compose up --build -d`, and prints the URL + login token at
-the end. Everything else (LLM provider, models, Telegram, email/SMTP) is
-configured from the in-app setup wizard — no `.env` editing required for
-the first run.
+builds service images, prebuilds all sandbox images up front, then runs
+`docker compose up -d` and prints the URL + login token at the end.
+Everything else (LLM provider, models, Telegram, email/SMTP) is configured
+from the in-app setup wizard — no `.env` editing required for the first
+run.
 
 Prefer to do it by hand:
 
 ```bash
 cp .env.example .env
 # edit AUTH_TOKEN and RUNTIME_API_TOKEN to long random strings
-docker compose up --build -d
+docker compose build
+docker compose run --rm --no-deps -e SANDBOX_PREBUILD_MODE=build sandbox-prebuild
+docker compose up -d
 ```
 
 Then open http://localhost:27173 and sign in with `AUTH_TOKEN`.
@@ -117,24 +120,24 @@ Then open http://localhost:27173 and sign in with `AUTH_TOKEN`.
 | First boot | ~3–6 min | Pulls Alpine/Python base layers and builds **7 sandbox images** — `sandbox-base` plus 6 builtins (`base`, `browser`, `email`, `ffmpeg`, `netsec`, `runtimectl`) |
 | Subsequent boots | <30 s | Each Dockerfile is hashed; unchanged sandboxes are skipped |
 
-The dedicated `sandbox-prebuild` service runs once before the backend
-starts, so every sandbox is ready the moment the UI is reachable. Watch
-the progress live — it prints one line per image:
+`quickstart.sh` runs the full sandbox image prebuild before starting the
+stack. During `docker compose up`, the `sandbox-prebuild` service only
+verifies that images are already cached, then exits. Watch the progress
+live — it prints one line per image:
 
 ```bash
 docker compose logs -f sandbox-prebuild
-# sandbox-prebuild: base         building (sha=…)
-# sandbox-prebuild: base         ready (12s)
-# sandbox-prebuild: browser      ready (1m04s)
+# sandbox-prebuild: base         up-to-date (sha=…)
+# sandbox-prebuild: browser      up-to-date (sha=…)
 # …
-# sandbox-prebuild: all 7 sandbox images ready
+# sandbox-prebuild: all 7 sandbox images are prebuilt
 ```
 
 Useful commands:
 
 ```bash
 docker compose logs -f app             # backend logs
-docker compose logs -f sandbox-prebuild # sandbox build progress
+docker compose logs -f sandbox-prebuild # prebuild verification logs
 docker compose down                    # stop everything
 ```
 

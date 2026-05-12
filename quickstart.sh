@@ -62,8 +62,14 @@ fi
 fe_port="$(read_env MANTIS_FRONTEND_PORT)"
 fe_port="${fe_port:-27173}"
 
-log "booting docker compose (first build takes ~3-6 min — sandboxes are cached afterwards)"
-docker compose up --build -d
+log "building docker compose images"
+docker compose build
+
+log "prebuilding sandbox images upfront (first run takes ~3-6 min; cached afterwards)"
+docker compose run --rm --no-deps -e SANDBOX_PREBUILD_MODE=build sandbox-prebuild
+
+log "booting docker compose (sandbox-prebuild now verifies cache only)"
+docker compose up -d
 
 cat <<EOF
 

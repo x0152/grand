@@ -31,6 +31,7 @@ services:
     restart: "no"
     entrypoint: ["/usr/local/bin/sandbox-prebuild"]
     environment:
+      SANDBOX_PREBUILD_MODE: "${SANDBOX_PREBUILD_MODE:-verify}"
       DOCKER_SOCKET: /var/run/docker.sock
       RUNTIME_NETWORK: "${RUNTIME_NETWORK:-sandbox-net}"
     volumes:

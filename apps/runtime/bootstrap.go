@@ -219,16 +219,24 @@ func (b *Bootstrapper) ensureSandbox(ctx context.Context, conn types.Connection,
 		return nil
 	}
 
-	log.Printf("runtime bootstrap: building %s", sandboxName)
-	stream, err := b.rt.BuildWithLabels(ctx, sandboxName, []byte(conn.Dockerfile), map[string]string{dockerfileHashLabel: wantHash})
-	if err != nil {
-		return fmt.Errorf("build: %w", err)
+	needBuild := true
+	if labels, err := b.rt.ImageLabels(ctx, sandboxName); err == nil && labels != nil && labels[dockerfileHashLabel] == wantHash {
+		needBuild = false
+	} else if err != nil {
+		log.Printf("runtime bootstrap: image labels %s: %v", sandboxName, err)
 	}
-	if _, err := io.Copy(io.Discard, stream); err != nil {
+	if needBuild {
+		log.Printf("runtime bootstrap: building %s", sandboxName)
+		stream, err := b.rt.BuildWithLabels(ctx, sandboxName, []byte(conn.Dockerfile), map[string]string{dockerfileHashLabel: wantHash})
+		if err != nil {
+			return fmt.Errorf("build: %w", err)
+		}
+		if _, err := io.Copy(io.Discard, stream); err != nil {
+			stream.Close()
+			return fmt.Errorf("build stream: %w", err)
+		}
 		stream.Close()
-		return fmt.Errorf("build stream: %w", err)
 	}
-	stream.Close()
 
 	log.Printf("runtime bootstrap: starting %s", sandboxName)
 	spec := b.specBuilder.Build(

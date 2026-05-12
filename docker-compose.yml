@@ -32,6 +32,7 @@ services:
     entrypoint: ["go", "run", "./cmd/sandbox-prebuild"]
     working_dir: /app
     environment:
+      SANDBOX_PREBUILD_MODE: "${SANDBOX_PREBUILD_MODE:-verify}"
       DOCKER_SOCKET: /var/run/docker.sock
       RUNTIME_NETWORK: "${RUNTIME_NETWORK:-sandbox-net}"
       GOFLAGS: "-buildvcs=false"
