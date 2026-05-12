@@ -445,8 +445,13 @@ func (r *Runtime) attachContainer(ctx context.Context, container, network string
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 && resp.StatusCode != http.StatusForbidden {
 		raw, _ := io.ReadAll(resp.Body)
-		msg := strings.TrimSpace(string(raw))
-		if !strings.Contains(strings.ToLower(msg), "already exists") {
+		msg := strings.ToLower(strings.TrimSpace(string(raw)))
+		switch {
+		case strings.Contains(msg, "already exists"):
+		case resp.StatusCode == http.StatusNotFound &&
+			(strings.Contains(msg, "not found") || strings.Contains(msg, "no such")):
+			return "", nil
+		default:
 			return "", fmt.Errorf("connect %s -> %s: %d %s", container, network, resp.StatusCode, msg)
 		}
 	}

@@ -5,14 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
 
-  <title>GRAND — Run AI agents without trusting them with your machine</title>
-  <meta name="description" content="GRAND is a multi-agent runtime. An LLM orchestrator routes tasks; agents execute inside isolated sandboxes; every command passes a deterministic Guard before it touches a server. First-class engine: Gonka — decentralised inference for less than a cent per million tokens." />
+  <title>GRAND — One more AI-but-guarded system (Gonka inference, WinXP UI)</title>
+  <meta name="description" content="AI-but-guarded multi-agent runtime. Agents run in isolated SSH sandboxes; every command passes a deterministic Guard. Supports Gonka decentralised inference. Optional Windows XP UI." />
 
   <link rel="icon" type="image/svg+xml" href="./logo.svg" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="GRAND — Run AI agents without trusting them with your machine" />
-  <meta property="og:description" content="A multi-agent runtime. Isolated sandboxes, deterministic Guard, decentralised inference via Gonka." />
+  <meta property="og:title" content="GRAND — One more AI-but-guarded system, supports Gonka inference" />
+  <meta property="og:description" content="Multi-agent runtime. Agents in SSH sandboxes, Guard on every command, Gonka decentralised inference, optional WinXP UI." />
+  <meta property="og:image" content="https://x0152.github.io/grand/screenshot-winxp.jpg" />
+  <meta property="og:url" content="https://x0152.github.io/grand/" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="GRAND — One more AI-but-guarded system, supports Gonka inference" />
+  <meta name="twitter:description" content="Multi-agent runtime. Agents in SSH sandboxes, Guard on every command, Gonka decentralised inference, optional WinXP UI." />
+  <meta name="twitter:image" content="https://x0152.github.io/grand/screenshot-winxp.jpg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -638,6 +645,7 @@
         <div class="row"><span class="k">interface</span><span>web · telegram · plans</span></div>
         <div class="row"><span class="k">guard</span><span>commands · domains · ips</span></div>
         <div class="row"><span class="k">engine</span><span>gonka or any openai-compatible</span></div>
+        <div class="row"><span class="k">ui</span><span>web · optional windows xp theme</span></div>
       </div>
 
       <a class="link" href="https://github.com/x0152/grand">view on github →</a>
@@ -655,9 +663,9 @@
       </div>
 
       <p>
-        Gonka is a decentralised inference network. An open marketplace of providers serves
-        any OpenAI-compatible model — no central provider, no subscription, settled per
-        request from a wallet.
+        Gonka is a decentralised inference network — independent GPU hosts serve open-weight
+        models behind an OpenAI-compatible API. No central provider, no subscription; every
+        request is settled on-chain from a <span class="mono">GNK</span> wallet.
       </p>
 
       <div class="bounty">
@@ -665,12 +673,12 @@
           <span class="dot"></span>
           <span>protocol · in development &amp; testing</span>
         </div>
-        <h3>Help build it. <em>Get paid in USDT.</em></h3>
+        <h3>Contribute to Gonka. <em>Open-source.</em></h3>
         <p>
-          Open issues come with bounties paid in <span class="mono">USDT</span> — ship a PR,
-          get rewarded by the protocol.
+          Gonka is an open-source protocol — contributions welcome across the network:
+          issues, models, GPU compute, integrations.
         </p>
-        <a class="cta" href="https://gonka.ai">browse bounties →</a>
+        <a class="cta" href="https://gonka.ai">contribute →</a>
       </div>
 
       <a class="link" href="https://gonka.ai">about gonka →</a>
@@ -837,7 +845,7 @@
       <div class="qs-col">
         <div class="head">
           <span><span class="arrow">▶</span> <b>quick start</b> · 3 commands</span>
-          <span>~3 min · first run</span>
+          <span>docker required</span>
         </div>
 
         <div class="qs-step">
@@ -846,22 +854,21 @@
         </div>
 
         <div class="qs-step">
-          <div class="meta"><span class="n">02</span> <span>configure</span></div>
-<pre><span class="prompt">$</span> cp .env.example .env
-<span class="comment"># set AUTH_TOKEN + LLM key</span></pre>
+          <div class="meta"><span class="n">02</span> <span>enter</span></div>
+<pre><span class="prompt">$</span> cd grand</pre>
         </div>
 
         <div class="qs-step">
           <div class="meta"><span class="n">03</span> <span>run</span></div>
-<pre><span class="prompt">$</span> docker compose up --build -d
-<span class="comment"># → localhost:27173</span></pre>
+<pre><span class="prompt">$</span> ./quickstart.sh
+<span class="comment"># prints URL + AUTH_TOKEN, then follow the in-app wizard</span></pre>
         </div>
       </div>
     </div>
   </section>
 
   <footer class="colophon">
-    <div><span class="k">install</span>docker compose up</div>
+    <div><span class="k">install</span>./quickstart.sh</div>
     <div><span class="k">port</span>localhost:27173</div>
     <div><span class="k">repo</span>github.com/x0152/grand</div>
     <div><span class="k">network</span>gonka.ai</div>

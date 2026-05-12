@@ -7,15 +7,27 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-1d9c92?style=flat-square)](LICENSE)
 [![GitHub Pages](https://img.shields.io/badge/docs-%2Fdocs-1d9c92?style=flat-square)](docs/)
 
-Multi-agent system where an LLM orchestrates a pool of isolated agents, each running on a dedicated SSH sandbox container with specialized tools. Designed for managing large server infrastructure — from quick one-off tasks to complex multi-step workflows. You interact via Telegram or Web UI — the LLM routes tasks to the right agent, commands pass through a guard layer before execution.
+> **One more AI-but-guarded system — supports Gonka inference, WinXP UI.**
+
+Multi-agent runtime where an LLM orchestrates a pool of isolated agents, each running on a dedicated SSH sandbox container with specialized tools. Designed for managing large server infrastructure — from quick one-off tasks to complex multi-step workflows. You interact via Telegram or Web UI — the LLM routes tasks to the right agent, commands pass through a deterministic Guard before execution. Supports Gonka decentralised inference and any OpenAI-compatible engine.
 
 > Early development — works end-to-end but expect rough edges.
+
+## Quick start
+
+```bash
+git clone https://github.com/x0152/grand.git
+cd grand
+./quickstart.sh
+```
+
+When the script finishes it prints a URL and an `AUTH_TOKEN`. Open the URL, sign in with the token, then follow the in-app **setup wizard** (LLM, models, Telegram, email). More details further down.
 
 ![Chat interface showing the agent browsing Hacker News and summarizing the top stories](docs/screenshot-chat.png)
 
 ![Modern web UI — single chat on Kimi K2.6 producing two artifacts back-to-back: a Hacker News homepage screenshot from the `browser` sandbox (Playwright + Chromium) and a 30-day Bitcoin price chart from the `base` sandbox (Python + matplotlib), each attached back to the conversation as a PNG](docs/screenshot-modern.png)
 
-![Windows XP shell — three chats running on Kimi K2.6, each in its own sandbox: Bitcoin chart (`base`), Hacker News screenshot (`browser`), DNS lookup (`netsec`), plus a `cmd.exe` window showing one tool step in detail](docs/screenshot-winxp.png)
+![Windows XP shell — three chats running on Kimi K2.6, each in its own sandbox: Bitcoin chart (`base`), Hacker News screenshot (`browser`), DNS lookup (`netsec`), plus a `cmd.exe` window showing one tool step in detail](docs/screenshot-winxp.jpg)
 
 ## What it does
 
@@ -32,6 +44,16 @@ Multi-agent system where an LLM orchestrates a pool of isolated agents, each run
 - **Notifications** — the agent can send proactive alerts and reports to Telegram via `send_notification`
 - **Telegram** — bot with voice messages, files, model switching
 - **ASR / OCR / TTS** — optional speech-to-text, OCR, text-to-speech integrations
+- **Windows XP theme** *(experimental)* — opt-in retro desktop UI with draggable windows and taskbar; toggle from the sidebar, no functional difference
+
+## Gonka
+
+GRAND works with any OpenAI-compatible provider (OpenAI, Anthropic via gateway, Ollama, LM Studio, …), but the **first-class engine** is [Gonka](https://gonka.ai).
+
+- **What it is.** A decentralised inference network — an open marketplace of independent GPU hosts serving any OpenAI-compatible model (Kimi K2.6 and other open-weight models). No central provider, no subscription; every request is settled on-chain from a `GNK` wallet.
+- **What it costs.** **Under $0.01 per 1M tokens** on open models. Pay-per-request, no credit card.
+- **What you need.** A wallet with a small `GNK` balance (the wizard requires ~0.1 GNK to start). The **setup wizard** can create a fresh wallet for you (mnemonic shown once), import an existing one, show the on-chain balance, and points the agent at a Gonka node by default (`https://node4.gonka.ai`).
+- **Why it matters here.** Agent runs issue many cheap, parallel tool calls — one per sandbox, plan step, skill, retry. Centralised-provider bills scale super-linearly with that pattern; sub-cent inference makes "let the agent retry, branch, and self-correct" practical instead of expensive.
 
 ## Architecture
 
@@ -76,183 +98,39 @@ Multi-agent system where an LLM orchestrates a pool of isolated agents, each run
 | Chat | Conversations with the agent, session management |
 | Plans | Visual workflow editor (React Flow), run history, parameters, scheduled execution |
 | Skills | Reusable SSH scripts with parameter editor, exposed as agent tools |
-| Servers | SSH connection management |
-| LLMs & Models | LLM provider connections and model registry |
-| Presets | Named model configurations (chat / fallback / image) |
-| Channels | Telegram bot configuration |
+| Hosts | SSH connection / sandbox management |
+| AI Engine | LLM providers, models, and presets (chat / fallback / image) |
 | Guard Profiles | Security profiles with capability and command whitelists |
+| Setup | Re-run the setup wizard or reset configuration |
 | Logs | Session logs with tool call details |
 
-## Quick Start
+## Setup details
 
-### Option A: Local Docker Compose (fastest)
+First boot ~10–15 min (prebuilds 7 sandbox images — depends on link speed and CPU), reboots <30 s. `quickstart.sh` generates `AUTH_TOKEN` / `RUNTIME_API_TOKEN`, builds and prebuilds everything, brings the stack up, and prints the URL + login token at the end. The **setup wizard** that opens on first sign-in handles the rest (LLM provider, models, Telegram, email/SMTP) — no `.env` editing required.
 
-```bash
-git clone https://github.com/x0152/grand.git
-cd grand
-./quickstart.sh
-```
+> **Skip wizard clicks:** pre-fill `.env` before running the script. Anything under `MANTIS_LLM_*` / `MANTIS_TG_*` / `MANTIS_EMAIL_*` is used as the wizard prefill on first run (and again after a Reset). See [`.env.example`](.env.example) for the full set; the wizard still lets you edit every field.
 
-That's it. `quickstart.sh` checks Docker, creates `.env` from
-`.env.example`, generates a random `AUTH_TOKEN` / `RUNTIME_API_TOKEN`,
-builds service images, prebuilds all sandbox images up front, then runs
-`docker compose up -d` and prints the URL + login token at the end.
-Everything else (LLM provider, models, Telegram, email/SMTP) is configured
-from the in-app setup wizard — no `.env` editing required for the first
-run.
-
-Prefer to do it by hand:
+The same wizard lives under **Setup** in the sidebar: **Continue** resumes from the first unfinished step, **Re-run** walks every step with current values prefilled, **Reset** clears `app_config` and reopens the wizard (existing AI engine, hosts and channels stay editable on their pages).
 
 ```bash
-cp .env.example .env
-# edit AUTH_TOKEN and RUNTIME_API_TOKEN to long random strings
-docker compose build
-docker compose run --rm --no-deps -e SANDBOX_PREBUILD_MODE=build sandbox-prebuild
-docker compose up -d
+docker compose logs -f app              # backend
+docker compose logs -f sandbox-prebuild # sandbox build progress
+docker compose down                     # stop
 ```
 
-Then open http://localhost:27173 and sign in with `AUTH_TOKEN`.
+For a Kubernetes / Helm install, see [`helm/mantis/README.md`](helm/mantis/README.md).
 
-#### What to expect on the first boot
+## Known limitations
 
-| Run | Wall time | Why |
-|---|---|---|
-| First boot | ~3–6 min | Pulls Alpine/Python base layers and builds **7 sandbox images** — `sandbox-base` plus 6 builtins (`base`, `browser`, `email`, `ffmpeg`, `netsec`, `runtimectl`) |
-| Subsequent boots | <30 s | Each Dockerfile is hashed; unchanged sandboxes are skipped |
-
-`quickstart.sh` runs the full sandbox image prebuild before starting the
-stack. During `docker compose up`, the `sandbox-prebuild` service only
-verifies that images are already cached, then exits. Watch the progress
-live — it prints one line per image:
-
-```bash
-docker compose logs -f sandbox-prebuild
-# sandbox-prebuild: base         up-to-date (sha=…)
-# sandbox-prebuild: browser      up-to-date (sha=…)
-# …
-# sandbox-prebuild: all 7 sandbox images are prebuilt
-```
-
-Useful commands:
-
-```bash
-docker compose logs -f app             # backend logs
-docker compose logs -f sandbox-prebuild # prebuild verification logs
-docker compose down                    # stop everything
-```
-
-### Option B: Kubernetes (Helm)
-
-#### 1) Build and push images
-
-```bash
-export TAG=$(git rev-parse --short HEAD)
-export REGISTRY=ghcr.io/<your-org>
-
-docker build -f Dockerfile.prod -t ${REGISTRY}/mantis:${TAG} .
-docker build -f frontend/Dockerfile.prod -t ${REGISTRY}/mantis-frontend:${TAG} frontend
-
-docker push ${REGISTRY}/mantis:${TAG}
-docker push ${REGISTRY}/mantis-frontend:${TAG}
-```
-
-Sandbox Dockerfiles are embedded inside the app image, so no extra push
-step is needed. The backend bootstraps them on first start (in the
-runtime mode that owns Docker — DIND sidecar or host-socket): each
-Dockerfile is hashed and built once, then cached. Plan for **~3–6 min on
-the first pod start**, and <30 s on subsequent ones. Follow progress with:
-
-```bash
-kubectl -n mantis logs -f deploy/app | grep -E 'runtime bootstrap|sandbox'
-# runtime bootstrap: building base image base
-# runtime bootstrap: base image base ready
-# runtime bootstrap: building browser
-# …
-```
-
-#### 2) Deploy with Helm
-
-```bash
-helm upgrade --install mantis ./helm/mantis \
-  --namespace mantis --create-namespace \
-  --set apps.global.image.repository=${REGISTRY}/mantis \
-  --set apps.global.image.tag=${TAG} \
-  --set frontend.image.repository=${REGISTRY}/mantis-frontend \
-  --set frontend.image.tag=${TAG} \
-  --set ingress.enabled=false
-```
-
-By default the chart uses `secrets.authToken=mantis-dev-token` for a quick
-first boot. Override it in real environments.
-
-#### 3) Access without Ingress (recommended for first run)
-
-```bash
-kubectl -n mantis port-forward svc/frontend 27173:80
-```
-
-Then open http://localhost:27173.
-
-#### 4) Access with Ingress (optional)
-
-If your cluster has an ingress controller:
-
-```bash
-helm upgrade --install mantis ./helm/mantis \
-  --namespace mantis --create-namespace \
-  --set apps.global.image.repository=${REGISTRY}/mantis \
-  --set apps.global.image.tag=${TAG} \
-  --set frontend.image.repository=${REGISTRY}/mantis-frontend \
-  --set frontend.image.tag=${TAG} \
-  --set secrets.authToken='change-me-to-a-long-random-string' \
-  --set ingress.enabled=true \
-  --set ingress.host=mantis.local
-```
-
-Point `mantis.local` to your ingress controller address (for local clusters this is often `127.0.0.1`) and open `http://mantis.local`.
-
-For production TLS, cert-manager, external secrets, and runtime mode details, see [`helm/mantis/README.md`](helm/mantis/README.md).
-
-## Required env
-
-Drop these into `.env` before anything else:
-
-```bash
-AUTH_TOKEN=long-random-string                   # your sign-in token
-MANTIS_LLM_BASE_URL=https://api.openai.com/v1   # or local Ollama / LM Studio
-MANTIS_LLM_API_KEY=sk-...                       # "dummy" for local
-MANTIS_LLM_MODEL=gpt-4o-mini                    # comma-separated for multiple
-```
-
-`MANTIS_LLM_*` values prefill setup wizard fields via backend config resolution and are re-read after a configuration reset.
-
-On first start the backend creates a single admin user tied to `AUTH_TOKEN` (change `AUTH_USER_NAME` if you want something other than `admin`). The login endpoint is rate-limited — defaults to 5 failed attempts per 15 minutes per IP; tune with `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW`.
-
-Optional: `MANTIS_TG_BOT_TOKEN` + `MANTIS_TG_USER_IDS` (Telegram), `ASR_API_URL` / `OCR_API_URL` / `TTS_API_URL` (speech/OCR services), `MANTIS_BACKEND_PORT` / `MANTIS_FRONTEND_PORT` / `MANTIS_PORT` (host ports). Full list in `.env.example`.
-
-## Setup wizard
-
-The first sign-in opens a step-by-step wizard that connects an LLM provider, picks chat / summary / vision models, and (optionally) a Telegram bot. Every value lands in a single `app_config` row on the backend; environment variables (`MANTIS_LLM_*`, `MANTIS_TG_*`, `GONKA_*`) act as prefill only.
-
-The same wizard lives under **Setup** in the sidebar:
-
-- **Continue** — resume the wizard from the first unfinished step.
-- **Re-run wizard** — walk every step again with current values prefilled.
-- **Reset** — clear `app_config` and reopen the wizard. Existing AI engine, hosts, and channels stay; you can still edit them on their pages.
+- **Docker is mandatory.** The sandbox runtime needs to spawn containers, so the host must run Docker (Linux / macOS / WSL2). Native Windows is not supported.
+- **Kubernetes needs DinD or host-socket.** The backend talks directly to a Docker daemon to manage sandbox containers; there is no Kubernetes-native runtime yet. The Helm chart ships a **Docker-in-Docker sidecar** by default — that means an extra ~400 MB image per replica, slower pod start, and the sidecar pod is privileged. The alternative is mounting `/var/run/docker.sock` from the host, which is faster but ties pods to a specific node and weakens isolation. There is no rootless / Kata / gVisor path yet.
+- **First boot is heavy.** ~10–15 min to pull base layers and build 7 sandbox images (highly dependent on link speed and CPU). The prebuild service caches by Dockerfile hash, so reboots and upgrades are <30 s.
+- **Single-user by default.** `AUTH_TOKEN` is one-tenant; multi-user / SSO / RBAC is not implemented. Anyone with the token has the full agent surface.
+- **Agent reliability scales with the model.** Small / older models hallucinate tool results, ignore sandbox boundaries, or fail to follow plan steps. Tested mostly with GPT-4-class and Kimi K2.6; expect rough behaviour on 7–13B local models.
 
 ## Generation limits
 
-Caps on how long generation can run and how many tool calls it can make. When a limit kicks in, the assistant message is marked `cancelled` and its content gets a human-readable marker naming the env var to tweak (e.g. `[stopped: supervisor timeout 15m0s exceeded — raise MANTIS_SUPERVISOR_TIMEOUT in .env to increase]`). Partial text and completed tool steps are preserved; unfinished steps get marked `cancelled`. A user-triggered Stop gives `[stopped by user]`.
-
-| Variable | Default | What it caps |
-|---|---|---|
-| `MANTIS_SUPERVISOR_TIMEOUT` | `15m` | Wall time for one user-message generation by the main agent |
-| `MANTIS_SUPERVISOR_MAX_ITERATIONS` | `30` | LLM tool-call rounds the main agent may do per message |
-| `MANTIS_SERVER_TIMEOUT` | `15m` | Wall time for one SSH sub-agent call (per `ssh_*` tool invocation) |
-| `MANTIS_SERVER_MAX_ITERATIONS` | `30` | LLM tool-call rounds inside one SSH sub-agent call |
-| `MANTIS_PLAN_STEP_TIMEOUT` | `15m` | Wall time for a single plan node execution |
-
-Values accept any Go duration (`30s`, `15m`, `1h`). On startup the app logs the active values, e.g. `limits: supervisor=15m0s/30, server=15m0s/30, plan_step=15m0s`. Server-level hits (timeout / iterations) surface as the tool result to the supervisor, so it can read the limit message and adapt instead of failing the whole reply.
+Per-message timeouts and tool-call iteration caps. Defaults are `15m` / `30` for the main agent (`MANTIS_SUPERVISOR_TIMEOUT` / `_MAX_ITERATIONS`), each SSH sub-agent (`MANTIS_SERVER_*`), and a single plan node (`MANTIS_PLAN_STEP_TIMEOUT`). Values take Go durations (`30s`, `15m`, `1h`). When a limit fires, the message is marked `cancelled` with a human-readable marker naming the env var to raise; partial text and completed tool steps are preserved.
 
 ## Dev
 
@@ -272,19 +150,7 @@ Multi-stage builds, frontend served by nginx, single port `:${MANTIS_PORT:-8080}
 
 ## ASR, OCR & TTS (optional)
 
-| Service | Env var | Repo |
-|---------|---------|------|
-| Speech-to-text | `ASR_API_URL` | [russian-asr](https://github.com/x0152/russian-asr) / [whisper.cpp](https://github.com/ggerganov/whisper.cpp) / OpenAI Whisper |
-| OCR | `OCR_API_URL` | [easy-ocr-api](https://github.com/x0152/easy-ocr-api) |
-| Text-to-speech | `TTS_API_URL` | [cosyvoice-tts-api](https://github.com/x0152/cosyvoice-tts-api) |
-
-```bash
-docker run -p 8016:8016 ghcr.io/x0152/russian-asr        # --gpus all for CUDA
-docker run -p 8017:8017 ghcr.io/x0152/easy-ocr-api
-docker run -p 8020:8020 ghcr.io/x0152/cosyvoice-tts-api
-```
-
-Set the URLs in `.env` (see `.env.example`). Since the ASR integration uses an OpenAI Whisper-compatible interface, you can use standard Whisper endpoints, `whisper.cpp` server, or other compatible services for `ASR_API_URL`.
+Plug in via `ASR_API_URL` / `OCR_API_URL` / `TTS_API_URL` in `.env`. ASR is OpenAI Whisper-compatible, so any Whisper endpoint (cloud, `whisper.cpp`, [russian-asr](https://github.com/x0152/russian-asr)) works. OCR pairs with [easy-ocr-api](https://github.com/x0152/easy-ocr-api), TTS with [cosyvoice-tts-api](https://github.com/x0152/cosyvoice-tts-api).
 
 ## License
 

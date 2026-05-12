@@ -1,0 +1,100 @@
+apps:
+  global:
+    image:
+      repository: mantis
+      tag: latest
+      pullPolicy: Never
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 25m
+      limits:
+        memory: 256Mi
+        cpu: 500m
+
+  main:
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 50m
+      limits:
+        memory: 512Mi
+        cpu: 1000m
+
+  chat:
+    resources:
+      requests:
+        memory: 96Mi
+        cpu: 50m
+      limits:
+        memory: 384Mi
+        cpu: 1000m
+
+  runtime:
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 50m
+      limits:
+        memory: 512Mi
+        cpu: 1000m
+
+frontend:
+  image:
+    repository: mantis-frontend
+    tag: latest
+    pullPolicy: Never
+  resources:
+    requests:
+      memory: 32Mi
+      cpu: 25m
+    limits:
+      memory: 128Mi
+      cpu: 200m
+
+postgres:
+  enabled: true
+  storage: 5Gi
+  resources:
+    requests:
+      memory: 96Mi
+      cpu: 50m
+    limits:
+      memory: 384Mi
+      cpu: 500m
+
+migration:
+  enabled: true
+  resources:
+    requests:
+      memory: 48Mi
+      cpu: 25m
+    limits:
+      memory: 192Mi
+      cpu: 200m
+
+ingress:
+  enabled: false
+
+runtime:
+  network: sandbox-net
+  sandboxCaps: "NET_RAW,NET_ADMIN"
+  dind:
+    image: docker:24-dind
+    storage:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        memory: 192Mi
+        cpu: 50m
+      limits:
+        memory: 1Gi
+        cpu: 1500m
+
+secrets:
+  postgres:
+    user: postgres
+    password: postgres
+    db: mantis
+  authToken: "minikube-smoke-token"
