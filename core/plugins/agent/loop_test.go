@@ -155,3 +155,106 @@ func TestNormalizeToolExecutionResult_ErrorTakesPriority(t *testing.T) {
 		t.Fatalf("unexpected error normalization: %q", got)
 	}
 }
+
+func TestAgentLoop_RequiredToolRetriesAndSuppressesUngroundedText(t *testing.T) {
+	llm := &scriptedLLM{
+		streams: [][]types.StreamEvent{
+			{
+				{Type: "text", Delta: "да, подключение работает"},
+			},
+			{
+				{Type: "text", Delta: "проверяю"},
+				{Type: "tool_calls", ToolCalls: []types.ToolCall{{ID: "1", Name: "ssh_email", Arguments: `{"task":"email-status"}`}}},
+			},
+			{
+				{Type: "text", Delta: "готово"},
+			},
+		},
+	}
+
+	loop := NewAgentLoop(NewAgentAction(llm))
+	ch, err := loop.Execute(context.Background(), LoopInput{
+		ActionInput: ActionInput{
+			Messages: []protocols.LLMMessage{{Role: "user", Content: "проверь почту"}},
+			Tools: []types.Tool{
+				{
+					Name: "ssh_email",
+					Execute: func(_ context.Context, _ string) (string, error) {
+						return "ok", nil
+					},
+				},
+			},
+		},
+		MaxIterations:     4,
+		RequiredToolNames: []string{"ssh_email"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	events := collect(ch)
+	if llm.calls != 3 {
+		t.Fatalf("expected 3 llm calls (retry + tool + final), got %d", llm.calls)
+	}
+
+	allText := ""
+	hasStart := false
+	hasEnd := false
+	for _, ev := range events {
+		if ev.Type == "text" {
+			allText += ev.Delta
+		}
+		if ev.Type == "tool_start" {
+			hasStart = true
+		}
+		if ev.Type == "tool_end" {
+			hasEnd = true
+		}
+		if ev.Type == "error" {
+			t.Fatalf("unexpected error event: %q", ev.Delta)
+		}
+	}
+	if strings.Contains(allText, "да, подключение работает") {
+		t.Fatalf("ungrounded first-pass text leaked into output: %q", allText)
+	}
+	if !strings.Contains(allText, "проверяю") || !strings.Contains(allText, "готово") {
+		t.Fatalf("expected accepted turns text, got %q", allText)
+	}
+	if !hasStart || !hasEnd {
+		t.Fatalf("expected tool events after required-tool retry start=%v end=%v", hasStart, hasEnd)
+	}
+}
+
+func TestAgentLoop_RequiredToolMissingEmitsError(t *testing.T) {
+	llm := &scriptedLLM{
+		streams: [][]types.StreamEvent{
+			{{Type: "text", Delta: "без проверки 1"}},
+			{{Type: "text", Delta: "без проверки 2"}},
+		},
+	}
+	loop := NewAgentLoop(NewAgentAction(llm))
+	ch, err := loop.Execute(context.Background(), LoopInput{
+		ActionInput: ActionInput{
+			Messages: []protocols.LLMMessage{{Role: "user", Content: "проверь почту"}},
+			Tools:    []types.Tool{{Name: "ssh_email", Execute: func(_ context.Context, _ string) (string, error) { return "ok", nil }}},
+		},
+		MaxIterations:     2,
+		RequiredToolNames: []string{"ssh_email"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	events := collect(ch)
+	found := false
+	for _, ev := range events {
+		if ev.Type == "error" && strings.Contains(ev.Delta, "required tool call missing") {
+			found = true
+		}
+		if ev.Type == "text" {
+			t.Fatalf("unexpected text leaked while required tool call was missing: %q", ev.Delta)
+		}
+	}
+	if !found {
+		t.Fatal("expected required-tool-missing error")
+	}
+}

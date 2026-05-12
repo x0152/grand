@@ -21,6 +21,8 @@ type LoopInput struct {
 	MaxIterations int
 	MessageID     string
 	ToolsProvider func(context.Context) []types.Tool
+	RequiredToolNames []string
+	RequireToolPrompt string
 }
 
 type AgentLoop struct {
@@ -42,6 +44,15 @@ func (l *AgentLoop) Execute(ctx context.Context, in LoopInput) (<-chan types.Str
 	for _, t := range tools {
 		toolMap[t.Name] = t
 	}
+	requiredTools := map[string]struct{}{}
+	for _, name := range in.RequiredToolNames {
+		n := strings.TrimSpace(name)
+		if n == "" {
+			continue
+		}
+		requiredTools[n] = struct{}{}
+	}
+	requiredSatisfied := len(requiredTools) == 0
 
 	ch := make(chan types.StreamEvent, 32)
 	go func() {
@@ -71,20 +82,57 @@ func (l *AgentLoop) Execute(ctx context.Context, in LoopInput) (<-chan types.Str
 
 			var reply strings.Builder
 			var toolCalls []types.ToolCall
+			enforceThisIter := !requiredSatisfied
+			buffered := make([]types.StreamEvent, 0, 16)
 
 			for event := range actionCh {
 				event.Iteration = iter
 				switch event.Type {
 				case "text":
 					reply.WriteString(event.Delta)
-					ch <- event
+					if enforceThisIter {
+						buffered = append(buffered, event)
+					} else {
+						ch <- event
+					}
 				case "thinking":
-					ch <- event
+					if enforceThisIter {
+						buffered = append(buffered, event)
+					} else {
+						ch <- event
+					}
 				case "tool_calls":
 					toolCalls = event.ToolCalls
 				case "error":
 					ch <- event
 					return
+				}
+			}
+
+			if enforceThisIter && !hasRequiredToolCall(toolCalls, requiredTools) {
+				if iter >= maxIter-1 {
+					needed := strings.Join(in.RequiredToolNames, ", ")
+					ch <- types.StreamEvent{
+						Type:    "error",
+						Delta:   "required tool call missing: " + needed,
+						IsFinal: true,
+					}
+					return
+				}
+				reminder := strings.TrimSpace(in.RequireToolPrompt)
+				if reminder == "" {
+					reminder = "Before answering this request, call one of the required tools first. Do not infer results without a tool run."
+				}
+				messages = append(messages, protocols.LLMMessage{
+					Role:    "system",
+					Content: reminder,
+				})
+				continue
+			}
+			if enforceThisIter {
+				requiredSatisfied = true
+				for _, ev := range buffered {
+					ch <- ev
 				}
 			}
 
@@ -180,6 +228,18 @@ func (l *AgentLoop) Execute(ctx context.Context, in LoopInput) (<-chan types.Str
 	}()
 
 	return ch, nil
+}
+
+func hasRequiredToolCall(calls []types.ToolCall, required map[string]struct{}) bool {
+	if len(required) == 0 {
+		return true
+	}
+	for _, tc := range calls {
+		if _, ok := required[strings.TrimSpace(tc.Name)]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 func normalizeToolExecutionResult(toolName, raw string, execErr error) string {

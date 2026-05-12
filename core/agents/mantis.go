@@ -291,6 +291,13 @@ func (a *MantisAgent) Execute(ctx context.Context, in MantisInput) (<-chan types
 	}
 
 	tools := a.buildTools(connections, skills, artifacts, requestID, in.Source)
+	requiredTools := requiredToolsForTurn(in.Content, history, tools)
+	requiredPrompt := ""
+	if len(requiredTools) > 0 {
+		requiredPrompt = "For this user request, you MUST call at least one of these tools before giving the final answer: " +
+			strings.Join(requiredTools, ", ") +
+			". Do not claim current mailbox status from memory or prior messages; re-check live now."
+	}
 	prompt := a.buildSystemPrompt(connections, artifacts, in.Source, in.ReplyChannel, in.ReplyTo)
 
 	toolsProvider := func(pctx context.Context) []types.Tool {
@@ -340,6 +347,8 @@ func (a *MantisAgent) Execute(ctx context.Context, in MantisInput) (<-chan types
 			MaxIterations: a.limits.SupervisorMaxIterations,
 			MessageID:     in.RequestID,
 			ToolsProvider: toolsProvider,
+			RequiredToolNames: requiredTools,
+			RequireToolPrompt: requiredPrompt,
 		},
 	})
 	if err != nil {
@@ -347,6 +356,98 @@ func (a *MantisAgent) Execute(ctx context.Context, in MantisInput) (<-chan types
 	}
 
 	return ch, nil
+}
+
+func requiredToolsForTurn(content string, history []protocols.LLMMessage, tools []types.Tool) []string {
+	if !hasToolByName(tools, "ssh_email") {
+		return nil
+	}
+
+	text := strings.ToLower(strings.TrimSpace(content))
+	if text == "" {
+		return nil
+	}
+
+	emailCue := containsAny(text,
+		"email", "mail", "inbox", "imap", "smtp", "почт", "ящик", "письм")
+	checkCue := containsAny(text,
+		"check", "status", "verify", "look", "again", "retry",
+		"проверь", "провер", "проверк", "доступ", "статус", "посмотр", "еще раз", "ещё раз", "снова", "повтори")
+
+	if emailCue && checkCue {
+		return []string{"ssh_email"}
+	}
+	if checkCue && (recentHistoryMentionsTool(history, "ssh_email", 14) || recentHistoryMentionsEmailContext(history, 20)) {
+		return []string{"ssh_email"}
+	}
+	return nil
+}
+
+func hasToolByName(tools []types.Tool, name string) bool {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return false
+	}
+	for _, t := range tools {
+		if strings.TrimSpace(t.Name) == name {
+			return true
+		}
+	}
+	return false
+}
+
+func containsAny(s string, parts ...string) bool {
+	for _, p := range parts {
+		if p != "" && strings.Contains(s, p) {
+			return true
+		}
+	}
+	return false
+}
+
+func recentHistoryMentionsTool(history []protocols.LLMMessage, toolName string, window int) bool {
+	if window <= 0 {
+		window = len(history)
+	}
+	toolName = strings.TrimSpace(toolName)
+	lowerTool := strings.ToLower(toolName)
+	seen := 0
+	for i := len(history) - 1; i >= 0 && seen < window; i-- {
+		seen++
+		m := history[i]
+		for _, tc := range m.ToolCalls {
+			if strings.TrimSpace(tc.Name) == toolName {
+				return true
+			}
+		}
+		content := strings.ToLower(m.Content)
+		if strings.Contains(content, lowerTool) || strings.Contains(content, "email-status") {
+			return true
+		}
+	}
+	return false
+}
+
+func recentHistoryMentionsEmailContext(history []protocols.LLMMessage, window int) bool {
+	if window <= 0 {
+		window = len(history)
+	}
+	seen := 0
+	for i := len(history) - 1; i >= 0 && seen < window; i-- {
+		seen++
+		m := history[i]
+		content := strings.ToLower(m.Content)
+		if containsAny(content, "email", "mail", "inbox", "imap", "smtp", "почт", "ящик", "письм", "email-status", "ssh_email") {
+			return true
+		}
+		for _, tc := range m.ToolCalls {
+			name := strings.ToLower(strings.TrimSpace(tc.Name))
+			if name == "ssh_email" || strings.Contains(name, "email") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (a *MantisAgent) loadUserMemories() []string {

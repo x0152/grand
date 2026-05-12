@@ -27,7 +27,7 @@ func stepsSummary(raw json.RawMessage) string {
 	}
 
 	var sb strings.Builder
-	sb.WriteString("\n\n[Tool activity from this turn — DO NOT redo these calls; their results are already known:")
+	sb.WriteString("\n\n[Past tool activity from this turn (historical context):")
 	shown := len(steps)
 	if shown > historyMaxSteps {
 		shown = historyMaxSteps
@@ -126,6 +126,10 @@ func BuildHistory(
 			}
 		}
 		if m.Role == "assistant" {
+			if toolMsgs, ok := replayToolCalls(m.Steps, content); ok {
+				msgs = append(msgs, toolMsgs...)
+				continue
+			}
 			if summary := stepsSummary(m.Steps); summary != "" {
 				content += summary
 			}
@@ -133,4 +137,52 @@ func BuildHistory(
 		msgs = append(msgs, protocols.LLMMessage{Role: m.Role, Content: content})
 	}
 	return msgs, nil
+}
+
+func replayToolCalls(raw json.RawMessage, content string) ([]protocols.LLMMessage, bool) {
+	if len(raw) == 0 {
+		return nil, false
+	}
+	var steps []types.Step
+	if err := json.Unmarshal(raw, &steps); err != nil || len(steps) == 0 {
+		return nil, false
+	}
+
+	var calls []types.ToolCall
+	var results []protocols.LLMMessage
+	for i, s := range steps {
+		if strings.TrimSpace(s.Tool) == "" {
+			continue
+		}
+		id := strings.TrimSpace(s.ID)
+		if id == "" {
+			id = fmt.Sprintf("call_%d", i)
+		}
+		args := strings.TrimSpace(s.Args)
+		if args == "" {
+			args = "{}"
+		}
+		calls = append(calls, types.ToolCall{ID: id, Name: s.Tool, Arguments: args})
+		result := s.Result
+		if strings.TrimSpace(result) == "" {
+			result = "(no output)"
+		}
+		results = append(results, protocols.LLMMessage{
+			Role:       "tool",
+			ToolCallID: id,
+			Content:    result,
+		})
+	}
+	if len(calls) == 0 {
+		return nil, false
+	}
+
+	out := make([]protocols.LLMMessage, 0, 1+len(results))
+	out = append(out, protocols.LLMMessage{
+		Role:      "assistant",
+		Content:   content,
+		ToolCalls: calls,
+	})
+	out = append(out, results...)
+	return out, true
 }

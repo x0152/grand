@@ -25,7 +25,7 @@
     :root {
       --bg: #fafafa;
       --fg: #0a0a0a;
-      --muted: #6b7280;
+      --muted: #525866;
       --line: #0a0a0a;
       --rule-soft: rgba(10, 10, 10, 0.18);
       --accent: #10b981;
@@ -40,7 +40,9 @@
       font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       font-feature-settings: 'ss01', 'cv11';
       letter-spacing: -0.01em;
-      line-height: 1.4;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     a { color: inherit; text-decoration: none; }
@@ -54,14 +56,14 @@
       grid-template-columns: 1fr auto 1fr;
       align-items: end;
       gap: 24px;
-      padding: 22px 48px 12px;
+      padding: 24px 48px 14px;
       border-bottom: 1px solid var(--line);
     }
     .masthead .left,
     .masthead .right {
       font-family: 'Geist Mono', monospace;
       font-size: 11px;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
       display: flex;
@@ -72,17 +74,17 @@
     .masthead .center {
       font-family: 'Geist Mono', monospace;
       font-size: 11px;
-      letter-spacing: 0.32em;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
     }
     .pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 3px 10px;
+      padding: 4px 11px;
       border: 1px solid var(--line);
-      font-size: 10px;
-      letter-spacing: 0.18em;
+      font-size: 11px;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--fg);
     }
@@ -99,27 +101,27 @@
     }
 
     .display {
-      padding: 48px 48px 28px;
+      padding: 56px 48px 36px;
       position: relative;
     }
     .display .axis {
       position: absolute;
       left: 48px;
       right: 48px;
-      top: 14px;
+      top: 16px;
       display: flex;
       justify-content: space-between;
       font-family: 'Geist Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.18em;
+      font-size: 11px;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--muted);
     }
     .display h1 {
-      margin: 0 0 40px;
+      margin: 0 0 48px;
       font-weight: 800;
       font-size: clamp(48px, 10vw, 120px);
-      line-height: 0.82;
+      line-height: 0.85;
       letter-spacing: -0.06em;
       text-align: center;
     }
@@ -133,24 +135,24 @@
       grid-template-columns: 1fr auto 1fr;
       align-items: end;
       gap: 24px;
-      padding-top: 22px;
+      padding-top: 28px;
       border-top: 1px solid var(--line);
     }
     .lede-row .l,
     .lede-row .r {
       font-family: 'Geist Mono', monospace;
       font-size: 11px;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
     }
     .lede-row .r { text-align: right; }
     .lede {
-      max-width: 720px;
+      max-width: 760px;
       margin: 0 auto;
       text-align: center;
       font-size: clamp(20px, 2vw, 28px);
-      line-height: 1.35;
+      line-height: 1.45;
       font-weight: 400;
       letter-spacing: -0.015em;
     }
@@ -161,26 +163,26 @@
     }
 
     .hero-cta {
-      margin-top: 32px;
-      padding-top: 24px;
+      margin-top: 40px;
+      padding-top: 28px;
       border-top: 1px solid var(--line);
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 18px;
+      gap: 20px;
       flex-wrap: wrap;
     }
     .btn-primary {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      padding: 13px 22px;
+      padding: 14px 24px;
       border: 1px solid var(--fg);
       background: var(--fg);
       color: var(--bg);
       font-family: 'Geist Mono', monospace;
       font-size: 12px;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       font-weight: 600;
       transition: background 0.12s, border-color 0.12s, color 0.12s;
@@ -200,7 +202,7 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
       border-bottom: 1px solid var(--fg);
-      padding-bottom: 2px;
+      padding-bottom: 3px;
     }
     .btn-ghost:hover {
       color: var(--accent);
@@ -212,26 +214,26 @@
       grid-template-columns: 1fr 1px 1fr;
       padding: 0 48px;
     }
-    .duo .col { padding: 36px 56px 36px; }
+    .duo .col { padding: 44px 56px; }
     .duo .col.left { padding-left: 0; }
     .duo .col.right { padding-right: 0; }
     .duo .rule { background: var(--line); }
     .duo .label {
       font-family: 'Geist Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.24em;
+      font-size: 11px;
+      letter-spacing: 0.20em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 18px;
+      margin-bottom: 22px;
       display: flex;
       align-items: center;
       gap: 12px;
     }
     .duo .label .num { color: var(--fg); font-weight: 600; }
     .duo h2 {
-      margin: 0 0 14px;
+      margin: 0 0 18px;
       font-size: clamp(36px, 4.4vw, 60px);
-      line-height: 0.96;
+      line-height: 1.02;
       letter-spacing: -0.04em;
       font-weight: 700;
     }
@@ -241,29 +243,30 @@
       color: var(--accent);
     }
     .duo p {
-      margin: 0 0 12px;
-      font-size: 16px;
-      line-height: 1.55;
-      max-width: 38ch;
+      margin: 0 0 14px;
+      font-size: 17px;
+      line-height: 1.65;
+      max-width: 46ch;
     }
     .duo .meta {
-      margin-top: 22px;
+      margin-top: 28px;
       font-family: 'Geist Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.06em;
+      font-size: 12px;
+      line-height: 1.7;
+      letter-spacing: 0.04em;
       color: var(--muted);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
     .duo .meta .row {
       display: grid;
-      grid-template-columns: 90px 1fr;
-      gap: 12px;
+      grid-template-columns: 100px 1fr;
+      gap: 14px;
     }
     .duo .meta .k { color: var(--fg); }
     .duo .link {
-      margin-top: 22px;
+      margin-top: 28px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -272,7 +275,7 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       border-bottom: 1px solid var(--fg);
-      padding-bottom: 2px;
+      padding-bottom: 3px;
     }
     .duo .link:hover {
       color: var(--accent);
@@ -280,17 +283,17 @@
     }
 
     .stat {
-      margin: 18px 0 8px;
-      padding: 18px 20px 16px;
+      margin: 22px 0 10px;
+      padding: 22px 22px 20px;
       border: 1px solid var(--line);
       display: flex;
       align-items: baseline;
-      gap: 14px;
+      gap: 18px;
     }
     .stat .num {
       font-weight: 800;
       font-size: clamp(38px, 4.6vw, 64px);
-      line-height: 0.96;
+      line-height: 1.0;
       letter-spacing: -0.04em;
       color: var(--accent);
     }
@@ -300,34 +303,35 @@
     }
     .stat .unit {
       font-family: 'Geist Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.16em;
+      font-size: 12px;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
-      max-width: 12ch;
-      line-height: 1.3;
+      max-width: 14ch;
+      line-height: 1.5;
     }
     .stat .unit b {
       display: block;
       color: var(--fg);
       font-weight: 600;
+      margin-bottom: 4px;
     }
 
     .bounty {
-      margin-top: 22px;
-      padding: 18px 20px 20px;
+      margin-top: 28px;
+      padding: 22px 22px 24px;
       border: 1px solid var(--line);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
     .bounty .meta {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       font-family: 'Geist Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.18em;
+      font-size: 11px;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--muted);
     }
@@ -338,11 +342,11 @@
       background: var(--warn);
     }
     .bounty h3 {
-      margin: 4px 0;
+      margin: 6px 0 2px;
       font-size: 22px;
       font-weight: 700;
       letter-spacing: -0.02em;
-      line-height: 1.05;
+      line-height: 1.2;
     }
     .bounty h3 em {
       font-style: italic;
@@ -351,22 +355,22 @@
     }
     .bounty p {
       margin: 0;
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 15px;
+      line-height: 1.6;
       max-width: 100%;
     }
     .bounty .cta {
-      margin-top: 8px;
+      margin-top: 12px;
       align-self: flex-start;
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 16px;
+      padding: 11px 18px;
       background: var(--fg);
       color: var(--bg);
       font-family: 'Geist Mono', monospace;
       font-size: 11px;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       font-weight: 600;
       border: 1px solid var(--fg);
@@ -380,21 +384,21 @@
 
     .runrow {
       margin: 0 48px;
-      padding: 36px 0 0;
+      padding: 44px 0 0;
       border-top: 1px solid var(--line);
     }
     .runrow-head {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 22px;
+      margin-bottom: 28px;
       gap: 24px;
       flex-wrap: wrap;
     }
     .runrow-head .label {
       font-family: 'Geist Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.24em;
+      font-size: 11px;
+      letter-spacing: 0.20em;
       text-transform: uppercase;
       color: var(--muted);
       display: flex;
@@ -405,7 +409,7 @@
     .runrow-head h2 {
       margin: 0;
       font-size: clamp(28px, 3.4vw, 44px);
-      line-height: 1.0;
+      line-height: 1.1;
       letter-spacing: -0.03em;
       font-weight: 700;
     }
@@ -419,7 +423,7 @@
       display: grid;
       grid-template-columns: 1.7fr 1px 1fr;
       border-top: 1px solid var(--line);
-      padding: 28px 0 36px;
+      padding: 36px 0 44px;
     }
     .runrow .diag-col {
       padding: 0 48px 0 0;
@@ -430,10 +434,10 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
       font-family: 'Geist Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.22em;
+      font-size: 11px;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--muted);
     }
@@ -454,11 +458,11 @@
     }
 
     .qs-step {
-      padding: 14px 0;
+      padding: 18px 0;
       border-bottom: 1px dashed var(--rule-soft);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
     .qs-step:first-of-type { padding-top: 0; }
     .qs-step:last-of-type { padding-bottom: 0; border-bottom: 0; }
@@ -467,8 +471,8 @@
       align-items: baseline;
       gap: 12px;
       font-family: 'Geist Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.22em;
+      font-size: 11px;
+      letter-spacing: 0.20em;
       text-transform: uppercase;
       color: var(--muted);
     }
@@ -478,18 +482,18 @@
     }
     .qs-step pre {
       margin: 0;
-      padding: 11px 14px;
+      padding: 14px 16px;
       background: var(--fg);
       color: var(--bg);
       font-family: 'Geist Mono', monospace;
-      font-size: 12px;
-      line-height: 1.55;
+      font-size: 13px;
+      line-height: 1.65;
       white-space: pre;
       overflow-x: auto;
     }
-    .qs-step pre .prompt { color: #71717a; }
+    .qs-step pre .prompt { color: #9ca3af; }
     .qs-step pre .accent { color: var(--accent); }
-    .qs-step pre .comment { color: #71717a; font-style: italic; }
+    .qs-step pre .comment { color: #9ca3af; font-style: italic; }
 
     svg.diagram {
       width: 100%;
@@ -521,17 +525,19 @@
     .diagram .caption   { font: 500 10px 'Geist Mono', monospace; fill: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
 
     .colophon {
-      padding: 16px 48px;
+      padding: 22px 48px;
+      border-top: 1px solid var(--line);
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
+      gap: 28px;
       font-family: 'Geist Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.12em;
+      font-size: 12px;
+      line-height: 1.5;
+      letter-spacing: 0.10em;
       text-transform: uppercase;
       color: var(--muted);
     }
-    .colophon .k { color: var(--fg); margin-right: 8px; }
+    .colophon .k { color: var(--fg); margin-right: 10px; font-weight: 600; }
 
     @media (max-width: 980px) {
       .runrow .grid {

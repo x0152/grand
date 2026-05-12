@@ -13,6 +13,10 @@ Multi-agent system where an LLM orchestrates a pool of isolated agents, each run
 
 ![demo](docs/demo.gif)
 
+![Modern web UI — single chat on Kimi K2.6 producing two artifacts back-to-back: a Hacker News homepage screenshot from the `browser` sandbox (Playwright + Chromium) and a 30-day Bitcoin price chart from the `base` sandbox (Python + matplotlib), each attached back to the conversation as a PNG](docs/screenshot-modern.png)
+
+![Windows XP shell — three chats running on Kimi K2.6, each in its own sandbox: Bitcoin chart (`base`), Hacker News screenshot (`browser`), DNS lookup (`netsec`), plus a `cmd.exe` window showing one tool step in detail](docs/screenshot-winxp.png)
+
 ## What it does
 
 - **Chat** — write a message, the LLM picks which server to use and what commands to run
